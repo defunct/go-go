@@ -3,14 +3,14 @@ package com.goodworkalan.mix;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import mix.Mix;
+import go.Go;
 
 /**
  * Make sense of the command line.
  *
  * @author Alan Gutierrez
  */
-public class CommandInterpreter implements Mix.Arguable
+public class CommandInterpreter implements Go.Arguable
 {
     public void main(String[] arguments)
     {
