@@ -1,4 +1,4 @@
-package com.goodworkalan.go;
+package com.goodworkalan.go.go;
 
 import java.util.LinkedHashMap;
 import java.util.Map;

@@ -1,4 +1,4 @@
-package com.goodworkalan.go;
+package com.goodworkalan.go.go;
 
 public @interface Task {
     String value();

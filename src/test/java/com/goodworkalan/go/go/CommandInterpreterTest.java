@@ -1,8 +1,8 @@
-package com.goodworkalan.mix;
+package com.goodworkalan.go.go;
 
 import org.testng.annotations.Test;
 
-import com.goodworkalan.go.CommandInterpreter;
+import com.goodworkalan.go.go.CommandInterpreter;
 
 public class CommandInterpreterTest
 {

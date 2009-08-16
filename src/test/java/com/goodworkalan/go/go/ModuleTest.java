@@ -1,7 +1,7 @@
-package com.goodworkalan.mix;
+package com.goodworkalan.go.go;
 
-import com.goodworkalan.go.Build;
-import com.goodworkalan.go.BuildModule;
+import com.goodworkalan.go.go.Build;
+import com.goodworkalan.go.go.BuildModule;
 
 public class ModuleTest extends BuildModule {
     public void foo(Build build) {
