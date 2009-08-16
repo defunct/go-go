@@ -1,4 +1,4 @@
 package com.goodworkalan.go.go;
 
-public class Task {
+public class JUnit extends Task {
 }
