@@ -1,5 +1,8 @@
 package com.goodworkalan.mix;
 
+import com.goodworkalan.go.Build;
+import com.goodworkalan.go.BuildModule;
+
 public class ModuleTest extends BuildModule {
     public void foo(Build build) {
 //        build
