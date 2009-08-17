@@ -1,7 +1,5 @@
 package com.goodworkalan.go.go;
 
-import go.go.Artifact;
-
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;

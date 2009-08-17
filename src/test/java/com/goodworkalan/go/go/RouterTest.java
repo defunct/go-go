@@ -1,5 +1,7 @@
 package com.goodworkalan.go.go;
 
+import org.testng.annotations.Test;
+
 public class RouterTest {
     public final static class TestRouter implements Router {
         public void route(Connector connector) {
@@ -14,7 +16,13 @@ public class RouterTest {
         }
     }
     
+    @Test
     public void route() {
         CommandInterpreter ci = new CommandInterpreter();
+        Command gogo = new Command("go.go");
+        gogo.addParameter("configure", "clap://thread/com/goodworkalan/go/go/api/router-test.go");
+        gogo.addCommand(new Command("mix"));
+        gogo.addCommand(new Command("compile"));
+        ci.main(gogo.toArguments());
     }
 }

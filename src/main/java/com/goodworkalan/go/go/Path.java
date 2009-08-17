@@ -1,7 +1,5 @@
 package com.goodworkalan.go.go;
 
-import go.go.MixException;
-
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -28,7 +26,7 @@ public class Path {
             try {
                 urls[i] = new URL("jar:" + files.get(i).toURL().toExternalForm() + "!/");
             } catch (MalformedURLException e) {
-                throw new MixException(0, e);
+                throw new GoException(0, e);
             }
         }
         return new URLClassLoader(urls, parent);

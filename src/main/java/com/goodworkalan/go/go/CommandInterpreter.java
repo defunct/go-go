@@ -3,8 +3,6 @@ package com.goodworkalan.go.go;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import go.go;
-
 /**
  * Make sense of the command line.
  * 
