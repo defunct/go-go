@@ -10,15 +10,12 @@ import java.util.List;
  * 
  * @author Alan Gutierrez
  */
-public class Command {
+public class Command extends ArrayList<Parameter> {
+    /** Serial version id. */
+    private static final long serialVersionUID = 1L;
+    
     /** The list of commands. */
     private final String name;
-
-    /** The list of parameters. */
-    private List<Parameter> parameters = new ArrayList<Parameter>();
-    
-    /** The next command. */
-    private Command next;
 
     /**
      * Create a command.
@@ -29,46 +26,45 @@ public class Command {
     public Command(String name) {
         this.name = name;
     }
-
-    /**
-     * Add a command to the list of commands.
-     * 
-     * @param command
-     *            The command to append to the list of commands.
-     */
-    public void addCommand(Command command) {
-        if (next == null ) {
-            next = command;
-        } else {
-            next.addCommand(command);
-        }
-    }
-
-    /**
-     * Add the string representation of the object to list of parameters.
-     * 
-     * @param name
-     *            The object name.
-     * @param value
-     *            The object value.
-     */
-    public void addParameter(String name, Object value) {
-        parameters.add(new Parameter(name, value.toString()));
+    
+    public Command(Command command) {
+        super(command);
+        this.name = command.name;
     }
     
-    private void toArguments(List<String> arguments, Command command) {
-        arguments.add(command.name);
-        for (Parameter parameter : command.parameters) {
-            arguments.add(parameter.toString());
-        }
-        if (command.next != null) {
-            toArguments(arguments, command.next);
-        }
+    public Command(String name, Command command) {
+        super(command);
+        this.name = name;
     }
-    
-    public String[] toArguments() {
+
+    public void add(String name, String value) {
+        add(new Parameter(name, value));
+    }
+
+    public Parameter getFirst(String name) {
+        for (Parameter parameter : this) {
+            if (parameter.matches(this.name, name)) {
+                return parameter;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Convert a list of commands into command line arguments.
+     * 
+     * @param commandLine
+     *            A list of commands.
+     * @return An array of string commands.
+     */
+    public static String[] toArguments(List<Command> commandLine) {
         List<String> arguments = new ArrayList<String>();
-        toArguments(arguments, this);
+        for (Command command : commandLine) {
+            arguments.add(command.name);
+            for (Parameter parameter : command) {
+                arguments.add(parameter.toString());
+            }
+        }
         return arguments.toArray(new String[arguments.size()]);
     }
 }

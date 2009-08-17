@@ -6,6 +6,9 @@ package com.goodworkalan.go.go;
  * @author Alan Gutierrez
  */
 public class Parameter {
+    /** The command name. */
+    private final String command;
+
     /** The parameter name. */
     private final String name;
     
@@ -21,10 +24,31 @@ public class Parameter {
      *            The parameter value.
      */
     public Parameter(String name, String value) {
-        this.name = name;
+        this.command = getCommand(name);
+        this.name = getName(name);
         this.value = value;
     }
-
+    
+    private static String getCommand(String name) {
+        int colon = name.indexOf(':');
+        if (colon == -1) {
+            return name;
+        }
+        return name.substring(0, colon);
+    }
+    
+    private static String getName(String name) {
+        int colon = name.indexOf(':');
+        if (colon == -1) {
+            return name;
+        }
+        return name.substring(colon + 1);
+    }
+    
+    public boolean matches(String command, String name) {
+        return name.equals(this.name) && (this.command.length() == 0 || command.equals(this.command)); 
+    }
+    
     /**
      * Get the parameter name.
      * 

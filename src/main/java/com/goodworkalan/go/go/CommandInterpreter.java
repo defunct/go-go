@@ -15,4 +15,13 @@ public class CommandInterpreter {
             System.out.println(arguments[i]);
         }
     }
+
+    /**
+     * Invoke the parsed command line.
+     * 
+     * @param command
+     *            The parsed command line.
+     */
+    public void main(CommandLine commandLine) {
+    }
 }

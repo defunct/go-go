@@ -12,6 +12,9 @@ public class RouterTest {
                     .end()
                 .connect("send")
                     .connect("publish", Publish.class).end()
+                    .end()
+                .connect("say")
+                    .connect("hello", Hello.class).end()
                     .end();
         }
     }
@@ -19,10 +22,12 @@ public class RouterTest {
     @Test
     public void route() {
         CommandInterpreter ci = new CommandInterpreter();
+        CommandLine commandLine = new CommandLine();
         Command gogo = new Command("go.go");
-        gogo.addParameter("configure", "clap://thread/com/goodworkalan/go/go/api/router-test.go");
-        gogo.addCommand(new Command("mix"));
-        gogo.addCommand(new Command("compile"));
-        ci.main(gogo.toArguments());
+        gogo.add("configure", "clap://thread/com/goodworkalan/go/go/api/router-test.go");
+        commandLine.add(gogo);
+        commandLine.add(new Command("mix"));
+        commandLine.add(new Command("compile"));
+        ci.main(commandLine);
     }
 }
