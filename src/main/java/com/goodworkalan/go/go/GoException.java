@@ -5,6 +5,16 @@ public class GoException extends RuntimeException {
     private static final long serialVersionUID = 1L;
 
     /**
+     * Create an exception with the given error code.
+     * 
+     * @param code
+     *            The error code.
+     */
+    public GoException(int code) {
+        super();
+    }
+
+    /**
      * Create a mix exception with the given error code and cause.
      * 
      * @param code
@@ -15,4 +25,7 @@ public class GoException extends RuntimeException {
     public GoException(int code, Throwable cause) {
         super(cause);
     }
+    
+    /** A Task has multiple Task type attributes indicating multiple parents. */
+    public final static int MULTIPLE_TASK_PARENTS = 102;
 }

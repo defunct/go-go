@@ -9,6 +9,11 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
+/**
+ * A file needed for the build, usually a jar file.
+ *
+ * @author Alan Gutierrez
+ */
 public class Artifact {
     /** The list of dependencies that depend on this item. */
     private final List<Artifact> dependents;

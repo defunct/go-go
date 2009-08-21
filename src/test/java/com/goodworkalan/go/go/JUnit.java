@@ -5,7 +5,6 @@ public class JUnit extends Task {
     }
 
     @Override
-    public void execute(CommandLine commandLine, int index) {
-        new Compile().execute(commandLine.rename(index, "compile"), index);
+    public void execute(String[][] remaining, String[] aruguments) {
     }
 }
