@@ -27,7 +27,7 @@ public class Responder {
     private final Map<String, Responder> commands;
 
     public Responder(Class<? extends Task> taskClass) {
-        CommandX command = taskClass.getAnnotation(CommandX.class);
+        Command command = taskClass.getAnnotation(Command.class);
         String name;
         if (command == null) {
             String className = taskClass.getCanonicalName();
