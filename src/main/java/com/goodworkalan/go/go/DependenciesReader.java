@@ -16,7 +16,7 @@ import java.util.Map;
  * 
  * @author Alan Gutierrez
  */
-public class DependenciesFile {
+public class DependenciesReader {
     /** Map of respoitory names to repository classes. */
     private final static Map<String, Boolean> repositories = new HashMap<String, Boolean>();
     
@@ -25,7 +25,7 @@ public class DependenciesFile {
         repositories.put("maven", true);
     };
 
-    public DependenciesFile(File file) {
+    public DependenciesReader(File file) {
         if (!file.exists()) {
             throw new GoException(0);
         }
