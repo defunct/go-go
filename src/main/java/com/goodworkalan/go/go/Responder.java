@@ -12,6 +12,13 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
 
+/**
+ * A wrapper around a task that maps task properites to assignment and parameter
+ * conversion strategies for those properties, and collects the sub commands of
+ * the task.
+ * 
+ * @author Alan Gutierrez
+ */
 public class Responder {
     /** The task class. */
     private final Class<? extends Task> taskClass;
@@ -22,10 +29,18 @@ public class Responder {
     /** The parent task if any. */
     private final Map<Method, Class<? extends Task>> parent;
 
+    /** A map of verbose argument names to assigment strategies. */
     private final Map<String, Assignment> assgnments;
 
-    private final Map<String, Responder> commands;
+    /** A map of sub command names to sub command responders. */ 
+    private final Map<String, Responder> subCommands;
 
+    /**
+     * Create wrapper around the given class that extends <code>Task</code>.
+     * 
+     * @param taskClass
+     *            The task class.
+     */
     public Responder(Class<? extends Task> taskClass) {
         Command command = taskClass.getAnnotation(Command.class);
         String name;
@@ -82,9 +97,16 @@ public class Responder {
         this.name = name;
         this.parent = parent;
         this.assgnments = assgnments;
-        this.commands = new TreeMap<String, Responder>();
+        this.subCommands = new TreeMap<String, Responder>();
     }
 
+    /**
+     * Cast a class to class that extends <code>Task</code>.
+     * 
+     * @param taskClass
+     *            A class.
+     * @return A class that extends <code>Task</code>.
+     */
     @SuppressWarnings("unchecked")
     private static Class<? extends Task> castTaskClass(Class taskClass) {
         return taskClass;
@@ -164,7 +186,16 @@ public class Responder {
     public Class<? extends Task> getParentTaskClass() {
         return parent.isEmpty() ? null : parent.values().iterator().next();
     }
-    
+
+    /**
+     * Set the parent task of the given task using the parent task setter for
+     * the task type warpped in this responder.
+     * 
+     * @param task
+     *            The task.
+     * @param parentTask
+     *            The parent task.
+     */
     public void setParent(Task task, Task parentTask) {
         Method method = parent.keySet().iterator().next();
         try {
@@ -175,13 +206,29 @@ public class Responder {
             throw new GoException(0, e);
         }
     }
-    
+
+    /**
+     * Add a sub command responder. The sub command will be made available
+     * through the {@link #getCommand(String) getCommand} method indexed by the
+     * command name property of the responder.
+     * 
+     * @param responder
+     *            The sub command to add.
+     */
     public void addCommand(Responder responder) {
-        commands.put(responder.getName(), responder);
+        assert responder.getParentTaskClass().equals(getTaskClass());
+        subCommands.put(responder.getName(), responder);
     }
-    
+
+    /**
+     * The responder for the given sub command if any.
+     * 
+     * @param command
+     *            The sub command name.
+     * @return The responder or null.
+     */
     public Responder getCommand(String command) {
-        return commands.get(command);
+        return subCommands.get(command);
     }
 
     /**
