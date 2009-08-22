@@ -30,12 +30,6 @@ public class Artifact {
     /** The dependency version. */
     private final String version;
 
-    /** Where the dependency is used. */
-    private final String usage;
-
-    /** Whether we should ever use a snapshot. */
-    private final boolean snapshot;
-
     /**
      * Create a dependency.
      * 
@@ -45,30 +39,15 @@ public class Artifact {
      *            The dependency name.
      * @param version
      *            The dependency version.
-     * @param usage
-     *            Where the dependency is used.
-     * @param snapshot
-     *            Whether we should ever use a snapshot.
      */
-    public Artifact(String group, String name, String version, String usage, boolean snapshot) {
+    public Artifact(String group, String name, String version) {
         this.group = group;
         this.name = name;
         this.version = version;
-        this.usage = usage;
-        this.snapshot = snapshot;
         this.dependencies = new LinkedList<Artifact>();
         this.dependents = new LinkedList<Artifact>();
     }
-
-    /**
-     * Get where the dependency is used.
-     * 
-     * @return Where the dependency is used.
-     */
-    public String getUsage() {
-        return usage;
-    }
-
+    
     /**
      * Get a key that uniquely defines the artifact without version.
      * 
@@ -90,7 +69,6 @@ public class Artifact {
                 .append("/").append(version)
                 .append("/")
                     .append(name).append("-").append(version)
-                    .append(wantSnapshots && snapshot ? "-SNAPSHOT" : "")
                     .append(suffix.length() == 0 ? "" : "-").append(suffix)
                     .append(".").append(extension);
         return file.toString();
@@ -130,7 +108,7 @@ public class Artifact {
         if (!dependencies.isEmpty()) {
             int start = artifacts.size();
             for (Artifact dependency : dependencies) {
-                if (usages.contains(dependency.getUsage()) && !seen.contains(dependency.getKey())) {
+                if (!seen.contains(dependency.getKey())) {
                     seen.add(dependency.getKey());
                     artifacts.add(dependency);
                 }
