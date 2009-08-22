@@ -6,10 +6,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 
-public class Repository {
+public class Library {
     private final URI uri;
     
-    public Repository(URI uri) {
+    public Library(URI uri) {
         this.uri = uri;
     }
 
