@@ -3,6 +3,11 @@ package com.goodworkalan.go.go;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
+/**
+ * Assigns a command line argument to a property in a {@link Task} Bean.
+ * 
+ * @author Alan Gutierrez
+ */
 public class Assignment {
     /** The method to set the task property. */
     private final Method setter;
