@@ -19,7 +19,7 @@ import java.util.Map;
  * 
  * @author Alan Gutierrez
  */
-public class DependenciesReader {
+public class ArtifactsFileReader {
     /** Map of respoitory names to repository classes. */
     private final static Map<String, Class<? extends Repository>> repositories = new HashMap<String, Class<? extends Repository>>();
     
@@ -32,7 +32,7 @@ public class DependenciesReader {
     
     private final List<Artifact> artifacts = new ArrayList<Artifact>();
 
-    public DependenciesReader(File file) {
+    public ArtifactsFileReader(File file) {
         if (!file.exists()) {
             throw new GoException(0);
         }
