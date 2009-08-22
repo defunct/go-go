@@ -1,16 +1,9 @@
 package com.goodworkalan.go.go;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
 
 
 /**
@@ -20,55 +13,13 @@ import java.util.TreeMap;
  */
 public class CommandInterpreter {
     private final TaskFactory taskFactory = new ReflectionTaskFactory();
-
-    public CommandInterpreter() {
-    }
+    private final Map<String, Responder> commands;
     
-    @SuppressWarnings("unchecked")
-    private static Class<? extends Task> taskClass(Class taskClass) {
-        return taskClass;
+    public CommandInterpreter(String artifactFile) {
+        this.commands = new CommandTreeBuilder(artifactFile).getCommands();
     }
 
     public void main(String...arguments) {
-        Set<Class<? extends Task>> tasks = new HashSet<Class<? extends Task>>();
-        BufferedReader reader = new BufferedReader(new InputStreamReader(getClass().getResourceAsStream("/snap.go.go")));
-        String className;
-        try {
-            while ((className = reader.readLine()) != null) {
-                Class<?> foundClass;
-                try {
-                    foundClass = getClass().getClassLoader().loadClass(className);
-                } catch (ClassNotFoundException e) {
-                    throw new GoException(0, e);
-                }
-                if (!Task.class.isAssignableFrom(foundClass)) {
-                    throw new GoException(0);
-                }
-                tasks.add(taskClass(foundClass));
-            }
-        } catch (IOException e) {
-            throw new GoException(0, e);
-        }
-        Map<Class<? extends Task>, Responder> responders = new HashMap<Class<? extends Task>, Responder>();
-        Map<String, Responder> commands = new TreeMap<String, Responder>();
-        for (Class<? extends Task> taskClass : tasks) {
-            if (!responders.containsKey(taskClass)) {
-                Responder responder = new Responder(taskClass);
-                responders.put(taskClass, responder);
-                Class<? extends Task> parentTaskClass = null;
-                while ((parentTaskClass = responder.getParentTaskClass()) != null) {
-                    Responder parent = responders.get(parentTaskClass);
-                    if (parent == null) {
-                        parent = new Responder(parentTaskClass);
-                        responders.put(parentTaskClass, parent);
-                    }
-                    parent.addCommand(responder);
-                    responder = parent;
-                }
-                // Will reassign sometimes, but that's okay.
-                commands.put(responder.getName(), responder);
-            }
-        }
         Responder responder = commands.get(arguments[0]);
         if (responder == null) {
             throw new GoException(0);

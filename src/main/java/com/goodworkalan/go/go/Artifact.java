@@ -1,13 +1,5 @@
 package com.goodworkalan.go.go;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
 
 /**
  * A file needed for the build, usually a jar file.
@@ -15,12 +7,6 @@ import java.util.Set;
  * @author Alan Gutierrez
  */
 public class Artifact {
-    /** The list of dependencies that depend on this item. */
-    private final List<Artifact> dependents;
-
-    /** The list of dependencies for this dependency. */
-    private final List<Artifact> dependencies;
-
     /** The dependency group. */
     private final String group;
 
@@ -44,8 +30,6 @@ public class Artifact {
         this.group = group;
         this.name = name;
         this.version = version;
-        this.dependencies = new LinkedList<Artifact>();
-        this.dependents = new LinkedList<Artifact>();
     }
     
     /**
@@ -57,12 +41,19 @@ public class Artifact {
         return group + "/" + name;
     }
 
+    public String getFileName(String suffix, String extension) {
+        StringBuilder file = new StringBuilder();
+        file.append(name).append("-").append(version)
+            .append(suffix.length() == 0 ? "" : "-").append(suffix)
+            .append(".").append(extension);
+        return file.toString();
+    }
     /**
      * Create the path in the repository where the artifact can be found.
      * 
      * @return The file path of the artifacts.
      */
-    public String getPath(String suffix, String extension, boolean wantSnapshots) {
+    public String getPath(String suffix, String extension) {
         StringBuilder file = new StringBuilder();
         file.append(group.replace(".", "/"))
                 .append("/").append(name)
@@ -72,66 +63,5 @@ public class Artifact {
                     .append(suffix.length() == 0 ? "" : "-").append(suffix)
                     .append(".").append(extension);
         return file.toString();
-    }
-
-    /**
-     * Make this dependency dependent on the given dependency.
-     * 
-     * @param dependency
-     *            The dependency.
-     */
-    public void depends(Artifact dependency) {
-        dependency.dependents.add(this);
-        dependencies.add(dependency);
-    }
-
-    /**
-     * Find the minimum depth of this depdendency.
-     * 
-     * @return The minimum depth of this dependency.
-     */
-    public int getMinimumDepth() {
-        if (dependents.isEmpty()) {
-            return 0;
-        }
-        int minimum = Integer.MAX_VALUE;
-        for (Artifact dependency : dependents) {
-            int depth = dependency.getMinimumDepth();
-            if (depth < minimum) {
-                minimum = depth;
-            }
-        }
-        return minimum;
-    }
-    
-    private void getDependencies(Set<String> usages, List<Artifact> artifacts, List<Artifact> dependencies, Set<String> seen) {
-        if (!dependencies.isEmpty()) {
-            int start = artifacts.size();
-            for (Artifact dependency : dependencies) {
-                if (!seen.contains(dependency.getKey())) {
-                    seen.add(dependency.getKey());
-                    artifacts.add(dependency);
-                }
-            }
-            Set<String> subUsages = new HashSet<String>(usages);
-            subUsages.add("core");
-            for (Artifact dependency : artifacts.subList(start, artifacts.size())) {
-                getDependencies(subUsages, artifacts, dependency.dependencies, seen);
-            }
-        }
-    }
-    
-    public List<Artifact> getDependencies(String...usages) {
-        List<Artifact> artifacts = new LinkedList<Artifact>();
-        getDependencies(new HashSet<String>(Arrays.asList(usages)), artifacts, Collections.singletonList(this), new HashSet<String>());
-        return artifacts;
-    }
-    
-    public Path getClassPath(File dir, boolean wantSnapshots, String...usages) {
-        List<File> path = new ArrayList<File>();
-        for (Artifact artifact : getDependencies(usages)) {
-            path.add(new File(dir, artifact.getPath("", "jar", wantSnapshots)));
-        }
-        return new Path(path);
     }
 }
