@@ -5,6 +5,6 @@ public class JUnit extends Task {
     }
 
     @Override
-    public void execute(String[][] remaining, String[] aruguments) {
+    public void execute(Environment env) {
     }
 }

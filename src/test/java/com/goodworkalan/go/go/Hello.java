@@ -15,13 +15,14 @@ public class Hello extends Task {
         this.snap = snap;
     }
 
-    public void execute(String[][] remaining, String[] aruguments) {
+    @Override
+    public void execute(Environment env) {
         if (snap.isVerbose()) {
-            System.err.println("About to greet with greeting: " + greeting);
+            env.err.println("About to greet with greeting: " + greeting);
         }
-        System.out.println(greeting);
+        env.out.println(greeting);
         if (snap.isVerbose()) {
-            System.err.println("Greeting emitted: " + greeting);
+            env.err.println("Greeting emitted: " + greeting);
         }
     }
 }

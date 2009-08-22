@@ -73,34 +73,38 @@ public class CommandInterpreter {
         if (responder == null) {
             throw new GoException(0);
         }
-        LinkedList<List<String>> unusedArguments = new LinkedList<List<String>>();
-        unusedArguments.add(new ArrayList<String>());
+        LinkedList<List<String>> contextualized = new LinkedList<List<String>>();
+        contextualized.add(new ArrayList<String>());
         Task task = taskFactory.newTask(responder.getTaskClass());
         int i, stop;
         for (i = 1, stop = arguments.length; responder != null && i < stop; i++) {
             String argument = arguments[i];
             if (argument.startsWith("--")) {
                 String[] pair = argument.substring(2).split("=", 2);
-                String[] qualified = pair[0].split(":");
-                if (qualified.length > 2) {
+                String name = pair[0];
+                if (name.indexOf(':') == -1) {
+                    name = responder.getName() + ':' + name;
+                }
+                String[] qualified = name.split(":");
+                if (qualified.length != 2) {
                     throw new GoException(0);
                 }
-                if (qualified.length == 1 || qualified[0].equals(responder.getName())) {
-                    responder.setArgument(task, qualified[qualified.length - 1], pair[1]);
-                } else {
-                    unusedArguments.getLast().add(argument);
+                if (qualified[0].equals(responder.getName())) {
+                    responder.setArgument(task, qualified[1], pair[1]);
                 }
+                contextualized.getLast().add("--" + name);
             } else {
                 responder = responder.getCommand(argument);
                 if (responder != null) {
                     Task subTask = taskFactory.newTask(responder.getTaskClass());
                     responder.setParent(subTask, task);
                     task = subTask;
-                    unusedArguments.addLast(new ArrayList<String>());
+                    contextualized.addLast(new ArrayList<String>());
                 }
             }
         }
-        task.execute(stringArrayArray(unusedArguments), remainingArguments(arguments, i));
+        Environment env = new Environment(System.in, System.err, System.out, stringArrayArray(contextualized), remainingArguments(arguments, i));
+        task.execute(env);
     }
     
     private static String[] remainingArguments(String[] arguments, int start) {
@@ -109,12 +113,12 @@ public class CommandInterpreter {
         return remaining;
     }
 
-    private static String[][] stringArrayArray(List<List<String>> unusedArguments) {
-        String[][] unused = new String[unusedArguments.size()][];
+    private static String[][] stringArrayArray(List<List<String>> stringListList) {
+        String[][] stringArrayArray = new String[stringListList.size()][];
         int index = 0;
-        for (List<String> args : unusedArguments) {
-            unused[index++] = args.toArray(new String[args.size()]);
+        for (List<String> args : stringListList) {
+            stringArrayArray[index++] = args.toArray(new String[args.size()]);
         }
-        return unused;
+        return stringArrayArray;
     }
 }
