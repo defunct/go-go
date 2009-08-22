@@ -24,6 +24,7 @@ public final class CommandTreeBuilder {
     private final Library library = new Library(new File(System.getProperty("user.home") + "/.m2/repository"));
     
     public CommandTreeBuilder(String artifactFile) {
+        seen.add("com.goodworkalan/go-go");
         List<Artifact> artifacts = new ArrayList<Artifact>();
         if (artifactFile != null) {
             ArtifactsFileReader reader = new ArtifactsFileReader(new File(artifactFile));
@@ -61,7 +62,7 @@ public final class CommandTreeBuilder {
     
     private ClassLoader loadConfigurations(ClassLoader classLoader) throws IOException {
         boolean classLoaderDirty = false;
-        Enumeration<URL> resources = classLoader.getResources("META-INF/services/com.goodworkalan.go.CommandInterpreter");
+        Enumeration<URL> resources = classLoader.getResources("META-INF/services/com.goodworkalan.go.go.CommandInterpreter");
         while (resources.hasMoreElements())
         {
             URL url = resources.nextElement();

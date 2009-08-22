@@ -16,13 +16,15 @@ public class CommandInterpreter {
     private final Map<String, Responder> commands;
     
     public CommandInterpreter(String artifactFile) {
+        System.out.println("kSJDFLDKJSLKFJSLDJKF");
         this.commands = new CommandTreeBuilder(artifactFile).getCommands();
     }
 
     public void main(String...arguments) {
         Responder responder = commands.get(arguments[0]);
         if (responder == null) {
-            throw new GoException(0);
+            System.out.println("Usage: " + commands.keySet());
+            throw new RuntimeException("Usage: " + commands.keySet());
         }
         LinkedList<List<String>> contextualized = new LinkedList<List<String>>();
         contextualized.add(new ArrayList<String>());

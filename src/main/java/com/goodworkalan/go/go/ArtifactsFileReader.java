@@ -45,7 +45,7 @@ public class ArtifactsFileReader {
             }
             List<Repository> repositories = new ArrayList<Repository>();
             List<Artifact> artifacts = new ArrayList<Artifact>();
-            String line = lines.readLine();
+            String line;
             while ((line = lines.readLine()) != null) {
                 line = line.trim();
                 if (!(line.startsWith("#") || line.equals(""))) {
@@ -64,6 +64,9 @@ public class ArtifactsFileReader {
                             uri = new URI(split[1]);
                         } catch (URISyntaxException e) {
                             throw new GoException(0, e);
+                        }
+                        if (!uri.isAbsolute()) {
+                            throw new GoException(0);
                         }
                         Constructor<?> constructor;
                         try {
@@ -88,9 +91,6 @@ public class ArtifactsFileReader {
                     } else if (split.length == 3) {
                         artifacts.add(new Artifact(split[0], split[1], split[2]));
                     } else {
-                        throw new GoException(0);
-                    }
-                    if (!uri.isAbsolute()) {
                         throw new GoException(0);
                     }
                 }

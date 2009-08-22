@@ -26,6 +26,17 @@ public class GoException extends RuntimeException {
         super(cause);
     }
     
+    public GoException add(String...argument) {
+        return this;
+    }
+    
     /** A Task has multiple Task type attributes indicating multiple parents. */
     public final static int MULTIPLE_TASK_PARENTS = 102;
+    
+    /** A property value ends with a backslash character, does not actually escape anything. */
+    public final static int TERMINAL_BACKSLASH = 202;
+    
+    
+    /** A variable substitution in the property file creates an infinite loop. */
+    public final static int PROPERTY_LOOP = 101;
 }

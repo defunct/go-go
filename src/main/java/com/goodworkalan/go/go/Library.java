@@ -8,8 +8,11 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 
 import org.xml.sax.Attributes;
@@ -33,88 +36,7 @@ public class Library {
         return file.exists();
     }
     
-    public List<Artifact> getImmediateDependencies(Artifact artifact) {
-        final List<Artifact> artifacts = new ArrayList<Artifact>();
-        ContentHandler handler = new DefaultHandler() {
-            int depth;
-            
-            boolean dependencies;
-            boolean dependency;
-            
-            StringBuilder characters = new StringBuilder();
-            
-            String group;
-            String name;
-            String version;
-            String scope;
-            String optional;
 
-            @Override
-            public void startElement(String uri, String localName, String qName, Attributes attributes)
-            throws SAXException {
-                depth++;
-                if (depth == 2 && localName.equals("dependencies")) {
-                    dependencies = true;
-                } else if (dependencies && depth == 4) {
-                    dependency = true;
-                }
-            }
-            
-            @Override
-            public void characters(char[] ch, int start, int length)
-            throws SAXException {
-                if (dependency) {
-                    characters.append(ch, start, length);
-                }
-            }
-           
-            @Override
-            public void endElement(String uri, String localName, String qName)
-            throws SAXException {
-                if (depth == 2 && localName.equals("dependencies")) {
-                    dependencies = false;
-                } else if (dependencies && depth == 3) {
-                    if ((scope == null || scope.equals("compile") || scope.equals("runtime")) && (optional == null || !"true".equals(optional))) {
-                        artifacts.add(new Artifact(group, name, version));
-                    }
-                    optional = scope = version = name = group = null;
-                } else if (depth == 4 && dependency) {
-                    dependency = false;
-                    if (localName.equals("groupId")) {
-                        group = characters.toString();
-                    } else if (localName.equals("artifactId")) {
-                        name = characters.toString();
-                    } else if (localName.equals("version")) {
-                        version = characters.toString();
-                    } else if (localName.equals("scope")) {
-                        scope = characters.toString();
-                    } else if (localName.equals("optional")) {
-                        optional = characters.toString();
-                    }
-                    characters.setLength(0);
-                }
-                depth--;
-            }
-        };
-        XMLReader xr;
-        try {
-            xr = XMLReaderFactory.createXMLReader();
-        } catch (SAXException e) {
-            throw new GoException(0, e);
-        }
-        xr.setContentHandler(handler);
-        File file = new File(dir, artifact.getPath("", "pom"));
-        try {
-            xr.parse(new InputSource(new FileInputStream(file)));
-        } catch (FileNotFoundException e) {
-            throw new GoException(0, e);
-        } catch (RuntimeException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new GoException(0, e);
-        }
-        return artifacts;
-    }
     
     private void resolve(List<Repository> repositories, List<Artifact> artifacts, List<Artifact> dependencies, Set<String> seen) {
         if (!dependencies.isEmpty()) {
@@ -128,7 +50,7 @@ public class Library {
                             System.out.println(repository);
                         }
                     }
-                    subDependencies.addAll(getImmediateDependencies(dependency));
+                    subDependencies.addAll(new POMReader(dir).getImmediateDependencies(dependency));
                 }
             }
             resolve(repositories, artifacts, subDependencies, seen);

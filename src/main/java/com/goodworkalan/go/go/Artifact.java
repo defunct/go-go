@@ -7,13 +7,13 @@ package com.goodworkalan.go.go;
  * @author Alan Gutierrez
  */
 public class Artifact {
-    /** The dependency group. */
+    /** The artifact group. */
     private final String group;
 
-    /** The dependency name. */
+    /** The artifact name. */
     private final String name;
 
-    /** The dependency version. */
+    /** The artifact version. */
     private final String version;
 
     /**
@@ -41,6 +41,33 @@ public class Artifact {
         return group + "/" + name;
     }
 
+    /**
+     * Get the artifact group.
+     * 
+     * @return The artifact group.
+     */
+    public String getGroup() {
+        return group;
+    }
+    
+    /**
+     * Get the artifact name.
+     * 
+     * @return The artifact name.
+     */
+    public String getName() {
+        return name;
+    }
+
+    /**
+     * Get the artifact version.
+     * 
+     * @return The artifact version.
+     */
+    public String getVersion() {
+        return version;
+    }
+
     public String getFileName(String suffix, String extension) {
         StringBuilder file = new StringBuilder();
         file.append(name).append("-").append(version)
@@ -63,5 +90,10 @@ public class Artifact {
                     .append(suffix.length() == 0 ? "" : "-").append(suffix)
                     .append(".").append(extension);
         return file.toString();
+    }
+    
+    @Override
+    public String toString() {
+        return getKey() + "/" + version;
     }
 }
