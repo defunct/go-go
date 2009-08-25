@@ -1,11 +1,10 @@
 package com.goodworkalan.go.go;
-import static com.goodworkalan.go.go.GoException.*;
+import static com.goodworkalan.go.go.GoException.PROPERTY_LOOP;
+import static com.goodworkalan.go.go.GoException.TERMINAL_BACKSLASH;
+
 import java.util.HashSet;
 import java.util.Properties;
 import java.util.Set;
-
-import javax.naming.InitialContext;
-import javax.naming.NamingException;
 
 public class VariableProperties {
     /** The serial version id. */
