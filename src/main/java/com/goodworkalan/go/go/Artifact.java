@@ -68,6 +68,17 @@ public class Artifact {
         return version;
     }
 
+    /**
+     * Get the artifact file name. The artifact file name is the concatenation
+     * of the artifact name and the artifact version separated by a hyphen. The
+     * suffix provided is catenated after the version spearated by a hyphen.
+     * 
+     * @param suffix
+     *            A suffix to apply or an empty string.
+     * @param extension
+     *            The file extension to use.
+     * @return The file name for this artifact.
+     */
     public String getFileName(String suffix, String extension) {
         StringBuilder file = new StringBuilder();
         file.append(name).append("-").append(version)
@@ -92,6 +103,11 @@ public class Artifact {
         return file.toString();
     }
     
+    /**
+     * Return the artfact key for this artifact.
+     * 
+     * @return A string representation of this artifact.
+     */
     @Override
     public String toString() {
         return getKey() + "/" + version;
