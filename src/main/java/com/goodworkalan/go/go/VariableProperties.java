@@ -88,7 +88,7 @@ public class VariableProperties {
      */
     private String expand(String name, Set<String> seen) {
         if (seen.contains(name)) {
-            throw new GoException(PROPERTY_LOOP).add(name);
+            throw new GoException(PROPERTY_LOOP).put("name", name);
         }
         seen.add(name);
 
@@ -99,7 +99,7 @@ public class VariableProperties {
             try {
                 expandValue(value, seen);
             } catch (GoException e) {
-                e.add(name);
+                e.put("name", name);
                 throw e;
             }
         }
