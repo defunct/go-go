@@ -1,6 +1,7 @@
 package com.goodworkalan.go.go;
 
 import com.goodworkalan.cassandra.CassandraException;
+import com.goodworkalan.cassandra.Report;
 
 public class GoException extends CassandraException {
     /** Serial version id. */
@@ -13,7 +14,7 @@ public class GoException extends CassandraException {
      *            The error code.
      */
     public GoException(int code) {
-        super(code);
+        super(code, new Report());
     }
 
     /**
@@ -25,7 +26,35 @@ public class GoException extends CassandraException {
      *            The wrapped exception.
      */
     public GoException(int code, Throwable cause) {
-        super(code, cause);
+        super(code, new Report(), cause);
+    }
+    
+    /**
+     * Create an exception with the given error code and the given initial
+     * report structure.
+     * 
+     * @param code
+     *            The error code.
+     * @param report
+     *            An initial report structure.
+     */
+    public GoException(int code, Report report) {
+        super(code, report);
+    }
+
+    /**
+     * Create an exception with the given error code and the given initial
+     * report structure that wraps the given cause exception.
+     * 
+     * @param The
+     *            error code.
+     * @param report
+     *            An initial report structure.
+     * @param The
+     *            cause.
+     */
+    public GoException(int code, Report report, Throwable cause) {
+        super(code, report, cause);
     }
     
     /** A Task has multiple Task type attributes indicating multiple parents. */
@@ -54,4 +83,13 @@ public class GoException extends CassandraException {
     
     /** Cannot construct repository. */
     public final static int UNABLE_TO_CONSTRUCT_REPOSITORY = 306;
+    
+    /** A repository URL cannot be relative. */
+    public final static int RELATIVE_ARTIFACT_REPOSITORY_URL = 307;
+    
+    /** Invalid artifact include specification line. */
+    public final static int INVALID_INCLUDE_LINE = 308;
+    
+    /** Invalid artifact exclude specification line. */
+    public final static int INVALID_EXCLUDE_LINE = 309;
 }

@@ -14,6 +14,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.goodworkalan.cassandra.Report;
+
 /**
  * A file reader that reads a list of dependencies from a file that 
  * contains a repository name and the dependency files.
@@ -38,6 +40,8 @@ public class ArtifactsFileReader {
         }
         Class<? extends Repository> repositoryClass = null;
         URI uri = null;
+        Report report = new Report();
+        report.put("file", file);
         try {
             BufferedReader lines;
             try {
@@ -46,89 +50,95 @@ public class ArtifactsFileReader {
                 throw new GoException(0, e);
             }
             List<Repository> repositories = new ArrayList<Repository>();
-            List<Artifact> artifacts = new ArrayList<Artifact>();
+            List<Artifact> includes = new ArrayList<Artifact>();
+            List<Artifact> excludes = new ArrayList<Artifact>();
             String line;
             while ((line = lines.readLine()) != null) {
                 line = line.trim();
-                try {
-                    if (!(line.startsWith("#") || line.equals(""))) {
-                        String[] split = line.split("\\s+");
-                        if (split[0].length() != 1) {
-                            throw new GoException(INVALID_ARTIFACT_LINE_START);
-                        }
-                        switch (split[0].charAt(0)) {
-                        case '?':
-                            if (split.length != 3) {
-                                throw new GoException(INVALID_ARTIFACT_REPOSITORY_LINE);
-                            }
-                            try {
-                                if (!artifacts.isEmpty()) {
-                                    transactions.add(new Transaction(new ArrayList<Repository>(repositories), new ArrayList<Artifact>(artifacts)));
-                                    repositories.clear();
-                                    artifacts.clear();
-                                }
-                                repositoryClass = repositoryClasses.get(split[1]);
-                                if (repositoryClass == null) {
-                                    throw new GoException(INVALID_ARTIFACT_REPOSITORY_TYPE);
-                                }
-                                try {
-                                    uri = new URI(split[2]);
-                                } catch (URISyntaxException e) {
-                                    throw new GoException(INVALID_ARTIFACT_REPOSITORY_URL);
-                                }
-                                if (!uri.isAbsolute()) {
-                                    throw new GoException(0);
-                                }
-                                try {
-                                    Constructor<?> constructor;
-                                    try {
-                                        constructor = repositoryClass.getConstructor(URI.class);
-                                    } catch (RuntimeException e) {
-                                        throw e;
-                                    } catch (Exception e) {
-                                        throw new GoException(UNABLE_TO_FIND_REPOSITORY_CONSTRUCTOR, e);
-                                    }
-                                    Repository repository;
-                                    try {
-                                        repository = (Repository) constructor.newInstance(uri);
-                                        // TODO WOW! I never noticed all this before! Need to write about it.
-                                    } catch (IllegalArgumentException e) {
-                                        throw new GoException(UNABLE_TO_CONSTRUCT_REPOSITORY, e);
-                                    } catch (RuntimeException e) {
-                                        throw e;
-                                    } catch (Exception e) {
-                                        throw new GoException(UNABLE_TO_CONSTRUCT_REPOSITORY, e);
-                                    }
-                                    repositories.add(repository);
-                                } catch (GoException e) {
-                                    throw e.put("repositoryClass", repositoryClass);
-                                }
-                            } catch (GoException e) {
-                                throw e
-                                    .map("repository")
-                                        .put("type", split[1])
-                                        .put("type", split[2])
-                                        .end();
-                            }
-                            break;
-                        case '+':
-                            if (split.length != 4) {
-                            }
-                            artifacts.add(new Artifact(split[1], split[2], split[3]));
-                        case '-':
-                            if (split.length != 4) {
-                                
-                            }
-                        default:
-                            throw new GoException(0);
-                        }
+                if (!(line.startsWith("#") || line.equals(""))) {
+                    report.mark().put("line", line);
+
+                    String[] split = line.split("\\s+");
+                    if (split[0].length() != 1) {
+                        throw new GoException(INVALID_ARTIFACT_LINE_START, report);
                     }
-                } catch (GoException e) {
-                    throw e.put("line", line).put("file", file);
+                    
+                    switch (split[0].charAt(0)) {
+                    case '?':
+                        if (split.length != 3) {
+                            throw new GoException(INVALID_ARTIFACT_REPOSITORY_LINE, report);
+                        }
+
+                        report
+                            .mark()
+                            .map("repository")
+                                .put("type", split[1])
+                                .put("url", split[2])
+                                .end();
+                        
+                        if (!includes.isEmpty()) {
+                            transactions.add(new Transaction(new ArrayList<Repository>(repositories), new ArrayList<Artifact>(includes)));
+                            repositories.clear();
+                            includes.clear();
+                        }
+                        repositoryClass = repositoryClasses.get(split[1]);
+                        if (repositoryClass == null) {
+                            throw new GoException(INVALID_ARTIFACT_REPOSITORY_TYPE, report);
+                        }
+                        try {
+                            uri = new URI(split[2]);
+                        } catch (URISyntaxException e) {
+                            throw new GoException(INVALID_ARTIFACT_REPOSITORY_URL, report);
+                        }
+                        if (!uri.isAbsolute()) {
+                            throw new GoException(RELATIVE_ARTIFACT_REPOSITORY_URL, report);
+                        }
+
+                        report.mark().put("repositoryClass", repositoryClass);
+                        
+                        Constructor<?> constructor;
+                        try {
+                            constructor = repositoryClass.getConstructor(URI.class);
+                        } catch (RuntimeException e) {
+                            throw e;
+                        } catch (Exception e) {
+                            throw new GoException(UNABLE_TO_FIND_REPOSITORY_CONSTRUCTOR, report, e);
+                        }
+                        Repository repository;
+                        try {
+                            repository = (Repository) constructor.newInstance(uri);
+                            // TODO WOW! I never noticed all this before! Need to write about it.
+                        } catch (IllegalArgumentException e) {
+                            throw new GoException(UNABLE_TO_CONSTRUCT_REPOSITORY, report, e);
+                        } catch (RuntimeException e) {
+                            throw e;
+                        } catch (Exception e) {
+                            throw new GoException(UNABLE_TO_CONSTRUCT_REPOSITORY, report, e);
+                        }
+                        repositories.add(repository);
+
+                        report.clear();
+                        report.clear();
+                        
+                        break;
+                    case '+':
+                        if (split.length != 4) {
+                            throw new GoException(INVALID_INCLUDE_LINE, report);
+                        }
+                        includes.add(new Artifact(split[1], split[2], split[3]));
+                    case '-':
+                        if (split.length != 4) {
+                            throw new GoException(INVALID_INCLUDE_LINE, report);
+                        }
+                        excludes.add(new Artifact(split[1], split[1], split[3]));
+                    default:
+                        throw new GoException(0);
+                    }
+                    report.clear();
                 }
             }
-            if (!artifacts.isEmpty()) {
-                transactions.add(new Transaction(repositories, artifacts));
+            if (!includes.isEmpty()) {
+                transactions.add(new Transaction(repositories, includes));
             }
         } catch (IOException e) {
             // Note that build as you throw will not capture the properties

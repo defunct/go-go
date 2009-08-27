@@ -9,7 +9,7 @@ import org.testng.annotations.Test;
  *
  * @author Alan Gutierrez
  */
-public class ArtifactsFileTest {
+public class ArtifactsFileReaderTest {
     /**
      * Check for an unexpected line start.
      */
