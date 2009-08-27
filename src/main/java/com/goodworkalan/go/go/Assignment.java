@@ -1,5 +1,7 @@
 package com.goodworkalan.go.go;
 
+import static com.goodworkalan.go.go.GoException.*;
+
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
@@ -40,13 +42,17 @@ public class Assignment {
      */
     public void setValue(Task task, String value) {
         try {
-            setter.invoke(task, new Object[] { converter.convert(value) });
-        } catch (RuntimeException e) {
-            throw e;
-        } catch (InvocationTargetException e) {
-            throw new GoException(0, e);
-        } catch (Exception e) {
-            throw new GoException(0, e);
+            try {
+                setter.invoke(task, new Object[] { converter.convert(value) });
+            } catch (RuntimeException e) {
+                throw e;
+            } catch (InvocationTargetException e) {
+                throw new GoException(ASSIGNMENT_EXCEPTION_THROWN, e);
+            } catch (Exception e) {
+                throw new GoException(ASSIGNMENT_FAILED, e);
+            }
+        } catch (GoException e) {
+            throw e.put("targetType", getType()).put("setter", setter.getName());
         }
     }
 
