@@ -87,6 +87,10 @@ public class POMReader {
                 depth--;
             }
         };
+        parse(artifact, handler);
+    }
+
+    private void parse(final Artifact artifact, ContentHandler handler) {
         XMLReader xr;
         try {
             xr = XMLReaderFactory.createXMLReader();
@@ -179,23 +183,7 @@ public class POMReader {
                 depth--;
             }
         };
-        XMLReader xr;
-        try {
-            xr = XMLReaderFactory.createXMLReader();
-        } catch (SAXException e) {
-            throw new GoException(0, e);
-        }
-        xr.setContentHandler(handler);
-        File file = new File(dir, artifact.getPath("", "pom"));
-        try {
-            xr.parse(new InputSource(new FileInputStream(file)));
-        } catch (FileNotFoundException e) {
-            throw new GoException(0, e);
-        } catch (RuntimeException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new GoException(0, e);
-        }
+        parse(artifact, handler);
     }
     
     public List<Artifact> getImmediateDependencies(Artifact artifact) {
@@ -273,23 +261,7 @@ public class POMReader {
                 depth--;
             }
         };
-        XMLReader xr;
-        try {
-            xr = XMLReaderFactory.createXMLReader();
-        } catch (SAXException e) {
-            throw new GoException(0, e);
-        }
-        xr.setContentHandler(handler);
-        File file = new File(dir, artifact.getPath("", "pom"));
-        try {
-            xr.parse(new InputSource(new FileInputStream(file)));
-        } catch (FileNotFoundException e) {
-            throw new GoException(0, e);
-        } catch (RuntimeException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new GoException(0, e);
-        }
+        parse(artifact, handler);
         return artifacts;
     }
 }
