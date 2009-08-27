@@ -27,6 +27,11 @@
     <dependencies>
         <dependency>
             <groupId>com.goodworkalan</groupId>
+            <artifactId>cassandra</artifactId>
+            <version>0.7${version.suffix}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.goodworkalan</groupId>
             <artifactId>mixer-build</artifactId>
             <version>0.1</version>
             <scope>test</scope>

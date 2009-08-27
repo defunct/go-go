@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.Reader;
 import java.lang.reflect.Constructor;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -22,51 +23,60 @@ import com.goodworkalan.cassandra.Report;
  * 
  * @author Alan Gutierrez
  */
-public class ArtifactsFileReader {
-    /** Map of respoitory names to repository classes. */
-    private final static Map<String, Class<? extends Repository>> repositoryClasses = new HashMap<String, Class<? extends Repository>>();
+public class ArtifactsReader {
+    /** Map of repository names to repository classes. */
+    final static Map<String, Class<? extends Repository>> repositoryClasses = new HashMap<String, Class<? extends Repository>>();
     
     static {
         repositoryClasses.put("flat", FlatRepository.class);
         repositoryClasses.put("maven", MavenRepository.class);
     };
-    
-    /** The a set of artifacts and a list of repositories to query. */
-    private final List<Transaction> transactions = new ArrayList<Transaction>();
 
-    public ArtifactsFileReader(File file) {
-        if (!file.exists()) {
-            throw new GoException(0);
-        }
-        Class<? extends Repository> repositoryClass = null;
-        URI uri = null;
-        Report report = new Report();
-        report.put("file", file);
+    public static List<Transaction> read(File file) {
         try {
-            BufferedReader lines;
             try {
-                lines = new BufferedReader(new FileReader(file));
+                return read(new FileReader(file));
             } catch (FileNotFoundException e) {
-                throw new GoException(0, e);
+                throw new GoException(ARTIFACT_FILE_NOT_FOUND, e);
             }
+        } catch (GoException e) {
+            e.put("file", file);
+            throw e;
+        }
+    }
+     
+    public static List<Transaction> read(Reader reader) {
+        try {
+            Report report = new Report();
+            BufferedReader lines = new BufferedReader(reader);
+            List<Transaction> transactions = new ArrayList<Transaction>();
+            Class<? extends Repository> repositoryClass = null;
+            URI uri = null;
             List<Repository> repositories = new ArrayList<Repository>();
             List<Artifact> includes = new ArrayList<Artifact>();
             List<Artifact> excludes = new ArrayList<Artifact>();
+            int lineNumber = 0;
             String line;
             while ((line = lines.readLine()) != null) {
+                lineNumber++;
                 line = line.trim();
                 if (!(line.startsWith("#") || line.equals(""))) {
-                    report.mark().put("line", line);
-
                     String[] split = line.split("\\s+");
+
+                    report
+                        .mark()
+                        .put("line", line)
+                        .put("lineNumber", lineNumber)
+                        .put("startCharacter", split[0]);
+
                     if (split[0].length() != 1) {
-                        throw new GoException(INVALID_ARTIFACT_LINE_START, report);
+                        throw new GoException(INVALID_ARTIFACTS_LINE_START, report);
                     }
                     
                     switch (split[0].charAt(0)) {
                     case '?':
                         if (split.length != 3) {
-                            throw new GoException(INVALID_ARTIFACT_REPOSITORY_LINE, report);
+                            throw new GoException(INVALID_REPOSITORY_LINE, report);
                         }
 
                         report
@@ -80,18 +90,19 @@ public class ArtifactsFileReader {
                             transactions.add(new Transaction(new ArrayList<Repository>(repositories), new ArrayList<Artifact>(includes)));
                             repositories.clear();
                             includes.clear();
+                            excludes.clear();
                         }
                         repositoryClass = repositoryClasses.get(split[1]);
                         if (repositoryClass == null) {
-                            throw new GoException(INVALID_ARTIFACT_REPOSITORY_TYPE, report);
+                            throw new GoException(INVALID_REPOSITORY_TYPE, report);
                         }
                         try {
                             uri = new URI(split[2]);
                         } catch (URISyntaxException e) {
-                            throw new GoException(INVALID_ARTIFACT_REPOSITORY_URL, report);
+                            throw new GoException(INVALID_REPOSITORY_URL, report);
                         }
                         if (!uri.isAbsolute()) {
-                            throw new GoException(RELATIVE_ARTIFACT_REPOSITORY_URL, report);
+                            throw new GoException(RELATIVE_REPOSITORY_URL, report);
                         }
 
                         report.mark().put("repositoryClass", repositoryClass);
@@ -102,15 +113,15 @@ public class ArtifactsFileReader {
                         } catch (RuntimeException e) {
                             throw e;
                         } catch (Exception e) {
-                            throw new GoException(UNABLE_TO_FIND_REPOSITORY_CONSTRUCTOR, report, e);
+                            throw new GoException(REPOSITORY_HAS_NO_URI_CONSTRUCTOR, report, e);
                         }
                         Repository repository;
                         try {
                             repository = (Repository) constructor.newInstance(uri);
                             // TODO WOW! I never noticed all this before! Need to write about it.
-                        } catch (IllegalArgumentException e) {
+                        } /* catch (IllegalArgumentException e) {
                             throw new GoException(UNABLE_TO_CONSTRUCT_REPOSITORY, report, e);
-                        } catch (RuntimeException e) {
+                        } */ catch (RuntimeException e) {
                             throw e;
                         } catch (Exception e) {
                             throw new GoException(UNABLE_TO_CONSTRUCT_REPOSITORY, report, e);
@@ -126,13 +137,15 @@ public class ArtifactsFileReader {
                             throw new GoException(INVALID_INCLUDE_LINE, report);
                         }
                         includes.add(new Artifact(split[1], split[2], split[3]));
+                        break;
                     case '-':
                         if (split.length != 4) {
-                            throw new GoException(INVALID_INCLUDE_LINE, report);
+                            throw new GoException(INVALID_EXCLUDE_LINE, report);
                         }
                         excludes.add(new Artifact(split[1], split[1], split[3]));
+                        break;
                     default:
-                        throw new GoException(0);
+                        throw new GoException(INVALID_ARTIFACTS_LINE_START, report);
                     }
                     report.clear();
                 }
@@ -140,14 +153,11 @@ public class ArtifactsFileReader {
             if (!includes.isEmpty()) {
                 transactions.add(new Transaction(repositories, includes));
             }
+            return transactions;
         } catch (IOException e) {
             // Note that build as you throw will not capture the properties
             // in the loop above.
             throw new GoException(0, e);
         }
-    }
-    
-    public List<Transaction> getTransactions() {
-        return transactions;
     }
 }

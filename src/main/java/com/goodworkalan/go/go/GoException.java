@@ -67,29 +67,32 @@ public class GoException extends CassandraException {
     public final static int PROPERTY_LOOP = 101;
     
     /** A line in an artifact file begins with an invalid character. */
-    public final static int INVALID_ARTIFACT_LINE_START = 301;
+    public final static int INVALID_ARTIFACTS_LINE_START = 301;
     
     /** Invalid repository specification line. */
-    public final static int INVALID_ARTIFACT_REPOSITORY_LINE = 302;
+    public final static int INVALID_REPOSITORY_LINE = 302;
     
     /** Invalid repository type in repository specification line. */
-    public final static int INVALID_ARTIFACT_REPOSITORY_TYPE = 303;
+    public final static int INVALID_REPOSITORY_TYPE = 303;
 
     /** Invalid repository URL in repository specification line. */
-    public final static int INVALID_ARTIFACT_REPOSITORY_URL = 304;
+    public final static int INVALID_REPOSITORY_URL = 304;
     
     /** Cannot find repository constructor. */
-    public final static int UNABLE_TO_FIND_REPOSITORY_CONSTRUCTOR = 305;
+    public final static int REPOSITORY_HAS_NO_URI_CONSTRUCTOR = 305;
     
     /** Cannot construct repository. */
     public final static int UNABLE_TO_CONSTRUCT_REPOSITORY = 306;
     
     /** A repository URL cannot be relative. */
-    public final static int RELATIVE_ARTIFACT_REPOSITORY_URL = 307;
+    public final static int RELATIVE_REPOSITORY_URL = 307;
     
     /** Invalid artifact include specification line. */
     public final static int INVALID_INCLUDE_LINE = 308;
     
     /** Invalid artifact exclude specification line. */
     public final static int INVALID_EXCLUDE_LINE = 309;
+    
+    /** Artifact file not found. */
+    public final static int ARTIFACT_FILE_NOT_FOUND = 310;
 }
