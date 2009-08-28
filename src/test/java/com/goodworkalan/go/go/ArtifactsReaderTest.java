@@ -20,7 +20,7 @@ import com.goodworkalan.reflective.ReflectiveFactory;
  *
  * @author Alan Gutierrez
  */
-public class ArtifactsFileReaderTest {
+public class ArtifactsReaderTest {
     /**
      * Check default constructor.
      */
