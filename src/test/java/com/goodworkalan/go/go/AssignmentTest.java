@@ -1,21 +1,23 @@
 package com.goodworkalan.go.go;
 
-import static org.testng.Assert.*;
-import java.lang.reflect.Method;
+import static org.testng.Assert.assertEquals;
 
 import org.testng.annotations.Test;
 
+import com.goodworkalan.reflective.Method;
+import com.goodworkalan.reflective.ReflectiveException;
+import com.goodworkalan.reflective.ReflectiveFactory;
+
 public class AssignmentTest {
     @Test
-    public void getType() throws SecurityException, NoSuchMethodException {
-        Method method = Dubious.class.getMethod("setSomething", String.class);
-        Assignment assignment = new Assignment(method, new StringConverter());
+    public void getType() throws ReflectiveException {
+        Assignment assignment = new Assignment(new ReflectiveFactory().getMethod(Dubious.class, "setSomething", String.class), new StringConverter());
         assertEquals(assignment.getType(), String.class);
     }
     
     @Test
-    public void invocationTargetException() throws SecurityException, NoSuchMethodException {
-        final Method method = Dubious.class.getMethod("setSomething", String.class);
+    public void invocationTargetException() throws ReflectiveException {
+        final Method method = new ReflectiveFactory().getMethod(Dubious.class, "setSomething", String.class);
         new GoExceptionCatcher(GoException.ASSIGNMENT_EXCEPTION_THROWN, new Runnable() {
             public void run() {
                 Assignment assignment = new Assignment(method, new StringConverter());
@@ -26,11 +28,11 @@ public class AssignmentTest {
     
     @Test
     public void reflectionExcpetion() throws SecurityException, NoSuchMethodException {
-        for (final Method method : Dubious.class.getDeclaredMethods()) {
+        for (final java.lang.reflect.Method method : Dubious.class.getDeclaredMethods()) {
             if (method.getName().equals("setPrivate")) {
                 new GoExceptionCatcher(GoException.ASSIGNMENT_FAILED, new Runnable() {
                     public void run() {
-                        Assignment assignment = new Assignment(method, new StringConverter());
+                        Assignment assignment = new Assignment(new Method(method), new StringConverter());
                         assignment.setValue(new Dubious(), "");
                     }
                 }).run();

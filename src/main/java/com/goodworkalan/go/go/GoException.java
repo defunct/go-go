@@ -96,6 +96,9 @@ public class GoException extends CassandraException {
     /** Artifact file not found. */
     public final static int ARTIFACT_FILE_NOT_FOUND = 310;
     
+    /** An I/O exception was thrown while reading an artifact file. */
+    public final static int ARTIFACT_FILE_IO_EXCEPTION = 311;
+    
     /** An exception was thrown during task property assignment. */
     public final static int ASSIGNMENT_EXCEPTION_THROWN = 401;
     

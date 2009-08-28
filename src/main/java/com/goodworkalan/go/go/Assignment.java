@@ -1,9 +1,10 @@
 package com.goodworkalan.go.go;
 
-import static com.goodworkalan.go.go.GoException.*;
+import static com.goodworkalan.go.go.GoException.ASSIGNMENT_EXCEPTION_THROWN;
+import static com.goodworkalan.go.go.GoException.ASSIGNMENT_FAILED;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
+import com.goodworkalan.reflective.Method;
+import com.goodworkalan.reflective.ReflectiveException;
 
 /**
  * Assigns a command line argument to a property in a {@link Task} Bean.
@@ -43,16 +44,15 @@ public class Assignment {
     public void setValue(Task task, String value) {
         try {
             try {
-                setter.invoke(task, new Object[] { converter.convert(value) });
-            } catch (RuntimeException e) {
-                throw e;
-            } catch (InvocationTargetException e) {
-                throw new GoException(ASSIGNMENT_EXCEPTION_THROWN, e);
-            } catch (Exception e) {
+                setter.invoke(task, converter.convert(value));
+            } catch (ReflectiveException e) {
+                if (e.getCode() == ReflectiveException.INVOCATION_TARGET) {
+                    throw new GoException(ASSIGNMENT_EXCEPTION_THROWN, e);
+                }
                 throw new GoException(ASSIGNMENT_FAILED, e);
             }
         } catch (GoException e) {
-            throw e.put("targetType", getType()).put("setter", setter.getName());
+            throw e.put("targetType", getType()).put("setter", setter.getNative().getName());
         }
     }
 
@@ -62,6 +62,6 @@ public class Assignment {
      * @return The assignment type.
      */
     public Class<?> getType() {
-        return setter.getParameterTypes()[0];
+        return setter.getNative().getParameterTypes()[0];
     }
 }

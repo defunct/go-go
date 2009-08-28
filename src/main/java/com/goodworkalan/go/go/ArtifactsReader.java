@@ -1,13 +1,23 @@
 package com.goodworkalan.go.go;
 
-import static com.goodworkalan.go.go.GoException.*;
+import static com.goodworkalan.go.go.GoException.ARTIFACT_FILE_IO_EXCEPTION;
+import static com.goodworkalan.go.go.GoException.ARTIFACT_FILE_NOT_FOUND;
+import static com.goodworkalan.go.go.GoException.INVALID_ARTIFACTS_LINE_START;
+import static com.goodworkalan.go.go.GoException.INVALID_EXCLUDE_LINE;
+import static com.goodworkalan.go.go.GoException.INVALID_INCLUDE_LINE;
+import static com.goodworkalan.go.go.GoException.INVALID_REPOSITORY_LINE;
+import static com.goodworkalan.go.go.GoException.INVALID_REPOSITORY_TYPE;
+import static com.goodworkalan.go.go.GoException.INVALID_REPOSITORY_URL;
+import static com.goodworkalan.go.go.GoException.RELATIVE_REPOSITORY_URL;
+import static com.goodworkalan.go.go.GoException.REPOSITORY_HAS_NO_URI_CONSTRUCTOR;
+import static com.goodworkalan.go.go.GoException.UNABLE_TO_CONSTRUCT_REPOSITORY;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
-import java.lang.reflect.Constructor;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -16,6 +26,8 @@ import java.util.List;
 import java.util.Map;
 
 import com.goodworkalan.cassandra.Report;
+import com.goodworkalan.reflective.ReflectiveException;
+import com.goodworkalan.reflective.ReflectiveFactory;
 
 /**
  * A file reader that reads a list of dependencies from a file that 
@@ -25,14 +37,26 @@ import com.goodworkalan.cassandra.Report;
  */
 public class ArtifactsReader {
     /** Map of repository names to repository classes. */
-    final static Map<String, Class<? extends Repository>> repositoryClasses = new HashMap<String, Class<? extends Repository>>();
+    private final Map<String, Class<? extends Repository>> repositoryClasses = new HashMap<String, Class<? extends Repository>>();
     
-    static {
+    private final ReflectiveFactory reflectiveFactory;
+    
+    ArtifactsReader(ReflectiveFactory reflectiveFactory) {
         repositoryClasses.put("flat", FlatRepository.class);
         repositoryClasses.put("maven", MavenRepository.class);
-    };
+        this.reflectiveFactory = reflectiveFactory;
+    }
+    
+    public ArtifactsReader() {
+        this(new ReflectiveFactory());
+    }
+    
+    public ArtifactsReader(Map<String, Class<? extends Repository>> repositoryClasses) {
+        repositoryClasses.putAll(repositoryClasses);
+        reflectiveFactory = new ReflectiveFactory();
+    }
 
-    public static List<Transaction> read(File file) {
+    public List<Transaction> read(File file) {
         try {
             try {
                 return read(new FileReader(file));
@@ -45,7 +69,7 @@ public class ArtifactsReader {
         }
     }
      
-    public static List<Transaction> read(Reader reader) {
+    public List<Transaction> read(Reader reader) {
         try {
             Report report = new Report();
             BufferedReader lines = new BufferedReader(reader);
@@ -107,24 +131,16 @@ public class ArtifactsReader {
 
                         report.mark().put("repositoryClass", repositoryClass);
                         
-                        Constructor<?> constructor;
-                        try {
-                            constructor = repositoryClass.getConstructor(URI.class);
-                        } catch (RuntimeException e) {
-                            throw e;
-                        } catch (Exception e) {
-                            throw new GoException(REPOSITORY_HAS_NO_URI_CONSTRUCTOR, report, e);
-                        }
                         Repository repository;
                         try {
-                            repository = (Repository) constructor.newInstance(uri);
-                            // TODO WOW! I never noticed all this before! Need to write about it.
-                        } /* catch (IllegalArgumentException e) {
-                            throw new GoException(UNABLE_TO_CONSTRUCT_REPOSITORY, report, e);
-                        } */ catch (RuntimeException e) {
-                            throw e;
-                        } catch (Exception e) {
-                            throw new GoException(UNABLE_TO_CONSTRUCT_REPOSITORY, report, e);
+                            repository =  reflectiveFactory.getConstructor(repositoryClass, URI.class).newInstance(uri);
+                        } catch (ReflectiveException e) {
+                            switch (e.getCode() / 100) {
+                            case ReflectiveException.CANNOT_FIND:
+                                throw new GoException(REPOSITORY_HAS_NO_URI_CONSTRUCTOR, report, e);
+                            default:
+                                throw new GoException(UNABLE_TO_CONSTRUCT_REPOSITORY, report, e);
+                            }
                         }
                         repositories.add(repository);
 
@@ -155,9 +171,7 @@ public class ArtifactsReader {
             }
             return transactions;
         } catch (IOException e) {
-            // Note that build as you throw will not capture the properties
-            // in the loop above.
-            throw new GoException(0, e);
+            throw new GoException(ARTIFACT_FILE_IO_EXCEPTION, e);
         }
     }
 }

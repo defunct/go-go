@@ -27,7 +27,7 @@ public final class CommandTreeBuilder {
         seen.add("com.goodworkalan/go-go");
         List<Artifact> artifacts = new ArrayList<Artifact>();
         if (artifactFile != null) {
-            for (Transaction transaction : ArtifactsReader.read(new File(artifactFile))) {
+            for (Transaction transaction : new ArtifactsReader().read(new File(artifactFile))) {
                 transaction.resolve(library);
                 artifacts.addAll(transaction.getArtifacts());
             }

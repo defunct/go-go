@@ -7,10 +7,12 @@ import java.beans.IntrospectionException;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.Constructor;
-import java.lang.reflect.Method;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
+
+import com.goodworkalan.reflective.Method;
 
 /**
  * A wrapper around a task that maps task properites to assignment and parameter
@@ -63,7 +65,7 @@ public class Responder {
         Map<Method, Class<? extends Task>> parent = new HashMap<Method, Class<? extends Task>>();
         Map<String, Assignment> assgnments = new TreeMap<String, Assignment>();
         for (PropertyDescriptor property : info.getPropertyDescriptors()) {
-            Method method = property.getWriteMethod();
+            java.lang.reflect.Method method = property.getWriteMethod();
             if (method != null) {
                 Argument argument = method.getAnnotation(Argument.class);
                 if (argument != null) {
@@ -76,9 +78,9 @@ public class Responder {
                         if (!parent.isEmpty()) {
                             throw new GoException(MULTIPLE_TASK_PARENTS);
                         }
-                        parent.put(method, castTaskClass(type));
+                        parent.put(new Method(method), castTaskClass(type));
                     } else if (type.equals(String.class)) {
-                        assgnments.put(verbose, new Assignment(method, new StringConverter()));
+                        assgnments.put(verbose, new Assignment(new Method(method), new StringConverter()));
                     } else {
                         Constructor<?> constructor;
                         try {
@@ -88,7 +90,7 @@ public class Responder {
                         } catch (Exception e) {
                             throw new GoException(0, e);
                         }
-                        assgnments.put(verbose, new Assignment(method, new ConstructorConverter(constructor)));
+                        assgnments.put(verbose, new Assignment(new Method(method), new ConstructorConverter(constructor)));
                     }
                 }
             }
