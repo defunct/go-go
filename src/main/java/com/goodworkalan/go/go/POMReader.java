@@ -1,8 +1,12 @@
 package com.goodworkalan.go.go;
 
+import static com.goodworkalan.go.go.GoException.*;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -24,7 +28,7 @@ public class POMReader {
         this.dir = dir;
     }
 
-    public void getMetaData(final Artifact artifact, final Properties properties, final Map<String, Artifact> dependencies) {
+    void getMetaData(final Artifact artifact, final Properties properties, final Map<String, Artifact> dependencies) {
         ContentHandler handler = new DefaultHandler() {
             int depth;
 
@@ -90,27 +94,41 @@ public class POMReader {
         parse(artifact, handler);
     }
 
-    private void parse(final Artifact artifact, ContentHandler handler) {
-        XMLReader xr;
-        try {
-            xr = XMLReaderFactory.createXMLReader();
-        } catch (SAXException e) {
-            throw new GoException(0, e);
-        }
-        xr.setContentHandler(handler);
+    void parse(final Artifact artifact, ContentHandler handler) {
         File file = new File(dir, artifact.getPath("", "pom"));
         try {
-            xr.parse(new InputSource(new FileInputStream(file)));
-        } catch (FileNotFoundException e) {
-            throw new GoException(0, e);
-        } catch (RuntimeException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new GoException(0, e);
+            try {
+                parse(artifact, handler, new FileInputStream(file));
+            } catch (FileNotFoundException e) {
+                throw new GoException(POM_FILE_NOT_FOUND, e);
+            }
+        } catch (GoException e) {
+            throw e.put("file", file);
         }
     }
     
-    private void getDependencyManagement(Artifact artifact, final Map<String, Artifact> dependencies) {
+    void parse(final Artifact artifact, ContentHandler handler, InputStream in) {
+        try {
+            XMLReader xr;
+            try {
+                xr = XMLReaderFactory.createXMLReader();
+            } catch (SAXException e) {
+                throw new GoException(CANNOT_CREATE_XML_PARSER, e);
+            }
+            xr.setContentHandler(handler);
+            try {
+                xr.parse(new InputSource(in));
+            } catch (IOException e) {
+                throw new GoException(POM_IO_EXCEPTION, e);
+            } catch (SAXException e) {
+                throw new GoException(POM_SAX_EXCEPTION, e);
+            }
+        } catch (GoException e) {
+            throw e.put("artifact", artifact.toString());
+        }
+    }
+    
+    void getDependencyManagement(Artifact artifact, final Map<String, Artifact> dependencies) {
         final Properties properties = new Properties();
         properties.setProperty("project.groupId", artifact.getGroup());
         properties.setProperty("project.artifactId", artifact.getName());

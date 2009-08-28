@@ -1,6 +1,7 @@
 package com.goodworkalan.go.go;
 
-import static org.testng.Assert.*;
+import static org.testng.Assert.assertEquals;
+
 import org.testng.annotations.Test;
 
 public class ArtifactTest {
