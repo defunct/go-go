@@ -119,4 +119,7 @@ public class GoException extends CassandraException {
 
     /** Unable to parse the XML in a POM file. */
     public final static int POM_SAX_EXCEPTION = 504;
+    
+    /** Unable to create task. */
+    public final static int CANNOT_CREATE_TASK = 601;
 }
