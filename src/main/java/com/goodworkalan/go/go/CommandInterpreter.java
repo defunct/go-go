@@ -48,12 +48,11 @@ public class CommandInterpreter {
                 contextualized.getLast().add("--" + name);
             } else {
                 responder = responder.getCommand(argument);
-                if (responder != null) {
-                    Task subTask = taskFactory.newTask(responder.getTaskClass());
-                    responder.setParent(subTask, task);
-                    task = subTask;
-                    contextualized.addLast(new ArrayList<String>());
+                if (responder == null) {
+                    break;
                 }
+                task = taskFactory.newTask(responder.getTaskClass());
+                contextualized.addLast(new ArrayList<String>());
             }
         }
         Environment env = new Environment(System.in, System.err, System.out, stringArrayArray(contextualized), remainingArguments(arguments, i));

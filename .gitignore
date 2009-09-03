@@ -2,3 +2,4 @@ target
 test-output
 temp-testng-customsuite.xml
 changes.txt
+src/test/resources/unflattened/com/lowagie/itext/2.1.4/itext-2.1.4.dep

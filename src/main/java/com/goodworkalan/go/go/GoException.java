@@ -122,4 +122,13 @@ public class GoException extends CassandraException {
     
     /** Unable to create task. */
     public final static int CANNOT_CREATE_TASK = 601;
+    
+    /** Unable to find a string constructor for argument of type. */
+    public final static int CANNOT_CREATE_FROM_STRING = 602;
+    
+    /** Invocation of string constructor on an argument failed. */
+    public final static int STRING_CONSTRUCTOR_ERROR = 603;
+    
+    /** Invocation of string constructor rejected the string data. */
+    public final static int STRING_CONVERSION_ERROR = 604;
 }

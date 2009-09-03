@@ -16,5 +16,7 @@ import java.lang.annotation.Target;
 @Target({ ElementType.TYPE })
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Command {
-    String value();
+    String name() default "";
+    
+    Class<? extends Task> parent() default Task.class;
 }

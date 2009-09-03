@@ -1,5 +1,8 @@
 package com.goodworkalan.go.go;
 
+import java.io.File;
+import java.util.LinkedList;
+
 
 /**
  * A file needed for the build, usually a jar file.
@@ -30,6 +33,38 @@ public class Artifact {
         this.group = group;
         this.name = name;
         this.version = version;
+    }
+
+    /**
+     * Create an artifact by parsing the given file name assuming the given
+     * suffix and extension.
+     * 
+     * @param file
+     *            An artifact file.
+     * @param suffix
+     *            A file name suffix.
+     * @param extension
+     *            The file extension.
+     */
+    public static Artifact parse(File file) {
+        LinkedList<File> parts = new LinkedList<File>();
+        File directory = file.getParentFile();
+        while (directory != null) {
+            parts.addFirst(directory);
+            directory = directory.getParentFile();
+        }
+        if (parts.size() < 3) {
+            return null;
+        }
+        String version = parts.removeLast().getName();
+        String name = parts.removeLast().getName();
+        StringBuilder group = new StringBuilder();
+        String separator = "";
+        for (File part : parts) {
+            group.append(separator).append(part.getName());
+            separator = ".";
+        }
+        return new Artifact(group.toString(), name, version);
     }
     
     /**

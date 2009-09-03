@@ -5,6 +5,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.util.ArrayList;
 
 public class MavenRepository implements Repository {
     private final URI uri;
@@ -24,5 +25,15 @@ public class MavenRepository implements Repository {
                 out.write(buffer, 0, read);
             }
         }
+    }
+
+    /**
+     * Get an iterator over the artifacts in the Maven repository.
+     * 
+     * @return An iterator over the artifacts in the Maven repository.
+     */
+    public Iterable<Artifact> artifacts() {
+        // FIXME A glob to match poms, then a parse method for Artifact.
+        return new ArrayList<Artifact>();
     }
 }

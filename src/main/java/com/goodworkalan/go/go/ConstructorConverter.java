@@ -1,6 +1,10 @@
 package com.goodworkalan.go.go;
+import static com.goodworkalan.go.go.GoException.CANNOT_CREATE_FROM_STRING;
+import static com.goodworkalan.go.go.GoException.*;
 
-import java.lang.reflect.Constructor;
+import com.goodworkalan.reflective.Constructor;
+import com.goodworkalan.reflective.ReflectiveException;
+import com.goodworkalan.reflective.ReflectiveFactory;
 
 /**
  * A converter that converts a string by constructing an object using an
@@ -18,10 +22,12 @@ public class ConstructorConverter implements Converter {
      * @param constructor
      *            The constructor.
      */
-    public ConstructorConverter(Constructor<?> constructor) {
-        assert constructor.getParameterTypes().length == 1;
-        assert constructor.getParameterTypes()[0].equals(String.class);
-        this.constructor = constructor;
+    public ConstructorConverter(ReflectiveFactory reflectiveFactory, Class<?> targetClass) {
+        try {
+            this.constructor = reflectiveFactory.getConstructor(targetClass, String.class);
+        } catch (ReflectiveException e) {
+            throw new GoException(CANNOT_CREATE_FROM_STRING, e).put("type", targetClass);
+        }
     }
 
     /**
@@ -36,13 +42,14 @@ public class ConstructorConverter implements Converter {
      */
     public Object convert(String string) {
         try {
-            return constructor.newInstance(new Object[] { string });
-        } catch (RuntimeException e) {
-            throw e;
-        } catch (InstantiationException e) { 
-            throw new GoException(0, e);
-        } catch (Exception e) {
-            throw new GoException(0, e);
+            return constructor.newInstance(string);
+        } catch (ReflectiveException e) {
+            if (e.getCode() == ReflectiveException.INVOCATION_TARGET) {
+                if (e.getCause().getCause() instanceof IllegalArgumentException) {
+                    throw new GoException(STRING_CONVERSION_ERROR, e).put("type", constructor.getNative().getDeclaringClass()).put("string", string);
+                }
+            }
+            throw new GoException(STRING_CONSTRUCTOR_ERROR, e).put("type", constructor.getNative().getDeclaringClass()).put("string", string);
         }
     }
 }

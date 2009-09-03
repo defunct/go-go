@@ -1,18 +1,14 @@
 package com.goodworkalan.go.go;
 
-import static com.goodworkalan.go.go.GoException.MULTIPLE_TASK_PARENTS;
-
 import java.beans.BeanInfo;
 import java.beans.IntrospectionException;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
-import java.lang.reflect.Constructor;
-
-import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
 
 import com.goodworkalan.reflective.Method;
+import com.goodworkalan.reflective.ReflectiveFactory;
 
 /**
  * A wrapper around a task that maps task properites to assignment and parameter
@@ -29,7 +25,7 @@ public class Responder {
     private final String name;
 
     /** The parent task if any. */
-    private final Map<Method, Class<? extends Task>> parent;
+    private final Class<? extends Task> parent;
 
     /** A map of verbose argument names to assigment strategies. */
     private final Map<String, Assignment> assgnments;
@@ -46,7 +42,7 @@ public class Responder {
     public Responder(Class<? extends Task> taskClass) {
         Command command = taskClass.getAnnotation(Command.class);
         String name;
-        if (command == null) {
+        if (command == null || command.name().equals("")) {
             String className = taskClass.getCanonicalName();
             int index = className.lastIndexOf('.');
             if (index != -1) {
@@ -54,7 +50,11 @@ public class Responder {
             }
             name = hyphenate(className);
         } else {
-            name = command.value();
+            name = command.name();
+        }
+        Class<? extends Task> parent = null;
+        if (command != null && !command.parent().equals(Task.class)) {
+            parent = command.parent();
         }
         BeanInfo info;
         try {
@@ -62,7 +62,7 @@ public class Responder {
         } catch (IntrospectionException e) {
             throw new GoException(0, e);
         }
-        Map<Method, Class<? extends Task>> parent = new HashMap<Method, Class<? extends Task>>();
+        ReflectiveFactory reflectiveFactory = new ReflectiveFactory();
         Map<String, Assignment> assgnments = new TreeMap<String, Assignment>();
         for (PropertyDescriptor property : info.getPropertyDescriptors()) {
             java.lang.reflect.Method method = property.getWriteMethod();
@@ -74,23 +74,10 @@ public class Responder {
                         verbose = hyphenate(property.getName());
                     }
                     Class<?> type =  objectify(property.getPropertyType());
-                    if (Task.class.isAssignableFrom(type)) {
-                        if (!parent.isEmpty()) {
-                            throw new GoException(MULTIPLE_TASK_PARENTS);
-                        }
-                        parent.put(new Method(method), castTaskClass(type));
-                    } else if (type.equals(String.class)) {
+                    if (type.equals(String.class)) {
                         assgnments.put(verbose, new Assignment(new Method(method), new StringConverter()));
                     } else {
-                        Constructor<?> constructor;
-                        try {
-                            constructor = type.getConstructor(new Class<?>[] { String.class });
-                        } catch (RuntimeException e) {
-                            throw e;
-                        } catch (Exception e) {
-                            throw new GoException(0, e);
-                        }
-                        assgnments.put(verbose, new Assignment(new Method(method), new ConstructorConverter(constructor)));
+                        assgnments.put(verbose, new Assignment(new Method(method), new ConstructorConverter(reflectiveFactory, type)));
                     }
                 }
             }
@@ -100,18 +87,6 @@ public class Responder {
         this.parent = parent;
         this.assgnments = assgnments;
         this.subCommands = new TreeMap<String, Responder>();
-    }
-
-    /**
-     * Cast a class to class that extends <code>Task</code>.
-     * 
-     * @param taskClass
-     *            A class.
-     * @return A class that extends <code>Task</code>.
-     */
-    @SuppressWarnings("unchecked")
-    private static Class<? extends Task> castTaskClass(Class taskClass) {
-        return taskClass;
     }
 
     /**
@@ -186,27 +161,7 @@ public class Responder {
      * @return The parent task for null if none.
      */
     public Class<? extends Task> getParentTaskClass() {
-        return parent.isEmpty() ? null : parent.values().iterator().next();
-    }
-
-    /**
-     * Set the parent task of the given task using the parent task setter for
-     * the task type warpped in this responder.
-     * 
-     * @param task
-     *            The task.
-     * @param parentTask
-     *            The parent task.
-     */
-    public void setParent(Task task, Task parentTask) {
-        Method method = parent.keySet().iterator().next();
-        try {
-            method.invoke(task, new Object[]{ parentTask });
-        } catch (RuntimeException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new GoException(0, e);
-        }
+        return parent;
     }
 
     /**

@@ -1,6 +1,9 @@
 package com.goodworkalan.go.go;
 
-import static com.goodworkalan.go.go.GoException.*;
+import static com.goodworkalan.go.go.GoException.CANNOT_CREATE_XML_PARSER;
+import static com.goodworkalan.go.go.GoException.POM_FILE_NOT_FOUND;
+import static com.goodworkalan.go.go.GoException.POM_IO_EXCEPTION;
+import static com.goodworkalan.go.go.GoException.POM_SAX_EXCEPTION;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -21,9 +24,19 @@ import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.DefaultHandler;
 import org.xml.sax.helpers.XMLReaderFactory;
 
+import com.goodworkalan.madlib.VariableProperties;
+
 public class POMReader {
+    /** The Maven repository directory. */
     private final File dir;
 
+    /**
+     * Create a POM reader that reads Maven POMs from the given Maven repository
+     * directory.
+     * 
+     * @param dir
+     *            The Maven repository directory.
+     */
     public POMReader(File dir) {
         this.dir = dir;
     }
