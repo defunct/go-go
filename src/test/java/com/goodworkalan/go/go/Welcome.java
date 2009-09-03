@@ -1,7 +1,7 @@
 package com.goodworkalan.go.go;
 
 @Command(parent = Snap.class)
-public class Hello extends Task {
+public class Welcome extends Task {
     public String greeting;
     
     @Argument

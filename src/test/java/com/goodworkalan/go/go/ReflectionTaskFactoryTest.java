@@ -20,13 +20,13 @@ public class ReflectionTaskFactoryTest {
                     public <T> Constructor<T> getConstructor(Class<T> type, java.lang.Class<?>...initargs) throws com.goodworkalan.reflective.ReflectiveException {
                         throw new ReflectiveException(ReflectiveException.SECURITY, new SecurityException("Go away."));
                     }
-                }).newTask(Hello.class);
+                }).newTask(Welcome.class);
             }
         }).run();
     }
     
     @Test
     public void newTask() {
-        new ReflectionTaskFactory().newTask(Hello.class);
+        new ReflectionTaskFactory().newTask(Welcome.class);
     }
 }
