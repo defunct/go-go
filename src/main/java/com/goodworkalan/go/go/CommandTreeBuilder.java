@@ -26,25 +26,24 @@ public final class CommandTreeBuilder {
     public CommandTreeBuilder(String artifactFile) {
         seen.add("com.goodworkalan/go-go");
         List<Artifact> artifacts = new ArrayList<Artifact>();
+        ArtifactsReader reader = new ArtifactsReader();
         if (artifactFile != null) {
-            for (Transaction transaction : new ArtifactsReader().read(new File(artifactFile))) {
-                transaction.resolve(library);
-                artifacts.addAll(transaction.getArtifacts());
-            }
+            artifacts.addAll(library.resolve(reader, new File(artifactFile), new Catcher()));
         }
         ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
         if (!artifacts.isEmpty()) {
+            System.out.println(artifacts);
             classLoader = library.getClassLoader(artifacts, classLoader, seen);
         }
         try {
-            while ((classLoader = loadConfigurations(classLoader)) != null) {
+            while ((classLoader = loadConfigurations(reader, classLoader)) != null) {
             }
         } catch (IOException e) {
             throw new GoException(0, e);
         }
     }
     
-    private ClassLoader resolve(Class<?> depenenciesClass, ClassLoader classLoader) {
+    private ClassLoader resolve(ArtifactsReader reader, Class<?> depenenciesClass, ClassLoader classLoader) {
         Dependencies dependencies;
         try {
             dependencies = (Dependencies) depenenciesClass.newInstance();
@@ -55,11 +54,11 @@ public final class CommandTreeBuilder {
         }
         Transaction transaction = new Transaction();
         dependencies.configure(transaction);
-        transaction.resolve(library);
+        library.resolve(transaction);
         return library.getClassLoader(transaction.getArtifacts(), classLoader, seen);
     }
     
-    private ClassLoader loadConfigurations(ClassLoader classLoader) throws IOException {
+    private ClassLoader loadConfigurations(ArtifactsReader reader, ClassLoader classLoader) throws IOException {
         boolean classLoaderDirty = false;
         Enumeration<URL> resources = classLoader.getResources("META-INF/services/com.goodworkalan.go.go.CommandInterpreter");
         while (resources.hasMoreElements())
@@ -67,10 +66,10 @@ public final class CommandTreeBuilder {
             URL url = resources.nextElement();
             if (!urls.contains(url)) {
                 urls.add(url);
-                BufferedReader reader = new BufferedReader(new InputStreamReader(url.openStream()));
+                BufferedReader lines = new BufferedReader(new InputStreamReader(url.openStream()));
                 String className;
                 try {
-                    while ((className = reader.readLine()) != null) {
+                    while ((className = lines.readLine()) != null) {
                         Class<?> foundClass;
                         try {
                             foundClass = classLoader.loadClass(className);
@@ -80,13 +79,10 @@ public final class CommandTreeBuilder {
                         if (Dependencies.class.isAssignableFrom(foundClass)) {
                             if (!dependenciesClasses.contains(foundClass)) {
                                 dependenciesClasses.add(foundClass);
-                                classLoader = resolve(foundClass, classLoader);
+                                classLoader = resolve(reader, foundClass, classLoader);
                                 classLoaderDirty = true;
                             }
                         } else if (Task.class.isAssignableFrom(foundClass)) {
-                            System.out.println(getClass().getClassLoader());
-                            System.out.println(foundClass.getClassLoader());
-                            System.out.println(classLoader);
                             tasks.add(taskClass(foundClass));
                         } else {
                             throw new GoException(0);

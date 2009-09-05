@@ -22,7 +22,7 @@ import java.util.Set;
 public class Library {
     /** The library directory. */
     private final File dir;
-
+    
     /**
      * Create a library with the given library directory.
      * 
@@ -38,49 +38,87 @@ public class Library {
      * 
      * @param artifact
      *            The artifact.
+     * @param suffix
+     *            The artifact file suffix.
      * @param extension
-     *            The file extension for the specific artifact file.
+     *            The artifact file extension.
      * @return True if the library contains the given artifact.
      */
-    public boolean contains(Artifact artifact, String extension) {
-        return new File(dir, artifact.getPath("", extension)).exists();
+    public boolean contains(Artifact artifact, String suffix, String extension) {
+        return getFile(artifact, suffix, extension).exists();
+    }
+
+    /**
+     * Get the file for the given artifact file with the given suffix and given
+     * extension.
+     * 
+     * @param artifact
+     *            The artifact.
+     * @param suffix
+     *            The artifact file suffix.
+     * @param extension
+     *            The artifact file extension.
+     * @return The file.
+     */
+    public File getFile(Artifact artifact, String suffix, String extension) {
+        return new File(dir, artifact.getPath(suffix, extension));
     }
     
-    private void resolve(List<Repository> repositories, List<Artifact> artifacts, List<Artifact> dependencies, Set<String> seen) {
+    private void resolve(ArtifactsReader reader, List<Artifact> artifacts, List<Transaction> dependencies, Set<String> seen, Catcher fetchFailure) {
         if (!dependencies.isEmpty()) {
-            List<Artifact> subDependencies = new ArrayList<Artifact>();
-            for (Artifact dependency : dependencies) {
-                if (!seen.contains(dependency.getKey())) {
-                    seen.add(dependency.getKey());
-                    artifacts.add(dependency);
-                    if (!contains(dependency, "jar")) {
-                        for (Repository repository : repositories) {
-                            System.out.println(repository);
+            List<Transaction> subDependencies = new ArrayList<Transaction>();
+            for (Transaction transaction : dependencies) {
+                for (Artifact dependency : transaction.getArtifacts()) {
+                    if (!seen.contains(dependency.getKey())) {
+                        // FIXME Excludes go here, as a separate hash.
+                        seen.add(dependency.getKey());
+                        artifacts.add(dependency);
+                        try {
+                            if (!getFile(dependency, "", "jar").exists()) {
+                                for (Repository repository : transaction.getRepositories()) {
+                                    if (!getFile(dependency, "", "dep").exists()) {
+                                        repository.fetchDependencies(this, dependency);
+                                    }
+                                    if (!getFile(dependency, "", "jar").exists()) {
+                                        repository.fetch(this, dependency, "", "jar");
+                                    }
+                                }
+                            }
+                        } catch (GoException e) {
+                            fetchFailure.examine(e);
+                            continue;
                         }
+                        subDependencies.addAll(reader.read(getFile(dependency, "", "dep")));
                     }
-                    subDependencies.addAll(new POMReader(dir).getImmediateDependencies(dependency));
                 }
             }
-            resolve(repositories, artifacts, subDependencies, seen);
+            resolve(reader, artifacts, subDependencies, seen, fetchFailure);
         }
     }
 
-    public List<Artifact> resolve(List<Repository> repositories, List<Artifact> artifacts) {
+    public List<Artifact> resolve(Transaction transaction) {
+        ArtifactsReader reader = new ArtifactsReader();
         List<Artifact> dependencies = new ArrayList<Artifact>();
-        resolve(repositories, dependencies, artifacts, new HashSet<String>());
+        resolve(reader, dependencies, Collections.singletonList(transaction), new HashSet<String>(), new Catcher());
+        return dependencies;
+    }
+
+    public List<Artifact> resolve(ArtifactsReader reader, File file, Catcher fetchFailure) {
+        List<Artifact> dependencies = new ArrayList<Artifact>();
+        resolve(reader, dependencies, reader.read(file), new HashSet<String>(), fetchFailure);
         return dependencies;
     }
     
-    public List<Artifact> resolve(List<Artifact> artifacts) {
-        return resolve(Collections.<Repository>emptyList(), artifacts);
-    }
-    
     public ClassLoader getClassLoader(List<Artifact> artifacts, ClassLoader parent, Set<String> seen) {
+        Catcher catcher = new Catcher();
+        ArtifactsReader reader = new ArtifactsReader();
         List<File> path = new ArrayList<File>();
-        for (Artifact artifact : resolve(artifacts)) {
-            if (!seen.contains(artifact.getKey())) {
-                seen.add(artifact.getKey());
-                path.add(new File(dir, artifact.getPath("", "jar")));
+        for (Artifact resolve : artifacts) {
+            for (Artifact artifact : resolve(reader, new File(dir, resolve.getFileName("", "dep")), catcher)) {
+                if (!seen.contains(artifact.getKey())) {
+                    seen.add(artifact.getKey());
+                    path.add(new File(dir, artifact.getPath("", "jar")));
+                }
             }
         }
         if (path.isEmpty()) {

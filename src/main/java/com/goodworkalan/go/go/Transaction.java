@@ -3,6 +3,7 @@ package com.goodworkalan.go.go;
 import java.util.ArrayList;
 import java.util.List;
 
+
 public class Transaction implements Bundle {
     public final List<Repository> repositories = new ArrayList<Repository>();
     
@@ -15,6 +16,10 @@ public class Transaction implements Bundle {
         this.repositories.addAll(repositories);
         this.artifacts.addAll(artifacts);
     }
+    
+    public List<Repository> getRepositories() {
+        return repositories;
+    }
 
     public void repsitory(Repository repository) {
         repositories.add(repository);
@@ -23,11 +28,7 @@ public class Transaction implements Bundle {
     public void include(Artifact artifact) {
         artifacts.add(artifact);
     }
-    
-    public void resolve(Library library) {
-        library.resolve(repositories, artifacts);
-    }
-    
+
     public List<Artifact> getArtifacts() {
         return artifacts;
     }

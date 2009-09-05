@@ -16,7 +16,6 @@ public class CommandInterpreter {
     private final Map<String, Responder> commands;
     
     public CommandInterpreter(String artifactFile) {
-        System.out.println("kSJDFLDKJSLKFJSLDJKF");
         this.commands = new CommandTreeBuilder(artifactFile).getCommands();
     }
 

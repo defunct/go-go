@@ -65,16 +65,6 @@ public class ArtifactsReaderTest {
         }).run();
     }
     
-
-    @Test
-    public void invalidRepositoryType() {
-        new GoExceptionCatcher(GoException.INVALID_REPOSITORY_TYPE, new Runnable() {
-            public void run() {
-                new ArtifactsReader().read(new StringReader("? fred http://kiloblog.com/fred"));
-            }
-        }).run();
-    }
-    
     @Test
     public void invalidRepositoryURL() {
         new GoExceptionCatcher(GoException.INVALID_REPOSITORY_URL, new Runnable() {
@@ -106,7 +96,7 @@ public class ArtifactsReaderTest {
                         throw new ReflectiveException(ReflectiveException.SECURITY, new SecurityException("Error"));
                     }
                 }; 
-                new ArtifactsReader(reflectiveFactory).read(new StringReader("? maven http://repository.com"));
+                new ArtifactsReader(reflectiveFactory, Collections.<String, Class<? extends Repository>>singletonMap("flat", FlatRepository.class)).read(new StringReader("? flat http://repository.com"));
             }
         }).run();
     }
@@ -124,8 +114,7 @@ public class ArtifactsReaderTest {
                         throw new ReflectiveException(ReflectiveException.ILLEGAL_ARGUMENT, new IllegalArgumentException("Error"));
                     }
                 }; 
-
-                new ArtifactsReader(reflectiveFactory).read(new StringReader("? maven http://repository.com"));
+                new ArtifactsReader(reflectiveFactory, Collections.<String, Class<? extends Repository>>singletonMap("flat", FlatRepository.class)).read(new StringReader("? flat http://repository.com"));
             }
         }).run();
     }

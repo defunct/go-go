@@ -6,6 +6,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 
+
+
 public class FlatRepository implements Repository {
     private final URI uri;
     
@@ -13,15 +15,23 @@ public class FlatRepository implements Repository {
         this.uri = uri;
     }
     
-    public void fetch(File dest, Artifact artifact, Library library) throws IOException {
-        if (!dest.exists()) {
-            byte[] buffer = new byte[4092];
-            FileOutputStream out = new FileOutputStream(dest);
-            InputStream in = uri.resolve(artifact.getFileName("", "jar")).toURL().openStream();
-            int read;
-            while ((read = in.read(buffer)) != -1) {
-                out.write(buffer, 0, read);
+    public void fetchDependencies(Library library, Artifact artifact) {
+    }
+    
+    public void fetch(Library library, Artifact artifact, String suffix, String extension) {
+        File dest = library.getFile(artifact, suffix, extension);
+        try {
+            if (!dest.exists()) {
+                byte[] buffer = new byte[4092];
+                FileOutputStream out = new FileOutputStream(dest);
+                InputStream in = uri.resolve(artifact.getFileName("", "jar")).toURL().openStream();
+                int read;
+                while ((read = in.read(buffer)) != -1) {
+                    out.write(buffer, 0, read);
+                }
             }
+        } catch (IOException e) {
+            throw new GoException(0, e);
         }
     }
 }

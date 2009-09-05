@@ -75,9 +75,6 @@ public class GoException extends CassandraException {
     /** Invalid repository specification line. */
     public final static int INVALID_REPOSITORY_LINE = 302;
 
-    /** Invalid repository type in repository specification line. */
-    public final static int INVALID_REPOSITORY_TYPE = 303;
-
     /** Invalid repository URL in repository specification line. */
     public final static int INVALID_REPOSITORY_URL = 304;
 
@@ -101,6 +98,9 @@ public class GoException extends CassandraException {
 
     /** An I/O exception was thrown while reading an artifact file. */
     public final static int ARTIFACT_FILE_IO_EXCEPTION = 311;
+    
+    /** A repository type is missing an implementation. */
+    public final static int MISSING_REPOSITORY_IMPLEMENTATION = 321;
 
     /** An exception was thrown during task property assignment. */
     public final static int ASSIGNMENT_EXCEPTION_THROWN = 401;
