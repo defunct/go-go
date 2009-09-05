@@ -139,7 +139,7 @@ public class Artifact {
     }
     
     /**
-     * Return the artfact key for this artifact.
+     * Return the artifact key for this artifact.
      * 
      * @return A string representation of this artifact.
      */
