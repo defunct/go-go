@@ -34,7 +34,7 @@ public class Environment {
      * @param out
      *            The output stream.
      * @param arguments
-     *            The arguements for each command with command name.
+     *            The arguments for each command with command name.
      * @param remaining
      *            The remaining arguments.
      */

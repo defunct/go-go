@@ -11,7 +11,10 @@ import com.goodworkalan.reflective.ReflectiveException;
  * 
  * @author Alan Gutierrez
  */
-public class Assignment {
+class Assignment {
+    /** The class that declared the assignment. */
+    private final Class<? extends Arguable> declaringClass;
+    
     /** The method to set the task property. */
     private final Method setter;
 
@@ -19,32 +22,39 @@ public class Assignment {
     private final Converter converter;
 
     /**
-     * Create an assignment that will set the property indentified by the given
+     * Create an assignment that will set the property identified by the given
      * setter method with a string value converted with the given converter.
      * 
+     * @param declaringClass
+     *            The class that declared the assignment.
      * @param setter
      *            The property setter.
      * @param converter
      *            The string converter.
      */
-    public Assignment(Method setter, Converter converter) {
+    public Assignment(Class<? extends Arguable> declaringClass, Method setter, Converter converter) {
+        this.declaringClass = declaringClass;
         this.setter = setter;
         this.converter = converter;
+    }
+
+    public Object convertValue(String value) {
+        return converter.convert(value);
     }
 
     /**
      * Set the property of the task that is defined by this assignment to the
      * value represented by the given string.
      * 
-     * @param task
+     * @param arguable
      *            The task.
      * @param value
      *            The string value.
      */
-    public void setValue(Task task, String value) {
+    public void setValue(Arguable arguable, Object value) {
         try {
             try {
-                setter.invoke(task, converter.convert(value));
+                setter.invoke(arguable, value);
             } catch (ReflectiveException e) {
                 if (e.getCode() == ReflectiveException.INVOCATION_TARGET) {
                     throw new GoException(ASSIGNMENT_EXCEPTION_THROWN, e);
@@ -54,6 +64,15 @@ public class Assignment {
         } catch (GoException e) {
             throw e.put("targetType", getType()).put("setter", setter.getNative().getName());
         }
+    }
+
+    /**
+     * Get the type of the declaring class.
+     * 
+     * @return The type of the declaring class.
+     */
+    public Class<? extends Arguable> getDeclaringClass() {
+        return declaringClass;
     }
 
     /**

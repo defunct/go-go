@@ -1,23 +1,33 @@
 package com.goodworkalan.go.go;
 
+import static com.goodworkalan.go.go.Casts.arguableClass;
+import static com.goodworkalan.go.go.Casts.objectify;
+import static com.goodworkalan.go.go.Casts.outputClass;
+import static com.goodworkalan.go.go.Casts.taskClass;
+
 import java.beans.BeanInfo;
 import java.beans.IntrospectionException;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 
 import com.goodworkalan.reflective.Method;
+import com.goodworkalan.reflective.ReflectiveException;
 import com.goodworkalan.reflective.ReflectiveFactory;
 
 /**
- * A wrapper around a task that maps task properites to assignment and parameter
+ * A wrapper around a task that maps task properties to assignment and parameter
  * conversion strategies for those properties, and collects the sub commands of
  * the task.
  * 
  * @author Alan Gutierrez
  */
-public class Responder {
+class Responder {
     /** The task class. */
     private final Class<? extends Task> taskClass;
 
@@ -27,8 +37,17 @@ public class Responder {
     /** The parent task if any. */
     private final Class<? extends Task> parent;
 
-    /** A map of verbose argument names to assigment strategies. */
-    private final Map<String, Assignment> assgnments;
+    /** A map of verbose argument names to assignment strategies. */
+    private final Map<String, Assignment> assignments;
+
+    /** A map of properties that consume argument structures. */
+    private final Map<Class<? extends Arguable>, Method> arguables;
+
+    /** A map of properties that consume outputs. */
+    private final Map<Class<? extends Output>, Method> inputs;
+    
+    /** A map of properites that emit output. */
+    private final Map<Class<? extends Output>, Method> outputs; 
 
     /** A map of sub command names to sub command responders. */ 
     private final Map<String, Responder> subCommands;
@@ -40,6 +59,11 @@ public class Responder {
      *            The task class.
      */
     public Responder(Class<? extends Task> taskClass) {
+        this.arguables = new HashMap<Class<? extends Arguable>, Method>();
+        this.inputs = new HashMap<Class<? extends Output>, Method>();
+        this.assignments = new TreeMap<String, Assignment>();
+        this.outputs = new HashMap<Class<? extends Output>, Method>();
+        
         Command command = taskClass.getAnnotation(Command.class);
         String name;
         if (command == null || command.name().equals("")) {
@@ -56,6 +80,65 @@ public class Responder {
         if (command != null && !command.parent().equals(Task.class)) {
             parent = command.parent();
         }
+
+        BeanInfo info = gatherAssignments(taskClass, assignments);
+        gatherNestedAssignments(taskClass, assignments);
+
+        for (PropertyDescriptor property : info.getPropertyDescriptors()) {
+            java.lang.reflect.Method read = property.getReadMethod();
+            if (read != null) {
+                Class<?> type = objectify(property.getPropertyType());
+                if (Output.class.isAssignableFrom(type)) {
+                    checkPropertyNested(type);
+                    outputs.put(outputClass(type), new Method(read));
+                }
+            }
+            java.lang.reflect.Method write = property.getWriteMethod();
+            if (write != null) {
+                Class<?> type = objectify(property.getPropertyType());
+                boolean arguable = Arguable.class.isAssignableFrom(type);
+                boolean output = Output.class.isAssignableFrom(type);
+                if (arguable) {
+                    if (output) {
+                        throw new GoException(0);
+                    }
+                    checkPropertyNested(type);
+                    arguables.put(arguableClass(type), new Method(write));
+                } else if (output) {
+                    checkPropertyNested(type);
+                    inputs.put(outputClass(type), new Method(write));
+                }
+            }
+        }
+
+        this.taskClass = taskClass;
+        this.name = name;
+        this.parent = parent;
+        this.subCommands = new TreeMap<String, Responder>();
+    }
+    
+    private void checkPropertyNested(Class<?> type) {
+        if (type.getDeclaringClass() == null) {
+            throw new GoException(0);
+        }
+        if (!Task.class.isAssignableFrom(type.getDeclaringClass())) {
+            throw new GoException(0);
+        }
+    }
+
+    private static void gatherNestedAssignments(Class<? extends Arguable> taskClass, Map<String, Assignment> assignments) {
+        for (Class<?> nestedClass : taskClass.getDeclaredClasses()) {
+            if (Arguable.class.isAssignableFrom(nestedClass)) {
+                gatherAssignments(arguableClass(nestedClass), assignments);
+            }
+        }
+        Class<?> superclass = taskClass.getSuperclass();
+        if (Arguable.class.isAssignableFrom(superclass)) {
+            gatherNestedAssignments(arguableClass(superclass), assignments);
+        }
+    }
+
+    private static BeanInfo gatherAssignments(Class<? extends Arguable> taskClass, Map<String, Assignment> assignment) {
         BeanInfo info;
         try {
             info = Introspector.getBeanInfo(taskClass, Object.class);
@@ -63,30 +146,28 @@ public class Responder {
             throw new GoException(0, e);
         }
         ReflectiveFactory reflectiveFactory = new ReflectiveFactory();
-        Map<String, Assignment> assgnments = new TreeMap<String, Assignment>();
         for (PropertyDescriptor property : info.getPropertyDescriptors()) {
-            java.lang.reflect.Method method = property.getWriteMethod();
-            if (method != null) {
-                Argument argument = method.getAnnotation(Argument.class);
+            java.lang.reflect.Method write = property.getWriteMethod();
+            if (write != null) {
+                Argument argument = write.getAnnotation(Argument.class);
                 if (argument != null) {
                     String verbose = argument.value();
                     if (verbose.equals("")) {
                         verbose = hyphenate(property.getName());
                     }
+                    if (assignment.containsKey(argument)) {
+                        throw new GoException(0);
+                    }
                     Class<?> type =  objectify(property.getPropertyType());
                     if (type.equals(String.class)) {
-                        assgnments.put(verbose, new Assignment(new Method(method), new StringConverter()));
+                        assignment.put(verbose, new Assignment(taskClass, new Method(write), new StringConverter()));
                     } else {
-                        assgnments.put(verbose, new Assignment(new Method(method), new ConstructorConverter(reflectiveFactory, type)));
+                        assignment.put(verbose, new Assignment(taskClass, new Method(write), new ConstructorConverter(reflectiveFactory, type)));
                     }
                 }
             }
         }
-        this.taskClass = taskClass;
-        this.name = name;
-        this.parent = parent;
-        this.assgnments = assgnments;
-        this.subCommands = new TreeMap<String, Responder>();
+        return info;
     }
 
     /**
@@ -110,58 +191,21 @@ public class Responder {
         }
         return string.toString();
     }
-
-    /**
-     * Convert the type into an object type if the type is a primitive type.
-     * 
-     * @param primitive
-     *            A possible primitive type.
-     * @return An object type.
-     */
-    private static Class<?> objectify(Class<?> primitive) {
-        if (boolean.class.equals(primitive)) {
-            return Boolean.class;
-        } else if (byte.class.equals(primitive)) {
-            return Byte.class;
-        } else if (short.class.equals(primitive)) {
-            return Short.class;
-        } else if (int.class.equals(primitive)) {
-            return Integer.class;
-        } else if (long.class.equals(primitive)) {
-            return Long.class;
-        } else if (double.class.equals(primitive)) {
-            return Double.class;
-        } else if (float.class.equals(primitive)) {
-            return Float.class;
-        }
-        return primitive;
-    }
-
-    /**
-     * Get the task class.
-     * 
-     * @return The task class.
-     */
-    public Class<? extends Task> getTaskClass() {
-        return taskClass;
-    }
     
-    /**
-     * Get the command line name of the command.
-     * 
-     * @return The command line name of the command.
-     */
-    public String getName() {
-        return name;
-    }
-
-    /**
-     * Get the parent task.
-     * 
-     * @return The parent task for null if none.
-     */
-    public Class<? extends Task> getParentTaskClass() {
-        return parent;
+    public void checkEndlessRecursion(Map<Class<? extends Task>, Responder> tasks, Set<Class<? extends Task>> seen) {
+        Set<Class<? extends Task>> subSeen = new HashSet<Class<? extends Task>>(seen);
+        subSeen.add(taskClass);
+        for (Class<? extends Output> intputClass : inputs.keySet()) {
+            Class<? extends Arguable> taskClass = taskClass(intputClass.getDeclaringClass());
+            if (subSeen.contains(taskClass)) {
+                throw new GoException(0);
+            }
+            Responder responder = tasks.get(taskClass);
+            if (responder == null) {
+                throw new GoException(0);
+            }
+            responder.checkEndlessRecursion(tasks, subSeen);
+        }
     }
 
     /**
@@ -178,6 +222,73 @@ public class Responder {
     }
 
     /**
+     * Get the command line name of the command.
+     * 
+     * @return The command line name of the command.
+     */
+    public String getName() {
+        return name;
+    }
+
+    /**
+     * Get the task class.
+     * 
+     * @return The task class.
+     */
+    public Class<? extends Task> getTaskClass() {
+        return taskClass;
+    }
+    
+    /**
+     * Get the parent task.
+     * 
+     * @return The parent task for null if none.
+     */
+    public Class<? extends Task> getParentTaskClass() {
+        return parent;
+    }
+
+    public Map<String, Assignment> getAssignments() {
+        return assignments;
+    }
+
+    public Set<Class<? extends Arguable>> getArguables() {
+        return arguables.keySet();
+    }
+    
+    public void setArguable(Task task, Class<? extends Arguable> arguable, Arguable value) {
+        try {
+            arguables.get(arguable).invoke(task, value);
+        } catch (ReflectiveException e) {
+            throw new GoException(0, e);
+        }
+    }
+
+    public Set<Class<? extends Output>> getInputs() {
+        return inputs.keySet();
+    }
+    
+    public void setInput(Task task, Class<? extends Output> input, Output value) {
+        try {
+            inputs.get(input).invoke(task, value);
+        } catch (ReflectiveException e) {
+            throw new GoException(0, e);
+        }
+    }
+    
+    public Set<Class<? extends Output>> getOutputs() {
+        return outputs.keySet();
+    }
+    
+    public Output getOutput(Task task, Class<? extends Output> output) {
+        try {
+            return (Output) outputs.get(output).invoke(task);
+        } catch (ReflectiveException e) {
+            throw new GoException(0, e);
+        }
+    }
+    
+    /**
      * The responder for the given sub command if any.
      * 
      * @param command
@@ -187,40 +298,8 @@ public class Responder {
     public Responder getCommand(String command) {
         return subCommands.get(command);
     }
-
-    /**
-     * Set the given argument to the given value in the given task.
-     * 
-     * @param task
-     *            The task.
-     * @param argument
-     *            The argument.
-     * @param value
-     *            The value.
-     */
-    public void setArgument(Task task, String argument, String value) {
-        Assignment assignment = null;
-        if (value == null) {
-            if (argument.startsWith("no-")) {
-                assignment = assgnments.get(argument.substring(3));
-                if (assignment != null) {
-                    if (objectify(assignment.getType()).equals(Boolean.class)) {
-                        value = "false";
-                    } else {
-                        assignment = null;
-                    }
-                }
-            }
-        }
-        if (assignment == null) {
-            assignment = assgnments.get(argument);
-            if (assignment == null) {
-                throw new GoException(0);
-            }
-            if (value == null && objectify(assignment.getType()).equals(Boolean.class)) {
-                value = "true";
-            }
-        }
-        assignment.setValue(task, value);
+    
+    public Collection<Responder> getCommands() {
+        return subCommands.values();
     }
 }

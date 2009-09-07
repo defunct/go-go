@@ -114,7 +114,10 @@ public class Library {
         ArtifactsReader reader = new ArtifactsReader();
         List<File> path = new ArrayList<File>();
         for (Artifact resolve : artifacts) {
-            for (Artifact artifact : resolve(reader, new File(dir, resolve.getFileName("", "dep")), catcher)) {
+            List<Artifact> resolved = new ArrayList<Artifact>();
+            resolved.add(resolve);
+            resolved.addAll(resolve(reader, new File(dir, resolve.getPath("", "dep")), catcher));
+            for (Artifact artifact : resolved) {
                 if (!seen.contains(artifact.getKey())) {
                     seen.add(artifact.getKey());
                     path.add(new File(dir, artifact.getPath("", "jar")));

@@ -14,7 +14,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
-public final class CommandTreeBuilder {
+final class CommandTreeBuilder {
     private final Set<String> seen = new HashSet<String>();
     private final Map<String, Responder> commands = new TreeMap<String, Responder>();
     private final Set<Class<? extends Task>> tasks = new HashSet<Class<? extends Task>>();
@@ -70,6 +70,7 @@ public final class CommandTreeBuilder {
                 String className;
                 try {
                     while ((className = lines.readLine()) != null) {
+                        System.out.println(className);
                         Class<?> foundClass;
                         try {
                             foundClass = classLoader.loadClass(className);

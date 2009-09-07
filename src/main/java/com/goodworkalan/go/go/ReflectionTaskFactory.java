@@ -23,4 +23,12 @@ public class ReflectionTaskFactory implements TaskFactory {
             throw new GoException(CANNOT_CREATE_TASK, e);
         }
     }
+    
+    public Arguable newArguable(Class<? extends Arguable> arguableClass) {
+        try {
+            return reflectiveFactory.getConstructor(arguableClass).newInstance();
+        } catch (ReflectiveException e) {
+            throw new GoException(0, e);
+        }
+    }
 }
