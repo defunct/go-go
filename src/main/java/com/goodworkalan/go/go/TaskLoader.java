@@ -26,7 +26,7 @@ import java.util.TreeMap;
  * 
  * @author Alan Gutierrez
  */
-final class CommandTreeBuilder {
+final class TaskLoader {
     /** A set of keys of artifacts that have already been included. */
     private final Set<String> seen = new HashSet<String>();
     
@@ -54,7 +54,7 @@ final class CommandTreeBuilder {
      * @param artifactFile
      *            The artifact file.
      */
-    public CommandTreeBuilder(String artifactFile) {
+    public TaskLoader(String artifactFile) {
         seen.add("com.goodworkalan/go-go");
         List<Artifact> artifacts = new ArrayList<Artifact>();
         ArtifactsReader reader = new ArtifactsReader();

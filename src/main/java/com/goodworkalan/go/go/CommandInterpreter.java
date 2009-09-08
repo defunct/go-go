@@ -24,7 +24,7 @@ public final class CommandInterpreter {
     final Map<Class<? extends Task>, Responder> responders;
     
     public CommandInterpreter(String artifactFile) {
-        CommandTreeBuilder tasks = new CommandTreeBuilder(artifactFile);
+        TaskLoader tasks = new TaskLoader(artifactFile);
 
         this.commands = tasks.commands;
         this.responders = tasks.responders;
