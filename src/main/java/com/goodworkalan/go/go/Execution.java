@@ -34,12 +34,12 @@ public class Execution {
             return;
         }
         Task task = commandInterpreter.taskFactory.newTask(taskClass);
-        Responder responder = commandInterpreter.tasks.get(taskClass);
+        Responder responder = commandInterpreter.responders.get(taskClass);
         if (responder == null) {
             throw new GoException(0);
         }
         for (Class<? extends Arguable> argument : responder.getArguables()) {
-            Responder container = commandInterpreter.tasks.get(taskClass(argument.getDeclaringClass()));
+            Responder container = commandInterpreter.responders.get(taskClass(argument.getDeclaringClass()));
             // FIXME Assert that arguable is a static class.
             Arguable arguable = commandInterpreter.taskFactory.newArguable(argument);
             int index = getDepth(container);
@@ -57,7 +57,7 @@ public class Execution {
             responder.setArguable(task, argument, arguable);
         }
         for (Class<? extends Output> input : responder.getInputs()) {
-            Responder container = commandInterpreter.tasks.get(taskClass(input.getDeclaringClass()));
+            Responder container = commandInterpreter.responders.get(taskClass(input.getDeclaringClass()));
             execute(container.getTaskClass());
             responder.setInput(task, input, outputs.get(container.getTaskClass()).get(input));
         }
@@ -97,7 +97,7 @@ public class Execution {
         if (parent == null) {
             return 0;
         }
-        return getDepth(commandInterpreter.tasks.get(parent)) + 1;
+        return getDepth(commandInterpreter.responders.get(parent)) + 1;
     }
     
     public <T extends Arguable> T getArguable(Class<T> arguable) {

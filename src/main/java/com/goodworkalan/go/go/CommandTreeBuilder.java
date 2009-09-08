@@ -1,5 +1,7 @@
 package com.goodworkalan.go.go;
 
+import static com.goodworkalan.go.go.Casts.taskClass;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -14,15 +16,44 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
+/**
+ * Load the tasks from the task specification files found in the class path.
+ * <p>
+ * The builder is only used internally in the constructor of the
+ * {@link CommandInterpreter}. It is separate so that the command interpreter
+ * class does not have to maintain the members used only during task loading.
+ * 
+ * 
+ * @author Alan Gutierrez
+ */
 final class CommandTreeBuilder {
+    /** A set of keys of artifacts that have already been included. */
     private final Set<String> seen = new HashSet<String>();
-    private final Map<String, Responder> commands = new TreeMap<String, Responder>();
-    private final Set<Class<? extends Task>> tasks = new HashSet<Class<? extends Task>>();
+    
+    /** The set of class path URLs that have been inspected for commands. */
     private final Set<URL> urls = new HashSet<URL>();
+
+    /**
+     * The set of dependency specification that have been inspected for imports.
+     */
     private final Set<Class<?>> dependenciesClasses = new HashSet<Class<?>>();
-    private final Map<Class<? extends Task>, Responder> responders = new HashMap<Class<? extends Task>, Responder>();
+    
+    /** The Java-a-Go-Go library. */
     private final Library library = new Library(new File(System.getProperty("user.home") + "/.m2/repository"));
     
+    /** The root map of command names to command responders. */
+    public final Map<String, Responder> commands = new TreeMap<String, Responder>();
+
+    /** The map of tasks to responders. */
+    public final Map<Class<? extends Task>, Responder> responders = new HashMap<Class<? extends Task>, Responder>();
+
+    /**
+     * Load the tasks found in the libraries specified in the given artifact
+     * file. The library dependencies are also loaded.
+     * 
+     * @param artifactFile
+     *            The artifact file.
+     */
     public CommandTreeBuilder(String artifactFile) {
         seen.add("com.goodworkalan/go-go");
         List<Artifact> artifacts = new ArrayList<Artifact>();
@@ -42,7 +73,22 @@ final class CommandTreeBuilder {
             throw new GoException(0, e);
         }
     }
-    
+
+    /**
+     * Create a class loader that includes any unseen libraries specified by the
+     * given dependencies object.
+     * 
+     * @param reader
+     *            The artifacts reader.
+     * @param depenenciesClass
+     *            The dependency class to instantiate and query for
+     *            dependencies.
+     * @param classLoader
+     *            The current thread class loader, used as a parent class loader
+     *            for any dependencies.
+     * @return A class loader that includes any new libraries added by the
+     *         dependencies object.
+     */
     private ClassLoader resolve(ArtifactsReader reader, Class<?> depenenciesClass, ClassLoader classLoader) {
         Dependencies dependencies;
         try {
@@ -55,16 +101,38 @@ final class CommandTreeBuilder {
         Transaction transaction = new Transaction();
         dependencies.configure(transaction);
         library.resolve(transaction);
+        // FIXME Not taking into account artifacts already loaded, but we
+        // we can do so using the getURLs method, or maybe we need to provide
+        // a the seen hash, since URLs include version.
+        // FIXME Seen hash should come in with the constructor.
         return library.getClassLoader(transaction.getArtifacts(), classLoader, seen);
     }
-    
+
+    /**
+     * Iterate through all of the command interpreter task and dependencies
+     * definition files that can be found using the given class loader if they
+     * definition files have not already been loaded. Any dependency classes
+     * that specify new artifacts will have those artifacts loaded with the
+     * given artifacts reader.
+     * 
+     * @param reader
+     *            The artifacts reader.
+     * @param classLoader
+     *            The parent class loader.
+     * @return A class loader the includes any newly specified artifacts or null
+     *         if no new artifacts were specified.
+     * @throws IOException
+     *             For any I/O error while reading the command interpreter
+     *             definition files.
+     */
     private ClassLoader loadConfigurations(ArtifactsReader reader, ClassLoader classLoader) throws IOException {
         boolean classLoaderDirty = false;
         Enumeration<URL> resources = classLoader.getResources("META-INF/services/com.goodworkalan.go.go.CommandInterpreter");
-        while (resources.hasMoreElements())
-        {
+        while (resources.hasMoreElements()) {
             URL url = resources.nextElement();
             if (!urls.contains(url)) {
+                Set<Class<? extends Task>> tasks = new HashSet<Class<? extends Task>>();
+                
                 urls.add(url);
                 BufferedReader lines = new BufferedReader(new InputStreamReader(url.openStream()));
                 String className;
@@ -113,14 +181,5 @@ final class CommandTreeBuilder {
             }
         }
         return classLoaderDirty ? classLoader : null;
-    }
-
-    @SuppressWarnings("unchecked")
-    private static Class<? extends Task> taskClass(Class taskClass) {
-        return taskClass;
-    }
-    
-    public Map<String, Responder> getCommands() {
-        return commands;
     }
 }

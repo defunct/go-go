@@ -1,8 +1,9 @@
 package com.goodworkalan.go.go;
 
-import static com.goodworkalan.go.go.Casts.*;
+import static com.goodworkalan.go.go.Casts.objectList;
+import static com.goodworkalan.go.go.Casts.objectify;
+
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -20,22 +21,16 @@ public final class CommandInterpreter {
     
     final Map<String, Responder> commands;
 
-    final Map<Class<? extends Task>, Responder> tasks = new HashMap<Class<? extends Task>, Responder>();
+    final Map<Class<? extends Task>, Responder> responders;
     
     public CommandInterpreter(String artifactFile) {
-        this.commands = new CommandTreeBuilder(artifactFile).getCommands();
+        CommandTreeBuilder tasks = new CommandTreeBuilder(artifactFile);
+
+        this.commands = tasks.commands;
+        this.responders = tasks.responders;
         
-        mapTasks(commands.values());
-        
-        for (Responder responder : tasks.values()) {
-            responder.checkEndlessRecursion(tasks, new HashSet<Class<? extends Task>>());
-        }
-    }
-    
-    private void mapTasks(Collection<Responder> responders) {
-        for (Responder responder : responders) {
-            tasks.put(responder.getTaskClass(), responder);
-            mapTasks(responder.getCommands());
+        for (Responder responder : responders.values()) {
+            responder.checkEndlessRecursion(responders, new HashSet<Class<? extends Task>>());
         }
     }
     
@@ -68,7 +63,7 @@ public final class CommandInterpreter {
                 if (parent == null) {
                     consumer = commands.get(qualified[0]);
                 } else {
-                    consumer = tasks.get(parent).getCommand(qualified[0]);
+                    consumer = responders.get(parent).getCommand(qualified[0]);
                 }
                 
                 if (consumer == null) {
