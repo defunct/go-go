@@ -149,6 +149,7 @@ final class TaskLoader {
                             if (!dependenciesClasses.contains(foundClass)) {
                                 dependenciesClasses.add(foundClass);
                                 classLoader = resolve(reader, foundClass, classLoader);
+                                Thread.currentThread().setContextClassLoader(classLoader);
                                 classLoaderDirty = true;
                             }
                         } else if (Task.class.isAssignableFrom(foundClass)) {
