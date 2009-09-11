@@ -73,7 +73,7 @@ public class Execution {
                 }
             }
         }
-        Environment env = new Environment(System.in, System.err, System.out, arguments, remaining);
+        Environment env = new Environment(commandInterpreter, System.in, System.err, System.out, arguments, remaining);
         task.execute(env);
         outputs.put(taskClass, new HashMap<Class<? extends Output>, Output>());
         for (Class<? extends Output> output : responder.getOutputs()) {

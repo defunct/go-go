@@ -18,11 +18,13 @@ public class Environment {
     /** The output stream. */
     public final PrintStream out;
 
-    /** The arguements for each command with command name. */
+    /** The arguments for each command with command name. */
     public final String[][] arguments;
 
     /** The remaining arguments. */
     public final String[] remaining;
+    
+    public final CommandInterpreter commandInterpreter;
 
     /**
      * Create a new environment.
@@ -38,7 +40,8 @@ public class Environment {
      * @param remaining
      *            The remaining arguments.
      */
-    public Environment(InputStream in, PrintStream err, PrintStream out, String[][] arguments, String[] remaining) {
+    public Environment(CommandInterpreter commandInterpreter, InputStream in, PrintStream err, PrintStream out, String[][] arguments, String[] remaining) {
+        this.commandInterpreter = commandInterpreter;
         this.in = in;
         this.err = err;
         this.out = out;

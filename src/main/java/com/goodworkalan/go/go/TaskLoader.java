@@ -67,8 +67,7 @@ final class TaskLoader {
             classLoader = library.getClassLoader(artifacts, classLoader, seen);
         }
         try {
-            while ((classLoader = loadConfigurations(reader, classLoader)) != null) {
-            }
+            while ((classLoader = loadConfigurations(reader, classLoader)) != null);
         } catch (IOException e) {
             throw new GoException(0, e);
         }

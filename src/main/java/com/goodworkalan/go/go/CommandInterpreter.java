@@ -34,6 +34,10 @@ public final class CommandInterpreter {
         }
     }
     
+    public void execute(List<String> arguments) {
+        main(arguments.toArray(new String[arguments.size()]));
+    }
+    
     public void main(String...arguments) {
         Responder responder = commands.get(arguments[0]);
         if (responder == null) {
@@ -44,6 +48,7 @@ public final class CommandInterpreter {
         LinkedList<Map<String, Object>> converted = new LinkedList<Map<String, Object>>();
         contextualized.addLast(new ArrayList<String>());
         converted.addLast(new HashMap<String, Object>());
+        Class<? extends Task> taskClass = responder.getTaskClass();
         int i, stop;
         for (i = 1, stop = arguments.length; responder != null && i < stop; i++) {
             String argument = arguments[i];
@@ -121,12 +126,13 @@ public final class CommandInterpreter {
                 if (responder == null) {
                     break;
                 }
+                taskClass = responder.getTaskClass();
                 contextualized.addLast(new ArrayList<String>());
                 converted.addLast(new HashMap<String, Object>());
             }
         }
         Execution execution = new Execution(this, new ArrayList<Map<String,Object>>(converted), stringArrayArray(contextualized), remainingArguments(arguments, i));
-        execution.execute(responder.getTaskClass());
+        execution.execute(taskClass);
     }
     
     private static String[] remainingArguments(String[] arguments, int start) {

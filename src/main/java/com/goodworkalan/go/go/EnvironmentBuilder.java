@@ -9,6 +9,7 @@ import java.io.PrintStream;
  * @author Alan Gutierrez
  */
 public class EnvironmentBuilder {
+    private CommandInterpreter commandInterpreter;
     private InputStream in = System.in;
     private PrintStream out = System.out;
     private PrintStream err = System.err;
@@ -16,6 +17,10 @@ public class EnvironmentBuilder {
     private String[] remaining = new String[0];
     
     public EnvironmentBuilder() {
+    }
+    
+    public void setCommandInterpreter(CommandInterpreter commandInterpreter) {
+        this.commandInterpreter = commandInterpreter;
     }
     
     public void setIn(InputStream in) {
@@ -39,6 +44,6 @@ public class EnvironmentBuilder {
     }
     
     public Environment getInstance() {
-        return new Environment(in, err, out, arguments, remaining);
+        return new Environment(commandInterpreter, in, err, out, arguments, remaining);
     }
 }
