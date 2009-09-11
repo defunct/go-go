@@ -1,7 +1,10 @@
 package com.goodworkalan.go.go;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedList;
+import java.util.List;
 
 
 /**
@@ -65,6 +68,17 @@ public class Artifact {
             separator = ".";
         }
         return new Artifact(group.toString(), name, version);
+    }
+    
+    public static Artifact parse(String artifact) {
+        List<String> parts = new ArrayList<String>(Arrays.asList(artifact.split("/")));
+        if (parts.size() == 2) {
+            parts.add("*");
+        }
+        if (parts.size() == 3) {
+            return new Artifact(parts.get(0), parts.get(1), parts.get(2));
+        }
+        return null;
     }
     
     /**
