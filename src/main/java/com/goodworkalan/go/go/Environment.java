@@ -24,6 +24,7 @@ public class Environment {
     /** The remaining arguments. */
     public final String[] remaining;
     
+    /** The command interpreter. */
     public final CommandInterpreter commandInterpreter;
 
     /**

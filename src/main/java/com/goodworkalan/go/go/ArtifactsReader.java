@@ -41,6 +41,7 @@ public class ArtifactsReader {
     /** A pluggable reflection bridge to test reflection exceptions. */
     private final ReflectiveFactory reflectiveFactory;
     
+    /** FIXME Move this someplace where it is loaded. */
     private final static Map<String, Class<? extends Repository>> defaultRepositoryClasses = new HashMap<String, Class<? extends Repository>>();
     
     static {

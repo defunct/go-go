@@ -10,6 +10,7 @@ import java.beans.IntrospectionException;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -27,7 +28,7 @@ import com.goodworkalan.reflective.ReflectiveFactory;
  * 
  * @author Alan Gutierrez
  */
-class Responder {
+class Responder implements TaskInfo {
     /** The task class. */
     private final Class<? extends Task> taskClass;
 
@@ -51,6 +52,8 @@ class Responder {
 
     /** A map of sub command names to sub command responders. */ 
     private final Map<String, Responder> subCommands;
+    
+    private final Map<String, Class<?>> arguments;
 
     /**
      * Create wrapper around the given class that extends <code>Task</code>.
@@ -109,6 +112,12 @@ class Responder {
             }
         }
 
+        Map<String, Class<?>> arguments = new HashMap<String, Class<?>>();
+        for (Map.Entry<String, Assignment> entry : assignments.entrySet()) {
+            arguments.put(entry.getKey(), entry.getValue().getType());
+        }
+
+        this.arguments = Collections.unmodifiableMap(arguments);
         this.taskClass = taskClass;
         this.name = name;
         this.parent = parent;
@@ -299,5 +308,9 @@ class Responder {
     
     public Collection<Responder> getCommands() {
         return subCommands.values();
+    }
+
+    public Map<String, Class<?>> getArguments() {
+        return arguments;
     }
 }
