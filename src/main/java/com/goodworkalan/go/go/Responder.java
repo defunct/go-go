@@ -68,10 +68,8 @@ class Responder {
         String name;
         if (command == null || command.name().equals("")) {
             String className = taskClass.getCanonicalName();
-            int index = className.lastIndexOf('.');
-            if (index != -1) {
-                className = className.substring(index + 1);
-            }
+            className = className.replaceFirst("^.*\\.", "");
+            className = className.replaceFirst("Task$", "");
             name = hyphenate(className);
         } else {
             name = command.name();
