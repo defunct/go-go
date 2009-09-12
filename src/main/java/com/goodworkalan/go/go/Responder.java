@@ -9,6 +9,7 @@ import java.beans.BeanInfo;
 import java.beans.IntrospectionException;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
+import java.lang.reflect.Modifier;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -82,8 +83,14 @@ class Responder implements TaskInfo {
             parent = command.parent();
         }
 
-        BeanInfo info = gatherAssignments(taskClass, assignments);
+        gatherAssignments(taskClass, assignments);
         gatherNestedAssignments(taskClass, assignments);
+        BeanInfo info;
+        try {
+            info = Introspector.getBeanInfo(taskClass, Object.class);
+        } catch (IntrospectionException e) {
+            throw new GoException(0, e);
+        }
 
         for (PropertyDescriptor property : info.getPropertyDescriptors()) {
             java.lang.reflect.Method read = property.getReadMethod();
@@ -133,48 +140,50 @@ class Responder implements TaskInfo {
         }
     }
 
-    private static void gatherNestedAssignments(Class<? extends Arguable> taskClass, Map<String, Assignment> assignments) {
+    private static void gatherNestedAssignments(Class<? extends Task> taskClass, Map<String, Assignment> assignments) {
         for (Class<?> nestedClass : taskClass.getDeclaredClasses()) {
             if (Arguable.class.isAssignableFrom(nestedClass)) {
                 gatherAssignments(arguableClass(nestedClass), assignments);
             }
         }
         Class<?> superclass = taskClass.getSuperclass();
-        if (Arguable.class.isAssignableFrom(superclass)) {
-            gatherNestedAssignments(arguableClass(superclass), assignments);
+        if (Task.class.isAssignableFrom(superclass)) {
+            gatherNestedAssignments(taskClass(superclass), assignments);
         }
     }
 
-    private static BeanInfo gatherAssignments(Class<? extends Arguable> taskClass, Map<String, Assignment> assignment) {
-        BeanInfo info;
-        try {
-            info = Introspector.getBeanInfo(taskClass, Object.class);
-        } catch (IntrospectionException e) {
-            throw new GoException(0, e);
-        }
+    private static void gatherAssignments(Class<? extends Arguable> arguableClass, Map<String, Assignment> assignment) {
         ReflectiveFactory reflectiveFactory = new ReflectiveFactory();
-        for (PropertyDescriptor property : info.getPropertyDescriptors()) {
-            java.lang.reflect.Method write = property.getWriteMethod();
-            if (write != null) {
-                Argument argument = write.getAnnotation(Argument.class);
+        for (java.lang.reflect.Method method : arguableClass.getMethods()) {
+            if (method.getName().startsWith("add")
+                && method.getName().length() != 3
+                && Modifier.isPublic(method.getModifiers())
+                && method.getParameterTypes().length == 1) {
+                Argument argument = method.getAnnotation(Argument.class);
                 if (argument != null) {
                     String verbose = argument.value();
                     if (verbose.equals("")) {
-                        verbose = hyphenate(property.getName());
+                        String name = method.getName();
+                        name = name.substring(3);
+                        name = name.substring(0, 1).toLowerCase() + name.substring(1);
+                        verbose = hyphenate(name);
                     }
-                    if (assignment.containsKey(argument)) {
+                    if (assignment.containsKey(verbose)) {
                         throw new GoException(0);
                     }
-                    Class<?> type =  objectify(property.getPropertyType());
+                    Class<?> type =  objectify(method.getParameterTypes()[0]);
                     if (type.equals(String.class)) {
-                        assignment.put(verbose, new Assignment(taskClass, new Method(write), new StringConverter()));
+                        assignment.put(verbose, new Assignment(arguableClass, new Method(method), new StringConverter()));
                     } else {
-                        assignment.put(verbose, new Assignment(taskClass, new Method(write), new ConstructorConverter(reflectiveFactory, type)));
+                        assignment.put(verbose, new Assignment(arguableClass, new Method(method), new ConstructorConverter(reflectiveFactory, type)));
                     }
                 }
             }
         }
-        return info;
+        Class<?> superclass = arguableClass.getSuperclass();
+        if (Arguable.class.isAssignableFrom(superclass)) {
+            gatherAssignments(arguableClass(superclass), assignment);
+        }
     }
 
     /**

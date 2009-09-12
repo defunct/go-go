@@ -5,7 +5,7 @@ public class Welcome extends Task {
     public String greeting;
     
     @Argument
-    public void setGreeting(String greeting) {
+    public void addGreeting(String greeting) {
         this.greeting = greeting;
     }
 

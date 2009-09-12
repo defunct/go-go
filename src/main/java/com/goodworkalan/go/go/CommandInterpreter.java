@@ -44,6 +44,10 @@ public final class CommandInterpreter {
         execution.execute(commandPath.taskClass);
     }
     
+    public TaskInfo getTaskInfo(List<String> arguments) {
+        return getTaskInfo(arguments.toArray(new String[arguments.size()]));
+    }
+    
     public TaskInfo getTaskInfo(String...arguments) {
         CommandPath commandPath = new CommandPath(arguments);
         return responders.get(commandPath.taskClass);
@@ -112,16 +116,16 @@ public final class CommandInterpreter {
                     
                     Assignment assignment = null;
 
-                    String value = pair[1];
+                    String value = pair.length == 1 ? null : pair[1];
                     // Check for a negated boolean flag.
-                    if (value.equals("")) {
+                    if (value == null) {
                         // FIXME Ensure that there are no arguments beginning with no.
-                        if (argument.startsWith("no-")) {
+                        if (pair[0].startsWith("no-")) {
                             String negate = qualified[1].substring(3);
                             assignment = consumer.getAssignments().get(negate); 
                             if (assignment != null) {
                                 if (objectify(assignment.getType()).equals(Boolean.class)) {
-                                    argument = negate;
+                                    name = responder.getName() + ':' + negate;
                                     value = "false";
                                 } else {
                                     assignment = null;

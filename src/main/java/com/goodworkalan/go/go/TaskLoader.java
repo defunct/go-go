@@ -61,10 +61,12 @@ final class TaskLoader {
         if (artifactFile != null) {
             artifacts.addAll(library.resolve(reader, new File(artifactFile), new Catcher()));
         }
+        // FIXME Build this class loader, but keep it as a property. They
+        // us try/catch to set it.
         ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
         if (!artifacts.isEmpty()) {
-            System.out.println(artifacts);
             classLoader = library.getClassLoader(artifacts, classLoader, seen);
+            Thread.currentThread().setContextClassLoader(classLoader);
         }
         try {
             while ((classLoader = loadConfigurations(reader, classLoader)) != null);
@@ -137,7 +139,6 @@ final class TaskLoader {
                 String className;
                 try {
                     while ((className = lines.readLine()) != null) {
-                        System.out.println(className);
                         Class<?> foundClass;
                         try {
                             foundClass = classLoader.loadClass(className);

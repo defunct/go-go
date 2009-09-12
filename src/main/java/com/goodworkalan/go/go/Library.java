@@ -7,6 +7,7 @@ import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -109,10 +110,10 @@ public class Library {
         return dependencies;
     }
     
-    public ClassLoader getClassLoader(List<Artifact> artifacts, ClassLoader parent, Set<String> seen) {
+    public Set<File> getFiles(List<Artifact> artifacts, Set<String> seen) {
         Catcher catcher = new Catcher();
         ArtifactsReader reader = new ArtifactsReader();
-        List<File> path = new ArrayList<File>();
+        Set<File> path = new LinkedHashSet<File>();
         for (Artifact resolve : artifacts) {
             List<Artifact> resolved = new ArrayList<Artifact>();
             resolved.add(resolve);
@@ -124,13 +125,19 @@ public class Library {
                 }
             }
         }
+        return path;
+    }
+    
+    public ClassLoader getClassLoader(List<Artifact> artifacts, ClassLoader parent, Set<String> seen) {
+        Set<File> path = getFiles(artifacts, seen);
         if (path.isEmpty()) {
             return parent;
         }
         URL[] urls = new URL[path.size()];
-        for (int i = 0, stop = path.size(); i < stop; i++) {
+        int index = 0;
+        for (File part : path) {
             try {
-                urls[i] = new URL("jar:" + path.get(i).toURL().toExternalForm() + "!/");
+                urls[index++] = new URL("jar:" + part.toURL().toExternalForm() + "!/");
             } catch (MalformedURLException e) {
                 throw new GoException(0, e);
             }
