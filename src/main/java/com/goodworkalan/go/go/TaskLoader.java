@@ -7,11 +7,11 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
@@ -56,10 +56,10 @@ final class TaskLoader {
      */
     public TaskLoader(String artifactFile) {
         seen.add("com.goodworkalan/go-go");
-        List<Artifact> artifacts = new ArrayList<Artifact>();
-        ArtifactsReader reader = new ArtifactsReader();
+        Set<Artifact> artifacts = new LinkedHashSet<Artifact>();
+        Artifacts reader = new Artifacts();
         if (artifactFile != null) {
-            artifacts.addAll(library.resolve(reader, new File(artifactFile), new Catcher()));
+            artifacts.addAll(library.resolve(Artifacts.read(new File(artifactFile)), new Catcher()));
         }
         // FIXME Build this class loader, but keep it as a property. They
         // us try/catch to set it.
@@ -90,7 +90,7 @@ final class TaskLoader {
      * @return A class loader that includes any new libraries added by the
      *         dependencies object.
      */
-    private ClassLoader resolve(ArtifactsReader reader, Class<?> depenenciesClass, ClassLoader classLoader) {
+    private ClassLoader resolve(Artifacts reader, Class<?> depenenciesClass, ClassLoader classLoader) {
         Dependencies dependencies;
         try {
             dependencies = (Dependencies) depenenciesClass.newInstance();
@@ -101,12 +101,12 @@ final class TaskLoader {
         }
         Transaction transaction = new Transaction();
         dependencies.configure(transaction);
-        library.resolve(transaction);
+        library.resolve(Collections.singletonList(transaction), new Catcher());
         // FIXME Not taking into account artifacts already loaded, but we
         // we can do so using the getURLs method, or maybe we need to provide
         // a the seen hash, since URLs include version.
         // FIXME Seen hash should come in with the constructor.
-        return library.getClassLoader(transaction.getArtifacts(), classLoader, seen);
+        return library.getClassLoader(transaction.includes, classLoader, seen);
     }
 
     /**
@@ -126,7 +126,7 @@ final class TaskLoader {
      *             For any I/O error while reading the command interpreter
      *             definition files.
      */
-    private ClassLoader loadConfigurations(ArtifactsReader reader, ClassLoader classLoader) throws IOException {
+    private ClassLoader loadConfigurations(Artifacts reader, ClassLoader classLoader) throws IOException {
         boolean classLoaderDirty = false;
         Enumeration<URL> resources = classLoader.getResources("META-INF/services/com.goodworkalan.go.go.CommandInterpreter");
         while (resources.hasMoreElements()) {

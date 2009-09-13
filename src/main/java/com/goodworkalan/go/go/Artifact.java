@@ -151,6 +151,37 @@ public class Artifact {
                     .append(".").append(extension);
         return file.toString();
     }
+
+    /**
+     * This artifact is equal to the given object if it is also an artifact and
+     * if the group, name and versions are equal.
+     * 
+     * @param object
+     *            The object to test for equality.
+     * @return True if this object equals the given object.
+     */
+    public boolean equals(Object object) {
+        if (object instanceof Artifact) {
+            Artifact artifact = (Artifact) object;
+            return group.equals(artifact.group)
+                && name.equals(artifact.name)
+                && version.equals(artifact.version);
+        }
+        return false;
+    }
+
+    /**
+     * The hash code combines the hash codes of the group, name and version.
+     * 
+     * @return The hash code.
+     */
+    public int hashCode() {
+        int hashCode = 1;
+        hashCode = hashCode * 37 + group.hashCode();
+        hashCode = hashCode * 37 + name.hashCode();
+        hashCode = hashCode * 37 + version.hashCode();
+        return hashCode;
+    }
     
     /**
      * Return the artifact key for this artifact.

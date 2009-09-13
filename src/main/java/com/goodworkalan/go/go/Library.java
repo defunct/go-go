@@ -1,15 +1,25 @@
 package com.goodworkalan.go.go;
 
+import static com.goodworkalan.go.go.GoException.REPOSITORY_HAS_NO_URI_CONSTRUCTOR;
+import static com.goodworkalan.go.go.GoException.UNABLE_TO_CONSTRUCT_REPOSITORY;
+
 import java.io.File;
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+
+import com.goodworkalan.cassandra.Report;
+import com.goodworkalan.reflective.ReflectiveException;
+import com.goodworkalan.reflective.ReflectiveFactory;
 
 /**
  * A Jav-a-Go-Go format library. Libraries can live only on the local file
@@ -21,6 +31,10 @@ import java.util.Set;
  * @author Alan Gutierrez
  */
 public class Library {
+    private final ReflectiveFactory reflectiveFactory = new ReflectiveFactory();
+
+    private final Map<String, Class<? extends Repository>> repositoryClasses = new HashMap<String, Class<? extends Repository>>();
+
     /** The library directory. */
     private final File dir;
     
@@ -34,6 +48,22 @@ public class Library {
         this.dir = dir;
     }
 
+    Repository getRepositoryClient(RepositoryLine repository) {
+        Class<? extends Repository> repositoryClass = repositoryClasses.get(repository.type);
+        if (repositoryClass == null) {
+        } 
+        try {
+            return reflectiveFactory.getConstructor(repositoryClass, URI.class).newInstance(repository.uri);
+        } catch (ReflectiveException e) {
+            switch (e.getCode() / 100) {
+            case ReflectiveException.CANNOT_FIND:
+                throw new GoException(REPOSITORY_HAS_NO_URI_CONSTRUCTOR, new Report(), e);
+            default:
+                throw new GoException(UNABLE_TO_CONSTRUCT_REPOSITORY, new Report(), e);
+            }
+        }
+    }
+    
     /**
      * Determine whether the library contains the given artifact.
      * 
@@ -65,84 +95,93 @@ public class Library {
         return new File(dir, artifact.getPath(suffix, extension));
     }
     
-    private void resolve(ArtifactsReader reader, List<Artifact> artifacts, List<Transaction> dependencies, Set<String> seen, Catcher fetchFailure) {
-        if (!dependencies.isEmpty()) {
-            List<Transaction> subDependencies = new ArrayList<Transaction>();
-            for (Transaction transaction : dependencies) {
-                for (Artifact dependency : transaction.getArtifacts()) {
-                    if (!seen.contains(dependency.getKey())) {
-                        // FIXME Excludes go here, as a separate hash.
-                        seen.add(dependency.getKey());
-                        artifacts.add(dependency);
-                        try {
-                            if (!getFile(dependency, "", "jar").exists()) {
-                                for (Repository repository : transaction.getRepositories()) {
-                                    if (!getFile(dependency, "", "dep").exists()) {
-                                        repository.fetchDependencies(this, dependency);
-                                    }
-                                    if (!getFile(dependency, "", "jar").exists()) {
-                                        repository.fetch(this, dependency, "", "jar");
-                                    }
-                                }
-                            }
-                        } catch (GoException e) {
-                            fetchFailure.examine(e);
-                            continue;
-                        }
-                        subDependencies.addAll(reader.read(getFile(dependency, "", "dep")));
-                    }
-                }
-            }
-            resolve(reader, artifacts, subDependencies, seen, fetchFailure);
+    private Collection<PathPart> resolve(Set<Artifact> artifacts, Catcher catcher) {
+        Collection<PathPart> path = new ArrayList<PathPart>();
+        for (Artifact artifact : artifacts) {
+            path.add(new ResolutionPart(artifact));
         }
+        return resolve(path, catcher);
     }
 
-    public List<Artifact> resolve(Transaction transaction) {
-        ArtifactsReader reader = new ArtifactsReader();
-        List<Artifact> dependencies = new ArrayList<Artifact>();
-        resolve(reader, dependencies, Collections.singletonList(transaction), new HashSet<String>(), new Catcher());
-        return dependencies;
-    }
-
-    public List<Artifact> resolve(ArtifactsReader reader, File file, Catcher fetchFailure) {
-        List<Artifact> dependencies = new ArrayList<Artifact>();
-        resolve(reader, dependencies, reader.read(file), new HashSet<String>(), fetchFailure);
-        return dependencies;
-    }
-    
-    public Set<File> getFiles(List<Artifact> artifacts, Set<String> seen) {
-        Catcher catcher = new Catcher();
-        ArtifactsReader reader = new ArtifactsReader();
-        Set<File> path = new LinkedHashSet<File>();
-        for (Artifact resolve : artifacts) {
-            List<Artifact> resolved = new ArrayList<Artifact>();
-            resolved.add(resolve);
-            resolved.addAll(resolve(reader, new File(dir, resolve.getPath("", "dep")), catcher));
-            for (Artifact artifact : resolved) {
-                if (!seen.contains(artifact.getKey())) {
-                    seen.add(artifact.getKey());
-                    path.add(new File(dir, artifact.getPath("", "jar")));
+    private Collection<PathPart> resolve(Collection<PathPart> parts, Catcher catcher) {
+        Map<Object, PathPart> expanded = new LinkedHashMap<Object, PathPart>();
+        Collection<PathPart> current = parts;
+        Collection<PathPart> next = new ArrayList<PathPart>();
+        while (!current.isEmpty()) {
+            for (PathPart part : current) {
+                PathPart resolved;
+                try {
+                    resolved = part.expand(this, next);
+                } catch (GoException e) {
+                    catcher.examine(e);
+                    continue;
+                }
+                if (!expanded.containsKey(resolved.getKey())) {
+                    expanded.put(resolved.getKey(), resolved);
                 }
             }
+            current = next;
+            next = new ArrayList<PathPart>();
         }
-        return path;
+        return expanded.values();
+    }
+
+    public Set<Artifact> resolve(List<Transaction> transactions, Catcher fetchFailure) {
+        Collection<PathPart> pathParts = new ArrayList<PathPart>();
+        for (Transaction transaction : transactions) {
+            pathParts.addAll(transaction.getPathParts());
+        }
+        Set<Artifact> artifacts = new LinkedHashSet<Artifact>();
+        for (PathPart part : resolve(pathParts, fetchFailure)) {
+            if (part.getArtifact() != null) {
+                artifacts.add(part.getArtifact());
+            }
+        }
+        return artifacts;
     }
     
-    public ClassLoader getClassLoader(List<Artifact> artifacts, ClassLoader parent, Set<String> seen) {
-        Set<File> path = getFiles(artifacts, seen);
+    public Set<File> getFiles(Set<Artifact> artifacts, Set<String> seen) {
+        Set<File> files = new LinkedHashSet<File>();
+        for (PathPart part : resolve(artifacts, new Catcher())) {
+            files.add(part.getFile());
+        }
+        return files;
+    }
+    
+    public ClassLoader getClassLoader(Set<Artifact> artifacts, ClassLoader parent, Set<String> seen) {
+        Collection<PathPart> path = resolve(artifacts, new Catcher());
         if (path.isEmpty()) {
             return parent;
         }
         URL[] urls = new URL[path.size()];
         int index = 0;
-        for (File part : path) {
+        for (PathPart part : path) {
             try {
-                urls[index++] = new URL("jar:" + part.toURL().toExternalForm() + "!/");
+                urls[index++] = part.getURL();
             } catch (MalformedURLException e) {
                 throw new GoException(0, e);
             }
         }
         return new URLClassLoader(urls, parent);
+    }
+    
+    public LibraryEntry getEntry(Artifact artifact, List<RepositoryLine> repositories) {
+        File deps = new  File(dir, artifact.getPath("", "dep"));
+        if (!deps.exists()) {
+            for (RepositoryLine repository : repositories) {
+                Repository repositoryClient = getRepositoryClient(repository);
+                if (!deps.exists()) {
+                    repositoryClient.fetchDependencies(this, artifact);
+                }
+                if (!(new File(dir, artifact.getPath("", "jar"))).exists()) {
+                    repositoryClient.fetch(this, artifact, "", "jar");
+                }
+            }
+        }
+        if (deps.exists()) {
+            return new LibraryEntry(dir, artifact);
+        }
+        return null;
     }
     
     /**
