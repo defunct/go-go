@@ -33,7 +33,7 @@ import com.goodworkalan.reflective.ReflectiveFactory;
 public class Library {
     private final ReflectiveFactory reflectiveFactory = new ReflectiveFactory();
 
-    private final Map<String, Class<? extends Repository>> repositoryClasses = new HashMap<String, Class<? extends Repository>>();
+    private final Map<String, Class<? extends RepositoryClient>> repositoryClasses = new HashMap<String, Class<? extends RepositoryClient>>();
 
     /** The library directory. */
     private final File dir;
@@ -48,8 +48,8 @@ public class Library {
         this.dir = dir;
     }
 
-    Repository getRepositoryClient(RepositoryLine repository) {
-        Class<? extends Repository> repositoryClass = repositoryClasses.get(repository.type);
+    RepositoryClient getRepositoryClient(RepositoryLine repository) {
+        Class<? extends RepositoryClient> repositoryClass = repositoryClasses.get(repository.type);
         if (repositoryClass == null) {
         } 
         try {
@@ -169,7 +169,7 @@ public class Library {
         File deps = new  File(dir, artifact.getPath("", "dep"));
         if (!deps.exists()) {
             for (RepositoryLine repository : repositories) {
-                Repository repositoryClient = getRepositoryClient(repository);
+                RepositoryClient repositoryClient = getRepositoryClient(repository);
                 if (!deps.exists()) {
                     repositoryClient.fetchDependencies(this, artifact);
                 }

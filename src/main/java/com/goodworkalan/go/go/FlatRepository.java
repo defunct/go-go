@@ -8,7 +8,7 @@ import java.net.URI;
 
 
 
-public class FlatRepository implements Repository {
+public class FlatRepository implements RepositoryClient {
     private final URI uri;
     
     public FlatRepository(URI uri) {

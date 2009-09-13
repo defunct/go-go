@@ -9,14 +9,14 @@ import java.util.Map;
 public class LibraryBuilder {
     private List<File> directories = new ArrayList<File>();
     
-    private Map<String, Class<? extends Repository>> repositoryClasses = new HashMap<String, Class<? extends Repository>>();
+    private Map<String, Class<? extends RepositoryClient>> repositoryClasses = new HashMap<String, Class<? extends RepositoryClient>>();
     
     public LibraryBuilder addDirectory(File directory) {
         directories.add(directory);
         return this;
     }
     
-    public LibraryBuilder addRepositoryType(String name, Class<? extends Repository> repositoryClass) {
+    public LibraryBuilder addRepositoryType(String name, Class<? extends RepositoryClient> repositoryClass) {
         repositoryClasses.put(name, repositoryClass);
         return this;
     }

@@ -4,7 +4,7 @@ import static com.goodworkalan.go.go.GoException.MISSING_REPOSITORY_IMPLEMENTATI
 
 import java.net.URI;
 
-public class MissingRepository implements Repository {
+public class MissingRepository implements RepositoryClient {
     private final String type;
     private final URI uri;
     public MissingRepository(String type, URI uri) {
