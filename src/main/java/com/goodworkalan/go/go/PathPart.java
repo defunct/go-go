@@ -12,7 +12,7 @@ public interface PathPart {
     
     public Artifact getArtifact();
     
-    public PathPart expand(Library library, Collection<PathPart> additional);
+    public Collection<PathPart> expand(Library library, Collection<PathPart> expand);
     
     public Object getKey();
 }

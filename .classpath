@@ -15,7 +15,5 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/cassandra"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/reflective"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/madlib"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/glob"/>
 	<classpathentry kind="output" path="target/classes"/>
 </classpath>

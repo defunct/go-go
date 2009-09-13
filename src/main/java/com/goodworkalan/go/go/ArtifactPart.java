@@ -4,6 +4,7 @@ import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collection;
+import java.util.Collections;
 
 public class ArtifactPart implements PathPart {
     private final File libraryDirectory;
@@ -25,9 +26,9 @@ public class ArtifactPart implements PathPart {
     public Artifact getArtifact() {
         return artifact;
     }
-    
-    public PathPart expand(Library library, Collection<PathPart> additional) {
-        return this;
+
+    public Collection<PathPart> expand(Library library, Collection<PathPart> expand) {
+        return Collections.<PathPart>singletonList(this);
     }
     
     public Object getKey() {

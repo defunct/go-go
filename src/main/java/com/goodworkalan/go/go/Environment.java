@@ -23,7 +23,7 @@ public class Environment {
 
     /** The command part for the current task. */
     public final CommandPart commandPart;
-
+    
     /**
      * Create a new environment.
      * 

@@ -32,11 +32,6 @@
         </dependency>
         <dependency>
             <groupId>com.goodworkalan</groupId>
-            <artifactId>madlib</artifactId>
-            <version>0.1</version>
-        </dependency>
-        <dependency>
-            <groupId>com.goodworkalan</groupId>
             <artifactId>glob</artifactId>
             <version>0.1${version.suffix}</version>
         </dependency>

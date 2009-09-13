@@ -11,7 +11,6 @@ import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
@@ -28,7 +27,7 @@ import java.util.TreeMap;
  */
 final class TaskLoader {
     /** A set of keys of artifacts that have already been included. */
-    private final Set<String> seen = new HashSet<String>();
+    private final Set<Object> seen = new HashSet<Object>();
     
     /** The set of class path URLs that have been inspected for commands. */
     private final Set<URL> urls = new HashSet<URL>();
@@ -39,13 +38,15 @@ final class TaskLoader {
     private final Set<Class<?>> dependenciesClasses = new HashSet<Class<?>>();
     
     /** The Java-a-Go-Go library. */
-    private final Library library = new Library(new File(System.getProperty("user.home") + "/.m2/repository"));
+    public final Library library = new Library(new File(System.getProperty("user.home") + "/.m2/repository"));
     
     /** The root map of command names to command responders. */
     public final Map<String, Responder> commands = new TreeMap<String, Responder>();
 
     /** The map of tasks to responders. */
     public final Map<Class<? extends Task>, Responder> responders = new HashMap<Class<? extends Task>, Responder>();
+
+    private final ClassLoader threadClassLoader = Thread.currentThread().getContextClassLoader();
 
     /**
      * Load the tasks found in the libraries specified in the given artifact
@@ -56,57 +57,19 @@ final class TaskLoader {
      */
     public TaskLoader(String artifactFile) {
         seen.add("com.goodworkalan/go-go");
-        Set<Artifact> artifacts = new LinkedHashSet<Artifact>();
-        Artifacts reader = new Artifacts();
+        seen.add("com.goodworkalan/reflective");
+        seen.add("com.goodworkalan/cassandra");
+        
+        LibraryPath libraryPath = library.emptyPath(seen);
         if (artifactFile != null) {
-            artifacts.addAll(library.resolve(Artifacts.read(new File(artifactFile)), new Catcher()));
-        }
-        // FIXME Build this class loader, but keep it as a property. They
-        // us try/catch to set it.
-        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-        if (!artifacts.isEmpty()) {
-            classLoader = library.getClassLoader(artifacts, classLoader, seen);
-            Thread.currentThread().setContextClassLoader(classLoader);
+            libraryPath = libraryPath.extend(new ArtifactFilePart(new File(artifactFile)), seen, new Catcher());
+            Thread.currentThread().setContextClassLoader(libraryPath.getClassLoader(threadClassLoader));
         }
         try {
-            while ((classLoader = loadConfigurations(reader, classLoader)) != null);
+            while ((libraryPath = loadConfigurations(libraryPath)) != null);
         } catch (IOException e) {
             throw new GoException(0, e);
         }
-    }
-
-    /**
-     * Create a class loader that includes any unseen libraries specified by the
-     * given dependencies object.
-     * 
-     * @param reader
-     *            The artifacts reader.
-     * @param depenenciesClass
-     *            The dependency class to instantiate and query for
-     *            dependencies.
-     * @param classLoader
-     *            The current thread class loader, used as a parent class loader
-     *            for any dependencies.
-     * @return A class loader that includes any new libraries added by the
-     *         dependencies object.
-     */
-    private ClassLoader resolve(Artifacts reader, Class<?> depenenciesClass, ClassLoader classLoader) {
-        Dependencies dependencies;
-        try {
-            dependencies = (Dependencies) depenenciesClass.newInstance();
-        } catch (RuntimeException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new GoException(0, e);
-        }
-        Transaction transaction = new Transaction();
-        dependencies.configure(transaction);
-        library.resolve(Collections.singletonList(transaction), new Catcher());
-        // FIXME Not taking into account artifacts already loaded, but we
-        // we can do so using the getURLs method, or maybe we need to provide
-        // a the seen hash, since URLs include version.
-        // FIXME Seen hash should come in with the constructor.
-        return library.getClassLoader(transaction.includes, classLoader, seen);
     }
 
     /**
@@ -126,8 +89,9 @@ final class TaskLoader {
      *             For any I/O error while reading the command interpreter
      *             definition files.
      */
-    private ClassLoader loadConfigurations(Artifacts reader, ClassLoader classLoader) throws IOException {
+    private LibraryPath loadConfigurations(LibraryPath libraryPath) throws IOException {
         boolean classLoaderDirty = false;
+        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
         Enumeration<URL> resources = classLoader.getResources("META-INF/services/com.goodworkalan.go.go.CommandInterpreter");
         while (resources.hasMoreElements()) {
             URL url = resources.nextElement();
@@ -151,8 +115,18 @@ final class TaskLoader {
                         if (Dependencies.class.isAssignableFrom(foundClass)) {
                             if (!dependenciesClasses.contains(foundClass)) {
                                 dependenciesClasses.add(foundClass);
-                                classLoader = resolve(reader, foundClass, classLoader);
-                                Thread.currentThread().setContextClassLoader(classLoader);
+                                Dependencies dependencies;
+                                try {
+                                    dependencies = (Dependencies) foundClass.newInstance();
+                                } catch (RuntimeException e) {
+                                    throw e;
+                                } catch (Exception e) {
+                                    throw new GoException(0, e);
+                                }
+                                Transaction transaction = new Transaction();
+                                dependencies.configure(transaction);
+                                libraryPath = libraryPath.extend(new TransactionsPart(transaction), Collections.emptySet(), new Catcher());
+                                Thread.currentThread().setContextClassLoader(libraryPath.getClassLoader(threadClassLoader));
                                 classLoaderDirty = true;
                             }
                         } else if (Task.class.isAssignableFrom(foundClass)) {
@@ -184,6 +158,6 @@ final class TaskLoader {
                 }
             }
         }
-        return classLoaderDirty ? classLoader : null;
+        return classLoaderDirty ? libraryPath : null;
     }
 }

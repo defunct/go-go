@@ -4,6 +4,7 @@ import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collection;
+import java.util.Collections;
 
 public class JarPart implements PathPart {
     /** The jar file. */
@@ -31,8 +32,8 @@ public class JarPart implements PathPart {
         return null;
     }
 
-    public PathPart expand(Library library, Collection<PathPart> additional) {
-        return this;
+    public Collection<PathPart> expand(Library library, Collection<PathPart> expand) {
+        return Collections.<PathPart>singletonList(this);
     }
 
     public Object getKey() {

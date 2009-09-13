@@ -38,11 +38,11 @@ public class ResolutionPart implements PathPart {
         return artifact;
     }
     
-    public PathPart expand(Library library, Collection<PathPart> additional) {
+    public Collection<PathPart> expand(Library library, Collection<PathPart> additional) {
         LibraryEntry entry = library.getEntry(artifact, repositories);
         for (Transaction transaction : Artifacts.read(new File(entry.directory, entry.artifact.getPath("", "dep")))) {
             for (Artifact include : transaction.includes) {
-                if (excludes.contains(include)) {
+                if (!excludes.contains(include)) {
                     Set<Artifact> subExcludes = new HashSet<Artifact>();
                     subExcludes.addAll(excludes);
                     subExcludes.addAll(transaction.excludes);
@@ -50,7 +50,7 @@ public class ResolutionPart implements PathPart {
                 }
             }
         }
-        return new ArtifactPart(entry.directory, entry.artifact);
+        return Collections.<PathPart>singletonList(new ArtifactPart(entry.directory, entry.artifact));
     }
     
     public Object getKey() {

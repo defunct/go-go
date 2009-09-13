@@ -1,14 +1,12 @@
 package com.goodworkalan.go.go;
 
 import java.io.File;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -70,74 +68,38 @@ public class Library {
         return new File(dir, artifact.getPath(suffix, extension));
     }
     
-    private Collection<PathPart> resolve(Set<Artifact> artifacts, Catcher catcher) {
-        Collection<PathPart> path = new ArrayList<PathPart>();
-        for (Artifact artifact : artifacts) {
-            path.add(new ResolutionPart(artifact));
-        }
-        return resolve(path, catcher);
+    public LibraryPath emptyPath(Set<Object> excludes) {
+        return new LibraryPath(this, Collections.<PathPart>emptyList(), excludes);
     }
-
-    private Collection<PathPart> resolve(Collection<PathPart> parts, Catcher catcher) {
+    
+    public LibraryPath resolve(PathPart part, Set<Object> exclude, Catcher catcher) {
+        return resolve(Collections.<PathPart>singletonList(part), exclude, catcher);
+    }
+    
+    public LibraryPath resolve(Collection<PathPart> parts, Set<Object> exclude, Catcher catcher) {
         Map<Object, PathPart> expanded = new LinkedHashMap<Object, PathPart>();
         Collection<PathPart> current = parts;
         Collection<PathPart> next = new ArrayList<PathPart>();
         while (!current.isEmpty()) {
             for (PathPart part : current) {
-                PathPart resolved;
+                Collection<PathPart> expansions;
                 try {
-                    resolved = part.expand(this, next);
+                    expansions = part.expand(this, next);
                 } catch (GoException e) {
                     catcher.examine(e);
                     continue;
                 }
-                if (!expanded.containsKey(resolved.getKey())) {
-                    expanded.put(resolved.getKey(), resolved);
+                for (PathPart expansion : expansions) {
+                    Object key = expansion.getKey();
+                    if (!(exclude.contains(key) || expanded.containsKey(key))) {
+                        expanded.put(expansion.getKey(), expansion);
+                    }
                 }
             }
             current = next;
             next = new ArrayList<PathPart>();
         }
-        return expanded.values();
-    }
-
-    public Set<Artifact> resolve(List<Transaction> transactions, Catcher fetchFailure) {
-        Collection<PathPart> pathParts = new ArrayList<PathPart>();
-        for (Transaction transaction : transactions) {
-            pathParts.addAll(transaction.getPathParts());
-        }
-        Set<Artifact> artifacts = new LinkedHashSet<Artifact>();
-        for (PathPart part : resolve(pathParts, fetchFailure)) {
-            if (part.getArtifact() != null) {
-                artifacts.add(part.getArtifact());
-            }
-        }
-        return artifacts;
-    }
-    
-    public Set<File> getFiles(Set<Artifact> artifacts, Set<String> seen) {
-        Set<File> files = new LinkedHashSet<File>();
-        for (PathPart part : resolve(artifacts, new Catcher())) {
-            files.add(part.getFile());
-        }
-        return files;
-    }
-    
-    public ClassLoader getClassLoader(Set<Artifact> artifacts, ClassLoader parent, Set<String> seen) {
-        Collection<PathPart> path = resolve(artifacts, new Catcher());
-        if (path.isEmpty()) {
-            return parent;
-        }
-        URL[] urls = new URL[path.size()];
-        int index = 0;
-        for (PathPart part : path) {
-            try {
-                urls[index++] = part.getURL();
-            } catch (MalformedURLException e) {
-                throw new GoException(0, e);
-            }
-        }
-        return new URLClassLoader(urls, parent);
+        return new LibraryPath(this, expanded.values(), new HashSet<Object>(exclude));
     }
     
     public LibraryEntry getEntry(Artifact artifact, List<Repository> repositories) {
