@@ -4,22 +4,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class Execution {
-    private final CommandInterpreter commandInterpreter;
-    
-    private final List<Map<String, Object>> conversions;
+class Execution {
+    private final Executor executor;
     
     private final Map<Class<? extends Task>, Map<Class<? extends Output>, Output>> outputs = new HashMap<Class<? extends Task>, Map<Class<? extends Output>,Output>>();
     
-    private final String[][] arguments;
+    private final CommandPart commandPart;
     
-    private final String[] remaining;
-    
-    Execution(CommandInterpreter commandInterpreter,  List<Map<String, Object>> converted, String[][] arguments, String[] remaining) {
-        this.commandInterpreter = commandInterpreter;
-        this.arguments = arguments;
-        this.remaining = remaining;
-        this.conversions = converted;
+    public Execution(Executor executor, CommandPart commandPart) {
+        this.commandPart = commandPart;
+        this.executor = executor;
     }
 
     /**
@@ -33,52 +27,59 @@ public class Execution {
         if (outputs.containsKey(taskClass)) {
             return;
         }
-        Task task = commandInterpreter.taskFactory.newTask(taskClass);
-        Responder responder = commandInterpreter.responders.get(taskClass);
+        CommandInterpreter ci = commandPart.getCommandInterpreter();
+        Responder responder = ci.responders.get(taskClass);
         if (responder == null) {
             throw new GoException(0);
         }
-        for (Class<? extends Arguable> argument : responder.getArguables()) {
-            Responder container = commandInterpreter.responders.get(taskClass(argument.getDeclaringClass()));
-            // FIXME Assert that arguable is a static class.
-            Arguable arguable = commandInterpreter.taskFactory.newArguable(argument);
-            int index = getDepth(container);
-            if (index < conversions.size()) {
-                for (Map.Entry<String, Object> conversion : conversions.get(index).entrySet()) {
-                    String[] pair = conversion.getKey().split(":");
-                    if (pair[0].equals(container.getName())) {
-                        Assignment assignment = container.getAssignments().get(pair[1]);
-                        if (assignment.getDeclaringClass().equals(argument)) {
-                            assignment.setValue(arguable, conversion.getValue());
+        CommandPart part = commandPart.task(taskClass);
+        CommandKey key = part.getKey_();
+        if (!executor.outputCache.containsKey(key)) {
+            List<CommandPart> parts = part.getCommandPath();
+            Task task = ci.taskFactory.newTask(taskClass);
+            for (Class<? extends Arguable> argument : responder.getArguables()) {
+                Responder container = ci.responders.get(taskClass(argument.getDeclaringClass()));
+                // FIXME Assert that arguable is a static class.
+                Arguable arguable = ci.taskFactory.newArguable(argument);
+                int index = getDepth(container);
+                if (index < parts.size()) {
+                    for (Conversion conversion : parts.get(index).getConversions()) {
+                        String[] pair = conversion.getName().split(":");
+                        if (pair[0].equals(container.getName())) {
+                            Assignment assignment = container.getAssignments().get(pair[1]);
+                            if (assignment.getDeclaringClass().equals(argument)) {
+                                assignment.setValue(arguable, conversion.getValue());
+                            }
+                        }
+                    }
+                }
+                responder.setArguable(task, argument, arguable);
+            }
+            for (Class<? extends Output> input : responder.getInputs()) {
+                Responder container = ci.responders.get(taskClass(input.getDeclaringClass()));
+                execute(container.getTaskClass());
+                responder.setInput(task, input, outputs.get(container.getTaskClass()).get(input));
+            }
+            int index = getDepth(responder);
+            if (index < parts.size()) {
+                for (Conversion conversion : parts.get(index).getConversions()) {
+                    String[] pair = conversion.getName().split(":");
+                    if (pair[0].equals(responder.getName())) {
+                        Assignment assignment = responder.getAssignments().get(pair[1]);
+                        if (assignment.getDeclaringClass().equals(taskClass)) {
+                            assignment.setValue(task, conversion.getValue());
                         }
                     }
                 }
             }
-            responder.setArguable(task, argument, arguable);
-        }
-        for (Class<? extends Output> input : responder.getInputs()) {
-            Responder container = commandInterpreter.responders.get(taskClass(input.getDeclaringClass()));
-            execute(container.getTaskClass());
-            responder.setInput(task, input, outputs.get(container.getTaskClass()).get(input));
-        }
-        int index = getDepth(responder);
-        if (index < conversions.size()) {
-            for (Map.Entry<String, Object> conversion : conversions.get(index).entrySet()) {
-                String[] pair = conversion.getKey().split(":");
-                if (pair[0].equals(responder.getName())) {
-                    Assignment assignment = responder.getAssignments().get(pair[1]);
-                    if (assignment.getDeclaringClass().equals(taskClass)) {
-                        assignment.setValue(task, conversion.getValue());
-                    }
-                }
+            Environment env = new Environment(System.in, System.err, System.out, part, executor);
+            task.execute(env);
+            executor.outputCache.put(key, new HashMap<Class<? extends Output>, Output>());
+            for (Class<? extends Output> output : responder.getOutputs()) {
+                executor.outputCache.get(key).put(output, responder.getOutput(task, output));
             }
         }
-        Environment env = new Environment(commandInterpreter, System.in, System.err, System.out, arguments, remaining);
-        task.execute(env);
-        outputs.put(taskClass, new HashMap<Class<? extends Output>, Output>());
-        for (Class<? extends Output> output : responder.getOutputs()) {
-            outputs.get(taskClass).put(output, responder.getOutput(task, output));
-        }
+        outputs.put(taskClass, new HashMap<Class<? extends Output>, Output>(executor.outputCache.get(key)));
     }
     
     @SuppressWarnings("unchecked")
@@ -97,10 +98,6 @@ public class Execution {
         if (parent == null) {
             return 0;
         }
-        return getDepth(commandInterpreter.responders.get(parent)) + 1;
-    }
-    
-    public <T extends Arguable> T getArguable(Class<T> arguable) {
-        return null;
+        return getDepth(commandPart.getCommandInterpreter().responders.get(parent)) + 1;
     }
 }

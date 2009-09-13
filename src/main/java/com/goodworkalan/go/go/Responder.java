@@ -29,7 +29,7 @@ import com.goodworkalan.reflective.ReflectiveFactory;
  * 
  * @author Alan Gutierrez
  */
-class Responder implements TaskInfo {
+class Responder {
     /** The task class. */
     private final Class<? extends Task> taskClass;
 
@@ -254,7 +254,7 @@ class Responder implements TaskInfo {
     public Class<? extends Task> getTaskClass() {
         return taskClass;
     }
-    
+
     /**
      * Get the parent task.
      * 

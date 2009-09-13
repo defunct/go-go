@@ -18,14 +18,11 @@ public class Environment {
     /** The output stream. */
     public final PrintStream out;
 
-    /** The arguments for each command with command name. */
-    public final String[][] arguments;
+    /** The current execution. */
+    public final Executor executor;
 
-    /** The remaining arguments. */
-    public final String[] remaining;
-    
-    /** The command interpreter. */
-    public final CommandInterpreter commandInterpreter;
+    /** The command part for the current task. */
+    public final CommandPart commandPart;
 
     /**
      * Create a new environment.
@@ -36,17 +33,16 @@ public class Environment {
      *            The error stream.
      * @param out
      *            The output stream.
-     * @param arguments
-     *            The arguments for each command with command name.
-     * @param remaining
-     *            The remaining arguments.
+     * @param commandPart
+     *            The command part for the current task.
+     * @param execution
+     *            The execution state.
      */
-    public Environment(CommandInterpreter commandInterpreter, InputStream in, PrintStream err, PrintStream out, String[][] arguments, String[] remaining) {
-        this.commandInterpreter = commandInterpreter;
+    public Environment(InputStream in, PrintStream err, PrintStream out, CommandPart commandPart, Executor executor) {
         this.in = in;
         this.err = err;
         this.out = out;
-        this.arguments = arguments;
-        this.remaining = remaining;
+        this.commandPart = commandPart;
+        this.executor = executor;
     }
 }
