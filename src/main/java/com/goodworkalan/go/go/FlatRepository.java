@@ -6,19 +6,15 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 
-
-
 public class FlatRepository implements RepositoryClient {
-    private final URI uri;
-    
-    public FlatRepository(URI uri) {
-        this.uri = uri;
+    public String getTypeName() {
+        return "flat";
+    }
+
+    public void fetchDependencies(URI uri, Library library, Artifact artifact) {
     }
     
-    public void fetchDependencies(Library library, Artifact artifact) {
-    }
-    
-    public void fetch(Library library, Artifact artifact, String suffix, String extension) {
+    public void fetch(URI uri, Library library, Artifact artifact, String suffix, String extension) {
         File dest = library.getFile(artifact, suffix, extension);
         try {
             if (!dest.exists()) {

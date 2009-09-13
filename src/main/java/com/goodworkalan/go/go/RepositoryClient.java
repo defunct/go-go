@@ -1,7 +1,11 @@
 package com.goodworkalan.go.go;
 
+import java.net.URI;
+
 public interface RepositoryClient {
-    public void fetch(Library library, Artifact artifact, String suffix, String extension);
+    public String getTypeName();
+
+    public void fetch(URI uri, Library library, Artifact artifact, String suffix, String extension);
     
-    public void fetchDependencies(Library library, Artifact artifact);
+    public void fetchDependencies(URI uri, Library library, Artifact artifact);
 }

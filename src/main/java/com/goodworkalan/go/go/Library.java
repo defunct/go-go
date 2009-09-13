@@ -1,11 +1,7 @@
 package com.goodworkalan.go.go;
 
-import static com.goodworkalan.go.go.GoException.REPOSITORY_HAS_NO_URI_CONSTRUCTOR;
-import static com.goodworkalan.go.go.GoException.UNABLE_TO_CONSTRUCT_REPOSITORY;
-
 import java.io.File;
 import java.net.MalformedURLException;
-import java.net.URI;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
@@ -17,10 +13,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.goodworkalan.cassandra.Report;
-import com.goodworkalan.reflective.ReflectiveException;
-import com.goodworkalan.reflective.ReflectiveFactory;
-
 /**
  * A Jav-a-Go-Go format library. Libraries can live only on the local file
  * system, therefore a library id uniquely identified by the directory where it
@@ -31,9 +23,8 @@ import com.goodworkalan.reflective.ReflectiveFactory;
  * @author Alan Gutierrez
  */
 public class Library {
-    private final ReflectiveFactory reflectiveFactory = new ReflectiveFactory();
-
-    private final Map<String, Class<? extends RepositoryClient>> repositoryClasses = new HashMap<String, Class<? extends RepositoryClient>>();
+    /** Map of repostiory types to client download strategies. */
+    private final Map<String, RepositoryClient> repositoryClients = new HashMap<String, RepositoryClient>();
 
     /** The library directory. */
     private final File dir;
@@ -48,22 +39,6 @@ public class Library {
         this.dir = dir;
     }
 
-    RepositoryClient getRepositoryClient(Repository repository) {
-        Class<? extends RepositoryClient> repositoryClass = repositoryClasses.get(repository.type);
-        if (repositoryClass == null) {
-        } 
-        try {
-            return reflectiveFactory.getConstructor(repositoryClass, URI.class).newInstance(repository.uri);
-        } catch (ReflectiveException e) {
-            switch (e.getCode() / 100) {
-            case ReflectiveException.CANNOT_FIND:
-                throw new GoException(REPOSITORY_HAS_NO_URI_CONSTRUCTOR, new Report(), e);
-            default:
-                throw new GoException(UNABLE_TO_CONSTRUCT_REPOSITORY, new Report(), e);
-            }
-        }
-    }
-    
     /**
      * Determine whether the library contains the given artifact.
      * 
@@ -169,12 +144,14 @@ public class Library {
         File deps = new  File(dir, artifact.getPath("", "dep"));
         if (!deps.exists()) {
             for (Repository repository : repositories) {
-                RepositoryClient repositoryClient = getRepositoryClient(repository);
-                if (!deps.exists()) {
-                    repositoryClient.fetchDependencies(this, artifact);
-                }
-                if (!(new File(dir, artifact.getPath("", "jar"))).exists()) {
-                    repositoryClient.fetch(this, artifact, "", "jar");
+                RepositoryClient client = repositoryClients.get(repository.type);
+                if (client != null) {
+                    if (!deps.exists()) {
+                        client.fetchDependencies(repository.uri, this, artifact);
+                    }
+                    if (!(new File(dir, artifact.getPath("", "jar"))).exists()) {
+                        client.fetch(repository.uri, this, artifact, "", "jar");
+                    }
                 }
             }
         }

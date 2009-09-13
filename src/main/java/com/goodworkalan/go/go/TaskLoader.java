@@ -139,6 +139,9 @@ final class TaskLoader {
                 String className;
                 try {
                     while ((className = lines.readLine()) != null) {
+                        if (className.trim().equals("")) {
+                            continue;
+                        }
                         Class<?> foundClass;
                         try {
                             foundClass = classLoader.loadClass(className);
