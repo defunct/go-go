@@ -48,7 +48,7 @@ public class Artifacts {
             BufferedReader lines = new BufferedReader(reader);
             List<Transaction> transactions = new ArrayList<Transaction>();
             URI uri = null;
-            List<RepositoryLine> repositories = new ArrayList<RepositoryLine>();
+            List<Repository> repositories = new ArrayList<Repository>();
             List<Artifact> includes = new ArrayList<Artifact>();
             List<Artifact> excludes = new ArrayList<Artifact>();
             int lineNumber = 0;
@@ -83,7 +83,7 @@ public class Artifacts {
                                 .end();
                         
                         if (!includes.isEmpty()) {
-                            transactions.add(new Transaction(new ArrayList<RepositoryLine>(repositories), new ArrayList<Artifact>(includes)));
+                            transactions.add(new Transaction(new ArrayList<Repository>(repositories), new ArrayList<Artifact>(includes)));
                             repositories.clear();
                             includes.clear();
                             excludes.clear();
@@ -97,7 +97,7 @@ public class Artifacts {
                             throw new GoException(RELATIVE_REPOSITORY_URL, report);
                         }
 
-                        repositories.add(new RepositoryLine(split[1], uri));
+                        repositories.add(new Repository(split[1], uri));
 
                         report.clear();
                         break;

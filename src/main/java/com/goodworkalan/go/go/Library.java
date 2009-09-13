@@ -48,7 +48,7 @@ public class Library {
         this.dir = dir;
     }
 
-    RepositoryClient getRepositoryClient(RepositoryLine repository) {
+    RepositoryClient getRepositoryClient(Repository repository) {
         Class<? extends RepositoryClient> repositoryClass = repositoryClasses.get(repository.type);
         if (repositoryClass == null) {
         } 
@@ -165,10 +165,10 @@ public class Library {
         return new URLClassLoader(urls, parent);
     }
     
-    public LibraryEntry getEntry(Artifact artifact, List<RepositoryLine> repositories) {
+    public LibraryEntry getEntry(Artifact artifact, List<Repository> repositories) {
         File deps = new  File(dir, artifact.getPath("", "dep"));
         if (!deps.exists()) {
-            for (RepositoryLine repository : repositories) {
+            for (Repository repository : repositories) {
                 RepositoryClient repositoryClient = getRepositoryClient(repository);
                 if (!deps.exists()) {
                     repositoryClient.fetchDependencies(this, artifact);

@@ -10,7 +10,7 @@ import java.util.Set;
 
 
 public class Transaction implements Bundle {
-    public final List<RepositoryLine> repositories = new ArrayList<RepositoryLine>();
+    public final List<Repository> repositories = new ArrayList<Repository>();
     
     public final Set<Artifact> includes = new LinkedHashSet<Artifact>();
     
@@ -19,17 +19,17 @@ public class Transaction implements Bundle {
     public Transaction() {
     }
     
-    public Transaction(List<RepositoryLine> repositories, List<Artifact> artifacts) {
+    public Transaction(List<Repository> repositories, List<Artifact> artifacts) {
         this.repositories.addAll(repositories);
         this.includes.addAll(artifacts);
     }
     
-    public List<RepositoryLine> getRepositories() {
+    public List<Repository> getRepositories() {
         return repositories;
     }
 
     public void repsitory(String type, URI uri) {
-        repositories.add(new RepositoryLine(type, uri));
+        repositories.add(new Repository(type, uri));
     }
     
     public void include(Artifact artifact) {

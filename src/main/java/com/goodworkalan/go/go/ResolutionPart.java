@@ -14,16 +14,16 @@ public class ResolutionPart implements PathPart {
     
     private final Set<Artifact> excludes;
     
-    private final List<RepositoryLine> repositories;
+    private final List<Repository> repositories;
     
-    public ResolutionPart(Artifact artifact, Set<Artifact> excludes, List<RepositoryLine> repositories) {
+    public ResolutionPart(Artifact artifact, Set<Artifact> excludes, List<Repository> repositories) {
         this.artifact = artifact;
         this.excludes = excludes;
         this.repositories = repositories;
     }
     
     public ResolutionPart(Artifact artifact) {
-        this(artifact, Collections.<Artifact>emptySet(), Collections.<RepositoryLine>emptyList());
+        this(artifact, Collections.<Artifact>emptySet(), Collections.<Repository>emptyList());
     }
     
     public File getFile() {
