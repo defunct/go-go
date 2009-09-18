@@ -40,6 +40,9 @@ public class ResolutionPart implements PathPart {
     
     public Collection<PathPart> expand(Library library, Collection<PathPart> additional) {
         LibraryEntry entry = library.getEntry(artifact, repositories);
+        if (entry == null) {
+            throw new GoException(0);
+        }
         for (Transaction transaction : Artifacts.read(new File(entry.directory, entry.artifact.getPath("", "dep")))) {
             for (Artifact include : transaction.includes) {
                 if (!excludes.contains(include)) {

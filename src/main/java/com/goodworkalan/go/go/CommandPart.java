@@ -155,7 +155,7 @@ public class CommandPart {
                     String value = pair.length == 1 ? null : pair[1]; 
                     part = part.argument(name, value);
                 } else {
-                    Responder child = responder.getCommand(argument);
+                    Responder child = part.responder.getCommand(argument);
                     if (child == null) {
                         part.remaining.add(argument);
                         remaining = true;
