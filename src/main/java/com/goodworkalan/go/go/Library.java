@@ -72,8 +72,12 @@ public class Library {
         return new LibraryPath(this, Collections.<PathPart>emptyList(), excludes);
     }
     
-    public LibraryPath resolve(PathPart part, Set<Object> exclude, Catcher catcher) {
-        return resolve(Collections.<PathPart>singletonList(part), exclude, catcher);
+    public LibraryPath resolve(PathPart part) {
+        return resolve(Collections.<PathPart>singletonList(part));
+    }
+    
+    public LibraryPath resolve(Collection<PathPart> parts) {
+        return resolve(parts, new HashSet<Object>(), new Catcher());
     }
     
     public LibraryPath resolve(Collection<PathPart> parts, Set<Object> exclude, Catcher catcher) {

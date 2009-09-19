@@ -62,7 +62,7 @@ final class TaskLoader {
         
         LibraryPath libraryPath = library.emptyPath(seen);
         if (artifactFile != null) {
-            libraryPath = libraryPath.extend(new ArtifactFilePart(new File(artifactFile)), seen, new Catcher());
+            libraryPath = libraryPath.extend(Collections.<PathPart>singletonList(new ArtifactFilePart(new File(artifactFile))), seen, new Catcher());
             Thread.currentThread().setContextClassLoader(libraryPath.getClassLoader(threadClassLoader));
         }
         try {
@@ -125,7 +125,7 @@ final class TaskLoader {
                                 }
                                 Transaction transaction = new Transaction();
                                 dependencies.configure(transaction);
-                                libraryPath = libraryPath.extend(new TransactionsPart(transaction), Collections.emptySet(), new Catcher());
+                                libraryPath = libraryPath.extend(new TransactionsPart(transaction));
                                 Thread.currentThread().setContextClassLoader(libraryPath.getClassLoader(threadClassLoader));
                                 classLoaderDirty = true;
                             }

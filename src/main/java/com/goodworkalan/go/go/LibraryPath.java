@@ -62,8 +62,12 @@ public class LibraryPath {
         return artifacts;
     }
     
-    public LibraryPath extend(PathPart part, Set<Object> excludes, Catcher catcher) {
-        return extend(Collections.singletonList(part), excludes, catcher);
+    public LibraryPath extend(PathPart part) {
+        return extend(Collections.singletonList(part));
+    }
+    
+    public LibraryPath extend(Collection<PathPart> parts) {
+        return extend(parts, Collections.emptySet(), new Catcher());
     }
     
     public LibraryPath extend(Collection<PathPart> parts, Set<Object> excludes, Catcher catcher) {
