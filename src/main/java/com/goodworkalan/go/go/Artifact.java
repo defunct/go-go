@@ -70,15 +70,17 @@ public class Artifact {
         return new Artifact(group.toString(), name, version);
     }
     
-    public static Artifact parse(String artifact) {
+    public Artifact(String artifact) {
         List<String> parts = new ArrayList<String>(Arrays.asList(artifact.split("/")));
         if (parts.size() == 2) {
             parts.add("*");
         }
-        if (parts.size() == 3) {
-            return new Artifact(parts.get(0), parts.get(1), parts.get(2));
+        if (parts.size() != 3) {
+            throw new GoException(0);
         }
-        return null;
+        this.group = parts.get(0);
+        this.name = parts.get(1);
+        this.version = parts.get(2);
     }
     
     /**
