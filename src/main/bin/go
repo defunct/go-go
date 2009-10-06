@@ -1,0 +1,43 @@
+#!/bin/sh
+
+echo $0
+
+dir=`readlink $0`
+dir=`dirname $dir`
+dir=`cd $dir && pwd`
+
+if [ -e /etc/gorc ]
+then
+    . /etc/gorc
+fi
+
+if [ -e "$dir/gorc" ]
+then
+    . "$dir/gorc"
+fi
+
+if [ $GO_PATH"x" == "x" ]
+then
+    GO_PATH=$HOME/.m2/repository
+fi
+
+classpath=
+separator=
+
+for file in \
+    com/goodworkalan/go-go/0.1/go-go-0.1.jar \
+    com/goodworkalan/cassandra/0.7-SNAPSHOT/cassandra-0.7-SNAPSHOT.jar \
+    com/goodworkalan/reflective/0.1-SNAPSHOT/reflective-0.1-SNAPSHOT.jar
+do
+    for part in `echo $GO_PATH | sed "s/:/ /g"`
+    do
+        if [ -e "$part/$file" ]
+        then
+            classpath="$classpath$separator$part/$file"
+            separator=":"
+            break
+        fi
+    done
+done
+
+java -cp $classpath com.goodworkalan.go.go.CommandInterpreter $@

@@ -1,6 +1,9 @@
 package com.goodworkalan.go.go;
 
+import java.io.File;
+import java.util.Arrays;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -20,6 +23,7 @@ public final class CommandInterpreter {
     private final Library library;
     
     public CommandInterpreter(String artifactFile) {
+        
         TaskLoader tasks = new TaskLoader(artifactFile);
 
         this.commands = tasks.commands;
@@ -36,11 +40,7 @@ public final class CommandInterpreter {
     }
 
     public void execute(List<String> arguments) {
-        main(arguments.toArray(new String[arguments.size()]));
-    }
-    
-    public void main(String...arguments) {
-        execute(arguments);
+        execute(arguments.toArray(new String[arguments.size()]));
     }
     
     public void execute(String...arguments) {
@@ -56,5 +56,45 @@ public final class CommandInterpreter {
             throw new GoException(0);
         }
         return new CommandPart(this, responder, null).extend(arguments, 1);
+    }
+
+    public static void main(String...arguments) throws Exception {
+        LinkedList<String> args = new LinkedList<String>(Arrays.asList(arguments));
+        if (args.isEmpty()) {
+            throw new GoException(0);
+        }
+        String artifacts = null;
+        boolean debug = false;
+        for (;;) {
+            artifacts = args.removeFirst();
+            if (!artifacts.startsWith("--")) {
+                break;
+            }
+            if (artifacts.equals("--debug")) {
+                debug = true;
+            } else {
+                throw new GoException(0);
+            }
+        }
+        CommandInterpreter ci = new CommandInterpreter(artifacts);
+        File file = new File(artifacts);
+        try {
+            String name = file.getName().toLowerCase();
+            if (name.endsWith(".bat")) {
+                name = name.substring(0, name.length() - 4);
+            }
+            ci.command(file.getName());
+            args.addFirst(file.getName());
+        } catch (GoException e) {
+        }
+        if (debug) {
+            System.out.println(args);
+        }
+        ci.execute(args);
+        if (debug) {
+            System.out.printf("%.2fM/%.2fM\n", 
+                    (double) Runtime.getRuntime().totalMemory() /  1024 / 1024,
+                    (double) Runtime.getRuntime().freeMemory() / 1024 / 1024);
+        }
     }
 }
