@@ -23,7 +23,6 @@ public final class CommandInterpreter {
     private final Library library;
     
     public CommandInterpreter(String artifactFile) {
-        
         TaskLoader tasks = new TaskLoader(artifactFile);
 
         this.commands = tasks.commands;

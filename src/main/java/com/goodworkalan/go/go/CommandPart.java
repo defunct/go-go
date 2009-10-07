@@ -160,7 +160,7 @@ public class CommandPart {
                         part.remaining.add(argument);
                         remaining = true;
                     } else {
-                        part = new CommandPart(commandInterpreter, child, this);
+                        part = new CommandPart(commandInterpreter, child, part);
                     }
                 }
             }

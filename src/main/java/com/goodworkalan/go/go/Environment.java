@@ -22,6 +22,7 @@ public class Environment {
     public final Executor executor;
 
     /** The command part for the current task. */
+    // FIXME Rename part.
     public final CommandPart commandPart;
     
     /**

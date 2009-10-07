@@ -57,6 +57,6 @@ public class ResolutionPart implements PathPart {
     }
     
     public Object getKey() {
-        return artifact.getKey();
+        return artifact.getKey().subList(0, 2);
     }
 }

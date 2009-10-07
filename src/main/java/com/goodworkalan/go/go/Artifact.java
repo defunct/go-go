@@ -12,6 +12,7 @@ import java.util.List;
  *
  * @author Alan Gutierrez
  */
+// FIXME Create an include structure that has a list of excludes.
 public class Artifact {
     /** The artifact group. */
     private final String group;
@@ -84,12 +85,16 @@ public class Artifact {
     }
     
     /**
-     * Get a key that uniquely defines the artifact without version.
+     * Get a key that is a list that uniquely defines the artifact.
      * 
-     * @return A key.
+     * @return A key as a list of name, group, version.
      */
-    public String getKey() {
-        return group + "/" + name;
+    public List<String> getKey() {
+        List<String> key =  new ArrayList<String>();
+        key.add(name);
+        key.add(group);
+        key.add(version);
+        return key;
     }
 
     /**
@@ -141,6 +146,7 @@ public class Artifact {
      * Create the path in the repository where the artifact can be found.
      * 
      * @return The file path of the artifacts.
+     * FIXME One argument convenience method.
      */
     public String getPath(String suffix, String extension) {
         StringBuilder file = new StringBuilder();
@@ -151,6 +157,14 @@ public class Artifact {
                     .append(name).append("-").append(version)
                     .append(suffix.length() == 0 ? "" : "-").append(suffix)
                     .append(".").append(extension);
+        return file.toString();
+    }
+    
+    public String getDirectoryPath() {
+        StringBuilder file = new StringBuilder();
+        file.append(group.replace(".", "/"))
+                .append("/").append(name)
+                .append("/").append(version);
         return file.toString();
     }
 
@@ -185,6 +199,27 @@ public class Artifact {
         return hashCode;
     }
     
+    private String line(String prefix) {
+        StringBuilder line = new StringBuilder();
+        line.append(prefix);
+        line.append(" ");
+        line.append(group);
+        line.append(" ");
+        line.append(name);
+        line.append(" ");
+        line.append(version);
+        line.append("\n");
+        return line.toString();
+    }
+    
+    public String includeLine() {
+        return line("+");
+    }
+    
+    public String excludeLine() {
+        return line("-");
+    }
+    
     /**
      * Return the artifact key for this artifact.
      * 
@@ -192,6 +227,6 @@ public class Artifact {
      */
     @Override
     public String toString() {
-        return getKey() + "/" + version;
+        return group + "/" + name + "/" + version;
     }
 }
