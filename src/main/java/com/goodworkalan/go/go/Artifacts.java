@@ -5,9 +5,6 @@ import static com.goodworkalan.go.go.GoException.ARTIFACT_FILE_NOT_FOUND;
 import static com.goodworkalan.go.go.GoException.INVALID_ARTIFACTS_LINE_START;
 import static com.goodworkalan.go.go.GoException.INVALID_EXCLUDE_LINE;
 import static com.goodworkalan.go.go.GoException.INVALID_INCLUDE_LINE;
-import static com.goodworkalan.go.go.GoException.INVALID_REPOSITORY_LINE;
-import static com.goodworkalan.go.go.GoException.INVALID_REPOSITORY_URL;
-import static com.goodworkalan.go.go.GoException.RELATIVE_REPOSITORY_URL;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -15,10 +12,6 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.List;
 
 import com.goodworkalan.cassandra.Report;
 
@@ -29,7 +22,7 @@ import com.goodworkalan.cassandra.Report;
  * @author Alan Gutierrez
  */
 public class Artifacts {
-    public static List<Transaction> read(File file) {
+    public static Transaction read(File file) {
         try {
             try {
                 return read(new FileReader(file));
@@ -42,15 +35,11 @@ public class Artifacts {
         }
     }
      
-    public static List<Transaction> read(Reader reader) {
+    public static Transaction read(Reader reader) {
         try {
+            Transaction transaction = new Transaction();
             Report report = new Report();
             BufferedReader lines = new BufferedReader(reader);
-            List<Transaction> transactions = new ArrayList<Transaction>();
-            URI uri = null;
-            List<Repository> repositories = new ArrayList<Repository>();
-            List<Artifact> includes = new ArrayList<Artifact>();
-            List<Artifact> excludes = new ArrayList<Artifact>();
             int lineNumber = 0;
             String line;
             while ((line = lines.readLine()) != null) {
@@ -70,48 +59,17 @@ public class Artifacts {
                     }
                     
                     switch (split[0].charAt(0)) {
-                    case '?':
-                        if (split.length != 3) {
-                            throw new GoException(INVALID_REPOSITORY_LINE, report);
-                        }
-
-                        report
-                            .mark()
-                            .map("repository")
-                                .put("type", split[1])
-                                .put("url", split[2])
-                                .end();
-                        
-                        if (!includes.isEmpty()) {
-                            transactions.add(new Transaction(new ArrayList<Repository>(repositories), new ArrayList<Artifact>(includes)));
-                            repositories.clear();
-                            includes.clear();
-                            excludes.clear();
-                        }
-                        try {
-                            uri = new URI(split[2]);
-                        } catch (URISyntaxException e) {
-                            throw new GoException(INVALID_REPOSITORY_URL, report);
-                        }
-                        if (!uri.isAbsolute()) {
-                            throw new GoException(RELATIVE_REPOSITORY_URL, report);
-                        }
-
-                        repositories.add(new Repository(split[1], uri));
-
-                        report.clear();
-                        break;
                     case '+':
                         if (split.length != 4) {
                             throw new GoException(INVALID_INCLUDE_LINE, report);
                         }
-                        includes.add(new Artifact(split[1], split[2], split[3]));
+                        transaction.include(new Artifact(split[1], split[2], split[3]));
                         break;
                     case '-':
                         if (split.length != 4) {
                             throw new GoException(INVALID_EXCLUDE_LINE, report);
                         }
-                        excludes.add(new Artifact(split[1], split[1], split[3]));
+                        transaction.exclude(new Artifact(split[1], split[1], split[3]));
                         break;
                     default:
                         throw new GoException(INVALID_ARTIFACTS_LINE_START, report);
@@ -119,10 +77,7 @@ public class Artifacts {
                     report.clear();
                 }
             }
-            if (!includes.isEmpty()) {
-                transactions.add(new Transaction(repositories, includes));
-            }
-            return transactions;
+            return transaction;
         } catch (IOException e) {
             throw new GoException(ARTIFACT_FILE_IO_EXCEPTION, e);
         }

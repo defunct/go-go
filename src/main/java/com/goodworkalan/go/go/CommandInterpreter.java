@@ -1,8 +1,10 @@
 package com.goodworkalan.go.go;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -22,8 +24,12 @@ public final class CommandInterpreter {
 
     private final Library library;
     
-    public CommandInterpreter(String artifactFile) {
-        TaskLoader tasks = new TaskLoader(artifactFile);
+    public CommandInterpreter(List<Transaction> transactions) {
+        this(transactions.toArray(new Transaction[transactions.size()]));
+    }
+ 
+    public CommandInterpreter(Transaction...transactions) {
+        TaskLoader tasks = new TaskLoader(transactions);
 
         this.commands = tasks.commands;
         this.responders = tasks.responders;
@@ -62,28 +68,38 @@ public final class CommandInterpreter {
         if (args.isEmpty()) {
             throw new GoException(0);
         }
-        String artifacts = null;
+        List<Transaction> transactions = new ArrayList<Transaction>();
         boolean debug = false;
-        for (;;) {
-            artifacts = args.removeFirst();
-            if (!artifacts.startsWith("--")) {
+        for (Iterator<String> each = args.iterator(); each.hasNext();) {
+            String argument = each.next();
+            if (argument.equals("--")) {
                 break;
-            }
-            if (artifacts.equals("--debug")) {
-                debug = true;
-            } else {
-                throw new GoException(0);
+            } else if (argument.startsWith("--go:")) {
+                if (argument.equals("--go:debug")) {
+                    debug = true;
+                } else if (argument.equals("--go:no-debug")) {
+                    debug = false;
+                } else if (argument.startsWith("--go:artifacts=")) {
+                    File artifacts = new File(argument.substring(argument.indexOf('=') + 1));
+                    if (artifacts.exists()) {
+                        transactions.add(Artifacts.read(artifacts));
+                    }
+                } else {
+                    throw new GoException(0);
+                }
+                each.remove();
             }
         }
-        CommandInterpreter ci = new CommandInterpreter(artifacts);
-        File file = new File(artifacts);
+        File artifacts = new File(args.removeFirst());
+        transactions.add(Artifacts.read(artifacts));
+        CommandInterpreter ci = new CommandInterpreter(transactions);
         try {
-            String name = file.getName().toLowerCase();
+            String name = artifacts.getName().toLowerCase();
             if (name.endsWith(".bat")) {
                 name = name.substring(0, name.length() - 4);
             }
-            ci.command(file.getName());
-            args.addFirst(file.getName());
+            ci.command(artifacts.getName());
+            args.addFirst(artifacts.getName());
         } catch (GoException e) {
         }
         if (debug) {

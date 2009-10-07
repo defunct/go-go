@@ -67,17 +67,17 @@ public class LibraryPath {
     }
     
     public LibraryPath extend(Collection<PathPart> parts) {
-        return extend(parts, Collections.emptySet(), new Catcher());
+        return extend(parts, Collections.emptySet());
     }
     
-    public LibraryPath extend(Collection<PathPart> parts, Set<Object> excludes, Catcher catcher) {
+    public LibraryPath extend(Collection<PathPart> parts, Set<Object> excludes) {
         Set<Object> subExcludes = new HashSet<Object>();
         subExcludes.add(this.excludes);
         subExcludes.add(excludes);
         Collection<PathPart> subParts = new ArrayList<PathPart>();
         subParts.addAll(this.parts);
         subParts.addAll(parts);
-        return library.resolve(subParts, subExcludes, catcher);
+        return library.resolve(subParts, subExcludes);
     }
     
     public Set<Object> getExcludes() {

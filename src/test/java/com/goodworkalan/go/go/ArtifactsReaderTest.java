@@ -5,7 +5,6 @@ import static org.testng.Assert.assertEquals;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
-import java.util.List;
 
 import org.testng.annotations.Test;
 
@@ -51,33 +50,6 @@ public class ArtifactsReaderTest {
     }
 
     @Test
-    public void invalidRepositoryLine() {
-        new GoExceptionCatcher(GoException.INVALID_REPOSITORY_LINE, new Runnable() {
-            public void run() {
-                Artifacts.read(new StringReader("?"));
-            }
-        }).run();
-    }
-    
-    @Test
-    public void invalidRepositoryURL() {
-        new GoExceptionCatcher(GoException.INVALID_REPOSITORY_URL, new Runnable() {
-            public void run() {
-                Artifacts.read(new StringReader("? maven ::"));
-            }
-        }).run();
-    }
-    
-    @Test
-    public void relativeRepositoryURL() {
-        new GoExceptionCatcher(GoException.RELATIVE_REPOSITORY_URL, new Runnable() {
-            public void run() {
-                Artifacts.read(new StringReader("? maven hello"));
-            }
-        }).run();
-    }
-
-    @Test
     public void invalidIncludeLine() {
         new GoExceptionCatcher(GoException.INVALID_INCLUDE_LINE, new Runnable() {
             public void run() {
@@ -111,24 +83,17 @@ public class ArtifactsReaderTest {
     }
     
     @Test
-    public void multipleTransactions() {
-        assertEquals(Artifacts.read(new File("src/test/resources/multiple_repositories.txt")).size(), 2);
-    }
-    
-    @Test
     public void excludesOnly() {
-        assertEquals(Artifacts.read(new StringReader("- com.goodworkalan go-go 1.2.8")).size(), 0);
+        assertEquals(Artifacts.read(new StringReader("- com.goodworkalan go-go 1.2.8")).getArtifacts().size(), 0);
     }
     
     @Test
     public void skipComment() {
-        List<Transaction> transactions = Artifacts.read(new StringReader("#"));
-        assertEquals(transactions.size(), 0);
+        assertEquals(Artifacts.read(new StringReader("#")).getArtifacts().size(), 0);
     }
     
     @Test
     public void skipBlankLines() {
-        List<Transaction> transactions = Artifacts.read(new StringReader("\n\n"));
-        assertEquals(transactions.size(), 0);
+        assertEquals(Artifacts.read(new StringReader("\n\n")).getArtifacts().size(), 0);
     }
 }

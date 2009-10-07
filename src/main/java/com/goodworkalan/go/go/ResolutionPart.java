@@ -6,7 +6,6 @@ import java.net.URL;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 public class ResolutionPart implements PathPart {
@@ -14,16 +13,13 @@ public class ResolutionPart implements PathPart {
     
     private final Set<Artifact> excludes;
     
-    private final List<Repository> repositories;
-    
-    public ResolutionPart(Artifact artifact, Set<Artifact> excludes, List<Repository> repositories) {
-        this.artifact = artifact;
-        this.excludes = excludes;
-        this.repositories = repositories;
-    }
-    
     public ResolutionPart(Artifact artifact) {
-        this(artifact, Collections.<Artifact>emptySet(), Collections.<Repository>emptyList());
+        this(artifact, Collections.<Artifact>emptySet());
+    }
+
+    public ResolutionPart(Artifact include, Set<Artifact> excludes) {
+        this.artifact = include;
+        this.excludes = excludes;
     }
     
     public File getFile() {
@@ -39,18 +35,17 @@ public class ResolutionPart implements PathPart {
     }
     
     public Collection<PathPart> expand(Library library, Collection<PathPart> additional) {
-        LibraryEntry entry = library.getEntry(artifact, repositories);
+        LibraryEntry entry = library.getEntry(artifact);
         if (entry == null) {
             throw new GoException(0);
         }
-        for (Transaction transaction : Artifacts.read(new File(entry.directory, entry.artifact.getPath("", "dep")))) {
-            for (Artifact include : transaction.includes) {
-                if (!excludes.contains(include)) {
-                    Set<Artifact> subExcludes = new HashSet<Artifact>();
-                    subExcludes.addAll(excludes);
-                    subExcludes.addAll(transaction.excludes);
-                    additional.add(new ResolutionPart(include, subExcludes, transaction.repositories));
-                }
+        Transaction transaction = Artifacts.read(new File(entry.directory, entry.artifact.getPath("", "dep")));
+        for (Artifact artifact : transaction.getArtifacts()) {
+            if (!excludes.contains(artifact)) {
+                Set<Artifact> subExcludes = new HashSet<Artifact>();
+                subExcludes.addAll(excludes);
+                subExcludes.addAll(transaction.getExcludes());
+                additional.add(new ResolutionPart(artifact, subExcludes));
             }
         }
         return Collections.<PathPart>singletonList(new ArtifactPart(entry.directory, entry.artifact));

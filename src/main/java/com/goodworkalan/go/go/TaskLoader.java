@@ -7,10 +7,11 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
@@ -55,14 +56,18 @@ final class TaskLoader {
      * @param artifactFile
      *            The artifact file.
      */
-    public TaskLoader(String artifactFile) {
+    public TaskLoader(Transaction...transactions) {
         seen.add("com.goodworkalan/go-go");
         seen.add("com.goodworkalan/reflective");
         seen.add("com.goodworkalan/cassandra");
         
         LibraryPath libraryPath = library.emptyPath(seen);
-        if (artifactFile != null) {
-            libraryPath = libraryPath.extend(Collections.<PathPart>singletonList(new ArtifactFilePart(new File(artifactFile))), seen, new Catcher());
+        if (transactions.length != 0) {
+            List<PathPart> parts = new ArrayList<PathPart>();
+            for (Transaction transaction : transactions) {
+                parts.add(new TransactionsPart(transaction));
+            }
+            libraryPath = libraryPath.extend(parts);
             Thread.currentThread().setContextClassLoader(libraryPath.getClassLoader(threadClassLoader));
         }
         try {

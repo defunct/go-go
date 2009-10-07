@@ -4,10 +4,8 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -21,9 +19,6 @@ import java.util.Set;
  * @author Alan Gutierrez
  */
 public class Library {
-    /** Map of repostiory types to client download strategies. */
-    private final Map<String, RepositoryClient> repositoryClients = new HashMap<String, RepositoryClient>();
-
     /** The library directory. */
     private final File dir;
     
@@ -77,22 +72,16 @@ public class Library {
     }
     
     public LibraryPath resolve(Collection<PathPart> parts) {
-        return resolve(parts, new HashSet<Object>(), new Catcher());
+        return resolve(parts, new HashSet<Object>());
     }
     
-    public LibraryPath resolve(Collection<PathPart> parts, Set<Object> exclude, Catcher catcher) {
+    public LibraryPath resolve(Collection<PathPart> parts, Set<Object> exclude) {
         Map<Object, PathPart> expanded = new LinkedHashMap<Object, PathPart>();
         Collection<PathPart> current = parts;
         Collection<PathPart> next = new ArrayList<PathPart>();
         while (!current.isEmpty()) {
             for (PathPart part : current) {
-                Collection<PathPart> expansions;
-                try {
-                    expansions = part.expand(this, next);
-                } catch (GoException e) {
-                    catcher.examine(e);
-                    continue;
-                }
+                Collection<PathPart> expansions = part.expand(this, next);
                 for (PathPart expansion : expansions) {
                     Object key = expansion.getKey();
                     if (!(exclude.contains(key) || expanded.containsKey(key))) {
@@ -106,21 +95,8 @@ public class Library {
         return new LibraryPath(this, expanded.values(), new HashSet<Object>(exclude));
     }
     
-    public LibraryEntry getEntry(Artifact artifact, List<Repository> repositories) {
+    public LibraryEntry getEntry(Artifact artifact) {
         File deps = new  File(dir, artifact.getPath("", "dep"));
-        if (!deps.exists()) {
-            for (Repository repository : repositories) {
-                RepositoryClient client = repositoryClients.get(repository.type);
-                if (client != null) {
-                    if (!deps.exists()) {
-                        client.fetchDependencies(repository.uri, this, artifact);
-                    }
-                    if (!(new File(dir, artifact.getPath("", "jar"))).exists()) {
-                        client.fetch(repository.uri, this, artifact, "", "jar");
-                    }
-                }
-            }
-        }
         if (deps.exists()) {
             return new LibraryEntry(dir, artifact);
         }

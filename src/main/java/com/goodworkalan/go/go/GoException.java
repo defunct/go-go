@@ -72,20 +72,11 @@ public class GoException extends CassandraException {
     /** A line in an artifact file begins with an invalid character. */
     public final static int INVALID_ARTIFACTS_LINE_START = 301;
 
-    /** Invalid repository specification line. */
-    public final static int INVALID_REPOSITORY_LINE = 302;
-
-    /** Invalid repository URL in repository specification line. */
-    public final static int INVALID_REPOSITORY_URL = 304;
-
     /** Cannot find repository constructor. */
     public final static int REPOSITORY_HAS_NO_URI_CONSTRUCTOR = 305;
 
     /** Cannot construct repository. */
     public final static int UNABLE_TO_CONSTRUCT_REPOSITORY = 306;
-
-    /** A repository URL cannot be relative. */
-    public final static int RELATIVE_REPOSITORY_URL = 307;
 
     /** Invalid artifact include specification line. */
     public final static int INVALID_INCLUDE_LINE = 308;
