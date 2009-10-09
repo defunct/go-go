@@ -39,7 +39,7 @@ public class ResolutionPart implements PathPart {
         if (entry == null) {
             throw new GoException(0);
         }
-        Transaction transaction = Artifacts.read(new File(entry.directory, entry.artifact.getPath("", "dep")));
+        Transaction transaction = Artifacts.read(new File(entry.getDirectory(), entry.getArtifact().getPath("", "dep")));
         for (Artifact artifact : transaction.getArtifacts()) {
             if (!excludes.contains(artifact)) {
                 Set<Artifact> subExcludes = new HashSet<Artifact>();
@@ -48,7 +48,7 @@ public class ResolutionPart implements PathPart {
                 additional.add(new ResolutionPart(artifact, subExcludes));
             }
         }
-        return Collections.<PathPart>singletonList(new ArtifactPart(entry.directory, entry.artifact));
+        return Collections.<PathPart>singletonList(new ArtifactPart(entry.getDirectory(), entry.getArtifact()));
     }
     
     public Object getKey() {
