@@ -103,12 +103,12 @@ public final class CommandInterpreter {
                 if (argument.length == 1) {
                     throw new GoException(0);
                 }
-                if (arguments[1].equals("debug")) {
+                if (argument[1].equals("debug")) {
                     debug = true;
-                } else if (arguments[1].equals("no-debug")) {
+                } else if (argument[1].equals("no-debug")) {
                     debug = false;
-                } else if (arguments[1].equals("artifacts")) {
-                    File additional = new File(arguments[2]);
+                } else if (argument[1].equals("artifacts")) {
+                    File additional = new File(argument[2]);
                     if (additional.exists()) {
                         transactions.add(Artifacts.read(additional));
                     }
