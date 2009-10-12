@@ -1,5 +1,6 @@
 package com.goodworkalan.go.go;
-import static org.testng.Assert.*;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.fail;
 public class GoExceptionCatcher {
     private final int code;
     private final Runnable runnable;

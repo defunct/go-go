@@ -28,17 +28,17 @@
         <dependency>
             <groupId>com.goodworkalan</groupId>
             <artifactId>cassandra</artifactId>
-            <version>0.7${version.suffix}</version>
+            <version>0.7</version>
         </dependency>
         <dependency>
             <groupId>com.goodworkalan</groupId>
             <artifactId>glob</artifactId>
-            <version>0.1${version.suffix}</version>
+            <version>0.1</version>
         </dependency>
         <dependency>
             <groupId>com.goodworkalan</groupId>
             <artifactId>reflective</artifactId>
-            <version>0.1${version.suffix}</version>
+            <version>0.1</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>

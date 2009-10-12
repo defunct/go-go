@@ -22,8 +22,7 @@ public class Environment {
     public final Executor executor;
 
     /** The command part for the current task. */
-    // FIXME Rename part.
-    public final CommandPart commandPart;
+    public final CommandPart part;
     
     /**
      * Create a new environment.
@@ -43,7 +42,7 @@ public class Environment {
         this.in = in;
         this.err = err;
         this.out = out;
-        this.commandPart = commandPart;
+        this.part = commandPart;
         this.executor = executor;
     }
 }

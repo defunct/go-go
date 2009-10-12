@@ -12,7 +12,6 @@ import java.util.List;
  *
  * @author Alan Gutierrez
  */
-// FIXME Create an include structure that has a list of excludes.
 public class Artifact {
     /** The artifact group. */
     private final String group;
@@ -125,15 +124,14 @@ public class Artifact {
     }
 
     /**
-     * Get the artifact file name. The artifact file name is the concatenation
-     * of the artifact name and the artifact version separated by a hyphen. The
-     * suffix provided is catenated after the version spearated by a hyphen.
+     * Create the file name for the artifact file with the given suffix and the
+     * given file extension. The file name takes the form of following the
+     * pattern where the dots in the group are replaced with file part
+     * separators.
      * 
-     * @param suffix
-     *            A suffix to apply or an empty string.
-     * @param extension
-     *            The file extension to use.
-     * @return The file name for this artifact.
+     * <code><pre>name-version-suffix.extension</code></pre>
+     * 
+     * @return The relative path into a repository for the artifact file.
      */
     public String getFileName(String suffix, String extension) {
         StringBuilder file = new StringBuilder();
@@ -142,11 +140,29 @@ public class Artifact {
             .append(".").append(extension);
         return file.toString();
     }
+
     /**
-     * Create the path in the repository where the artifact can be found.
+     * Create the file name for the artifact file with the given file extension.
+     * The file name takes the form of following the pattern where the dots in
+     * the group are replaced with file part separators.
      * 
-     * @return The file path of the artifacts.
-     * FIXME One argument convenience method.
+     * <code><pre>name-version.extension</code></pre>
+     * 
+     * @return The relative path into a repository for the artifact file.
+     */
+    public String getFileName(String extension) {
+        return getFileName("", extension);
+    }
+
+    /**
+     * Create the relative path into a repository for the artifact file with the
+     * given suffix and the given file extension. The file name takes the form
+     * of following the pattern where the dots in the group are replaced with
+     * file part separators.
+     * 
+     * <code><pre>group/name/version/name-version-suffix.extension</code></pre>
+     * 
+     * @return The relative path into a repository for the artifact file.
      */
     public String getPath(String suffix, String extension) {
         StringBuilder file = new StringBuilder();
@@ -158,6 +174,20 @@ public class Artifact {
                     .append(suffix.length() == 0 ? "" : "-").append(suffix)
                     .append(".").append(extension);
         return file.toString();
+    }
+
+    /**
+     * Create the relative path into a repository for the artifact file with the
+     * given file extension. The file name takes the form of following the
+     * pattern where the dots in the group are replaced with file part
+     * separators.
+     * 
+     * <code><pre>group/name/version/name-version.extension</code></pre>
+     * 
+     * @return The relative path into a repository for the artifact file.
+     */
+    public String getPath(String extension) {
+        return getPath("", extension);
     }
     
     public String getDirectoryPath() {
