@@ -45,7 +45,7 @@ public class Artifacts {
             while ((line = lines.readLine()) != null) {
                 lineNumber++;
                 line = line.trim();
-                if (!(line.startsWith("#") || line.equals(""))) {
+                if (!(line.startsWith("#") || line.startsWith("@") || line.equals(""))) {
                     String[] split = line.split("\\s+");
 
                     report

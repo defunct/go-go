@@ -1,6 +1,8 @@
 package com.goodworkalan.go.go;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -63,6 +65,7 @@ public final class CommandInterpreter {
         return new CommandPart(this, responder, null).extend(arguments, 1);
     }
 
+    // FIXME Don't throw Exception.
     public static void main(String...arguments) throws Exception {
         LinkedList<String> args = new LinkedList<String>(Arrays.asList(arguments));
         if (args.isEmpty()) {
@@ -91,6 +94,30 @@ public final class CommandInterpreter {
             }
         }
         File artifacts = new File(args.removeFirst());
+        BufferedReader configuration = new BufferedReader(new FileReader(artifacts));
+        String line;
+        while ((line = configuration.readLine()) != null) {
+            line = line.trim();
+            if (line.startsWith("@")) {
+                String[] argument = line.split("\\s+", 3);
+                if (argument.length == 1) {
+                    throw new GoException(0);
+                }
+                if (arguments[1].equals("debug")) {
+                    debug = true;
+                } else if (arguments[1].equals("no-debug")) {
+                    debug = false;
+                } else if (arguments[1].equals("artifacts")) {
+                    File additional = new File(arguments[2]);
+                    if (additional.exists()) {
+                        transactions.add(Artifacts.read(additional));
+                    }
+                } else {
+                    throw new GoException(0);
+                }
+            }
+        }
+        configuration.close();
         transactions.add(Artifacts.read(artifacts));
         CommandInterpreter ci = new CommandInterpreter(transactions);
         try {
