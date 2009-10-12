@@ -24,8 +24,8 @@ separator=
 
 for file in \
     com/goodworkalan/go-go/0.1/go-go-0.1.jar \
-    com/goodworkalan/cassandra/0.7-SNAPSHOT/cassandra-0.7-SNAPSHOT.jar \
-    com/goodworkalan/reflective/0.1-SNAPSHOT/reflective-0.1-SNAPSHOT.jar
+    com/goodworkalan/cassandra/0.7/cassandra-0.7.jar \
+    com/goodworkalan/reflective/0.1/reflective-0.1.jar
 do
     for part in `echo $GO_PATH | sed "s/:/ /g"`
     do
