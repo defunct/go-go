@@ -233,11 +233,7 @@ public class Artifact {
         StringBuilder line = new StringBuilder();
         line.append(prefix);
         line.append(" ");
-        line.append(group);
-        line.append(" ");
-        line.append(name);
-        line.append(" ");
-        line.append(version);
+        line.append(toString());
         line.append("\n");
         return line.toString();
     }

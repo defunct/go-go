@@ -90,6 +90,9 @@ public class GoException extends CassandraException {
     /** An I/O exception was thrown while reading an artifact file. */
     public final static int ARTIFACT_FILE_IO_EXCEPTION = 311;
     
+    /** An I/O exception was thrown while reading an artifact file. */
+    public final static int ARTIFACT_FILE_MISPLACED_EXCLUDE = 312;
+    
     /** A repository type is missing an implementation. */
     public final static int MISSING_REPOSITORY_IMPLEMENTATION = 321;
 

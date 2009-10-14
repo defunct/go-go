@@ -1,46 +1,76 @@
 package com.goodworkalan.go.go;
 
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
+/**
+ * An artifact include structure that groups the artifact, its excluded
+ * dependencies and whether or not it is optional. 
+ *  
+ * @author Alan Gutierrez
+ */
+public class Include {
+    /** The artifact to include. */
+    private final Artifact artifact;
+    
+    /** The artifact dependencies to exclude. */
+    private final Set<Artifact> excludes;
+    
+    /** Whether or not the include is optional. */
+    private final boolean optional;
 
-public class Include implements Bundle {    
-    private final Map<List<String>, Artifact> includes = new LinkedHashMap<List<String>, Artifact>();
-    
-    private final Set<Artifact> excludes = new HashSet<Artifact>();;
-    
-    public Include() {
+    /**
+     * Create an include structure.
+     * 
+     * @param optional
+     *            Whether or not the include is optional.
+     * @param artifact
+     *            The artifact to include.
+     * @param excludes
+     *            The artifact dependencies to exclude.
+     */
+    public Include(boolean optional, Artifact artifact, Artifact...excludes) {
+        this.optional = optional;
+        this.artifact = artifact;
+        this.excludes = new HashSet<Artifact>(Arrays.asList(excludes));
     }
     
-    public Collection<Artifact> getArtifacts() {
-        return includes.values();
+    public Include(boolean optional, Artifact artifact, List<Artifact> excludes) {
+        this(optional, artifact, excludes.toArray(new Artifact[excludes.size()]));
+    }
+
+    /**
+     * Get whether or not the include is optional.
+     * 
+     * @return True if the include is optional.
+     */
+    public boolean isOptional() {
+        return optional;
     }
     
-    public void include(Artifact artifact) {
-        List<String> key = artifact.getKey().subList(0, 2);
-        if (!includes.containsKey(key)) {
-            includes.put(key, artifact);
-        }
+    /**
+     * Get the artifact dependencies to exclude.
+     * 
+     * @return The artifact dependencies to exclude.
+     */
+    public Artifact getArtifact() {
+        return artifact;
     }
-    
+
+    /**
+     * Get the artifact dependencies to exclude.
+     * 
+     * @return The artifact dependencies to exclude.
+     */
     public Set<Artifact> getExcludes() {
         return excludes;
     }
-    
-    public void exclude(Artifact exclude) {
-        excludes.add(exclude);
-    }
 
     public Collection<PathPart> getPathParts() {
-        Collection<PathPart> pathParts = new ArrayList<PathPart>();
-        for (Artifact include : includes.values()) {
-            pathParts.add(new ResolutionPart(include, excludes));
-        }
-        return pathParts;
+        return Collections.<PathPart>singletonList(new ResolutionPart(artifact, excludes));
     }
 }

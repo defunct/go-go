@@ -71,7 +71,7 @@ public final class CommandInterpreter {
         if (args.isEmpty()) {
             throw new GoException(0);
         }
-        List<Include> transactions = new ArrayList<Include>();
+        List<Include> includes = new ArrayList<Include>();
         boolean debug = false;
         for (Iterator<String> each = args.iterator(); each.hasNext();) {
             String argument = each.next();
@@ -85,7 +85,7 @@ public final class CommandInterpreter {
                 } else if (argument.startsWith("--go:artifacts=")) {
                     File artifacts = new File(argument.substring(argument.indexOf('=') + 1));
                     if (artifacts.exists()) {
-                        transactions.add(Artifacts.read(artifacts));
+                        includes.addAll(Artifacts.read(artifacts));
                     }
                 } else {
                     throw new GoException(0);
@@ -110,7 +110,8 @@ public final class CommandInterpreter {
                 } else if (argument[1].equals("artifacts")) {
                     File additional = new File(argument[2]);
                     if (additional.exists()) {
-                        transactions.add(Artifacts.read(additional));
+                        System.out.println("Called!");
+                        includes.addAll(Artifacts.read(additional));
                     }
                 } else {
                     throw new GoException(0);
@@ -118,8 +119,8 @@ public final class CommandInterpreter {
             }
         }
         configuration.close();
-        transactions.add(Artifacts.read(artifacts));
-        CommandInterpreter ci = new CommandInterpreter(transactions);
+        includes.addAll(Artifacts.read(artifacts));
+        CommandInterpreter ci = new CommandInterpreter(includes);
         try {
             String name = artifacts.getName().toLowerCase();
             if (name.endsWith(".bat")) {

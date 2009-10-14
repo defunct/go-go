@@ -84,16 +84,20 @@ public class ArtifactsReaderTest {
     
     @Test
     public void excludesOnly() {
-        assertEquals(Artifacts.read(new StringReader("- com.goodworkalan go-go 1.2.8")).getArtifacts().size(), 0);
+        new GoExceptionCatcher(GoException.ARTIFACT_FILE_MISPLACED_EXCLUDE, new Runnable() {
+            public void run() {
+                Artifacts.read(new StringReader("- com.goodworkalan/go-go/1.2.8"));
+            }
+        }).run();
     }
     
     @Test
     public void skipComment() {
-        assertEquals(Artifacts.read(new StringReader("#")).getArtifacts().size(), 0);
+        assertEquals(Artifacts.read(new StringReader("#")).size(), 0);
     }
     
     @Test
     public void skipBlankLines() {
-        assertEquals(Artifacts.read(new StringReader("\n\n")).getArtifacts().size(), 0);
+        assertEquals(Artifacts.read(new StringReader("\n\n")).size(), 0);
     }
 }
