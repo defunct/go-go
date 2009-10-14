@@ -14,7 +14,7 @@ then
     . "$dir/gorc"
 fi
 
-if [ $GO_PATH"x" == "x" ]
+if [ -z $GO_PATH ]
 then
     GO_PATH=$HOME/.m2/repository
 fi
