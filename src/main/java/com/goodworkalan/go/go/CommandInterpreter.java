@@ -26,11 +26,11 @@ public final class CommandInterpreter {
 
     private final Library library;
     
-    public CommandInterpreter(List<Transaction> transactions) {
-        this(transactions.toArray(new Transaction[transactions.size()]));
+    public CommandInterpreter(List<Include> transactions) {
+        this(transactions.toArray(new Include[transactions.size()]));
     }
  
-    public CommandInterpreter(Transaction...transactions) {
+    public CommandInterpreter(Include...transactions) {
         TaskLoader tasks = new TaskLoader(transactions);
 
         this.commands = tasks.commands;
@@ -71,7 +71,7 @@ public final class CommandInterpreter {
         if (args.isEmpty()) {
             throw new GoException(0);
         }
-        List<Transaction> transactions = new ArrayList<Transaction>();
+        List<Include> transactions = new ArrayList<Include>();
         boolean debug = false;
         for (Iterator<String> each = args.iterator(); each.hasNext();) {
             String argument = each.next();

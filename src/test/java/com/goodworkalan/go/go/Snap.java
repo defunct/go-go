@@ -11,8 +11,4 @@ public class Snap extends Task {
     public boolean isVerbose() {
         return verbose;
     }
-    
-    public Snap() {
-        // TODO Auto-generated constructor stub
-    }
 }

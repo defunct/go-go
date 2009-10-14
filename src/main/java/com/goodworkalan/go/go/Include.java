@@ -9,12 +9,12 @@ import java.util.Map;
 import java.util.Set;
 
 
-public class Transaction implements Bundle {    
+public class Include implements Bundle {    
     private final Map<List<String>, Artifact> includes = new LinkedHashMap<List<String>, Artifact>();
     
     private final Set<Artifact> excludes = new HashSet<Artifact>();;
     
-    public Transaction() {
+    public Include() {
     }
     
     public Collection<Artifact> getArtifacts() {

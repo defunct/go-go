@@ -39,7 +39,7 @@ public class ResolutionPart implements PathPart {
         if (entry == null) {
             throw new GoException(0);
         }
-        Transaction transaction = Artifacts.read(new File(entry.getDirectory(), entry.getArtifact().getPath("", "dep")));
+        Include transaction = Artifacts.read(new File(entry.getDirectory(), entry.getArtifact().getPath("", "dep")));
         for (Artifact artifact : transaction.getArtifacts()) {
             if (!excludes.contains(artifact)) {
                 Set<Artifact> subExcludes = new HashSet<Artifact>();

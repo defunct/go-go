@@ -56,7 +56,7 @@ final class TaskLoader {
      * @param artifactFile
      *            The artifact file.
      */
-    public TaskLoader(Transaction...transactions) {
+    public TaskLoader(Include...transactions) {
         seen.add("com.goodworkalan/go-go");
         seen.add("com.goodworkalan/reflective");
         seen.add("com.goodworkalan/cassandra");
@@ -64,7 +64,7 @@ final class TaskLoader {
         LibraryPath libraryPath = library.emptyPath(seen);
         if (transactions.length != 0) {
             List<PathPart> parts = new ArrayList<PathPart>();
-            for (Transaction transaction : transactions) {
+            for (Include transaction : transactions) {
                 parts.add(new TransactionsPart(transaction));
             }
             libraryPath = libraryPath.extend(parts);
@@ -128,7 +128,7 @@ final class TaskLoader {
                                 } catch (Exception e) {
                                     throw new GoException(0, e);
                                 }
-                                Transaction transaction = new Transaction();
+                                Include transaction = new Include();
                                 dependencies.configure(transaction);
                                 libraryPath = libraryPath.extend(new TransactionsPart(transaction));
                                 Thread.currentThread().setContextClassLoader(libraryPath.getClassLoader(threadClassLoader));

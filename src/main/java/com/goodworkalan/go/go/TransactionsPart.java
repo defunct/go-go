@@ -4,9 +4,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 public class TransactionsPart extends ExpandingPathPart {
-    private final Transaction transaction;
+    private final Include transaction;
     
-    public TransactionsPart(Transaction transaction) {
+    public TransactionsPart(Include transaction) {
         this.transaction = transaction;
     }
     

@@ -22,7 +22,7 @@ import com.goodworkalan.cassandra.Report;
  * @author Alan Gutierrez
  */
 public class Artifacts {
-    public static Transaction read(File file) {
+    public static Include read(File file) {
         try {
             try {
                 return read(new FileReader(file));
@@ -35,9 +35,9 @@ public class Artifacts {
         }
     }
      
-    public static Transaction read(Reader reader) {
+    public static Include read(Reader reader) {
         try {
-            Transaction transaction = new Transaction();
+            Include transaction = new Include();
             Report report = new Report();
             BufferedReader lines = new BufferedReader(reader);
             int lineNumber = 0;
