@@ -122,6 +122,18 @@ public class Artifact {
     public String getVersion() {
         return version;
     }
+    
+    private String suffix(String suffix) {
+        String[] split = suffix.split("/");
+        switch (split.length) {
+        case 1:
+            return "." + suffix;
+        case 2:
+            return "-" + split[0] + "." + split[1];
+        default:
+            throw new IllegalArgumentException();
+        }
+    }
 
     /**
      * Create the file name for the artifact file with the given suffix and the
@@ -133,25 +145,10 @@ public class Artifact {
      * 
      * @return The relative path into a repository for the artifact file.
      */
-    public String getFileName(String suffix, String extension) {
+    public String getFileName(String suffix) {
         StringBuilder file = new StringBuilder();
-        file.append(name).append("-").append(version)
-            .append(suffix.length() == 0 ? "" : "-").append(suffix)
-            .append(".").append(extension);
+        file.append(name).append("-").append(version).append(suffix(suffix));
         return file.toString();
-    }
-
-    /**
-     * Create the file name for the artifact file with the given file extension.
-     * The file name takes the form of following the pattern where the dots in
-     * the group are replaced with file part separators.
-     * 
-     * <code><pre>name-version.extension</code></pre>
-     * 
-     * @return The relative path into a repository for the artifact file.
-     */
-    public String getFileName(String extension) {
-        return getFileName("", extension);
     }
 
     /**
@@ -164,30 +161,14 @@ public class Artifact {
      * 
      * @return The relative path into a repository for the artifact file.
      */
-    public String getPath(String suffix, String extension) {
+    public String getPath(String suffix) {
         StringBuilder file = new StringBuilder();
         file.append(group.replace(".", "/"))
                 .append("/").append(name)
                 .append("/").append(version)
                 .append("/")
-                    .append(name).append("-").append(version)
-                    .append(suffix.length() == 0 ? "" : "-").append(suffix)
-                    .append(".").append(extension);
+                    .append(name).append("-").append(version).append(suffix(suffix));
         return file.toString();
-    }
-
-    /**
-     * Create the relative path into a repository for the artifact file with the
-     * given file extension. The file name takes the form of following the
-     * pattern where the dots in the group are replaced with file part
-     * separators.
-     * 
-     * <code><pre>group/name/version/name-version.extension</code></pre>
-     * 
-     * @return The relative path into a repository for the artifact file.
-     */
-    public String getPath(String extension) {
-        return getPath("", extension);
     }
     
     public String getDirectoryPath() {

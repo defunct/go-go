@@ -26,13 +26,20 @@ public final class CommandInterpreter {
 
     private final Library library;
     
+    private final ErrorCatcher catcher;
+    
     public CommandInterpreter(List<Include> transactions) {
         this(transactions.toArray(new Include[transactions.size()]));
     }
- 
+    
     public CommandInterpreter(Include...transactions) {
+        this(new ErrorCatcher(), transactions);
+    }
+ 
+    public CommandInterpreter(ErrorCatcher catcher, Include...transactions) {
         TaskLoader tasks = new TaskLoader(transactions);
 
+        this.catcher = catcher;
         this.commands = tasks.commands;
         this.responders = tasks.responders;
         this.library = tasks.library;
@@ -46,12 +53,59 @@ public final class CommandInterpreter {
         return library;
     }
 
-    public void execute(List<String> arguments) {
-        execute(arguments.toArray(new String[arguments.size()]));
+    /**
+     * Execute the given arguments with the command interpreter.
+     * 
+     * @param arguments
+     *            The arguments to execute.
+     * @return The exit code.
+     */
+    public int execute(String...arguments) {
+        return execute(new InputOutput(), arguments);
+    }
+
+    /**
+     * Execute the given arguments with the command interpreter.
+     * 
+     * @param arguments
+     *            The arguments to execute.
+     * @return The exit code.
+     */
+    public int execute(List<String> arguments) {
+        return execute(new InputOutput(), arguments);
+    }
+
+    /**
+     * Execute the given arguments with the command interpreter using the given
+     * input/output streams.
+     * 
+     * @param io
+     *            The input/output streams.
+     * @param arguments
+     *            The arguments to execute.
+     * @return The exit code.
+     */
+    public int execute(InputOutput io, List<String> arguments) {
+        return execute(io, arguments.toArray(new String[arguments.size()]));
     }
     
-    public void execute(String...arguments) {
-        command(arguments).execute();
+    /**
+     * Execute the given arguments with the command interpreter using the given
+     * input/output streams.
+     * 
+     * @param io
+     *            The input/output streams.
+     * @param arguments
+     *            The arguments to execute.
+     * @return The exit code.
+     */
+    public int execute(InputOutput io, String...arguments) {
+        try {
+            command(arguments).execute();
+        } catch (GoError e) {
+            return catcher.inspect(e, System.err, System.out);
+        }
+        return 0;
     }
     
     public CommandPart command(String...arguments) {
@@ -133,11 +187,12 @@ public final class CommandInterpreter {
         if (debug) {
             System.out.println(args);
         }
-        ci.execute(args);
+        int code = ci.execute(new InputOutput(), args);
         if (debug) {
             System.out.printf("%.2fM/%.2fM\n", 
                     (double) Runtime.getRuntime().totalMemory() /  1024 / 1024,
                     (double) Runtime.getRuntime().freeMemory() / 1024 / 1024);
         }
+        System.exit(code);
     }
 }

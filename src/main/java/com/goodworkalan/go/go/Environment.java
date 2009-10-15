@@ -17,6 +17,9 @@ public class Environment {
 
     /** The output stream. */
     public final PrintStream out;
+    
+    /** The input/output streams. */
+    public final InputOutput io;
 
     /** The current execution. */
     public final Executor executor;
@@ -39,6 +42,7 @@ public class Environment {
      *            The execution state.
      */
     public Environment(InputStream in, PrintStream err, PrintStream out, CommandPart commandPart, Executor executor) {
+        this.io = new InputOutput(in, out, err);
         this.in = in;
         this.err = err;
         this.out = out;

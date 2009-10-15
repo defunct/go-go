@@ -1,5 +1,6 @@
 package com.goodworkalan.go.go;
 
+import static com.goodworkalan.go.go.GoException.*;
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -40,7 +41,7 @@ public class ResolutionPart implements PathPart {
     public Collection<PathPart> expand(Library library, Collection<PathPart> additional) {
         LibraryEntry entry = library.getEntry(artifact);
         if (entry == null) {
-            throw new GoException(0);
+            throw new GoException(UNRESOLVED_ARTIFACT).put("artifact", artifact);
         }
         for (Include include : Artifacts.read(new File(entry.getDirectory(), entry.getArtifact().getPath("dep")))) {
             if (!excludes.contains(include.getArtifact())) {

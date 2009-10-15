@@ -32,37 +32,6 @@ public class Library {
         this.dir = dir;
     }
 
-    /**
-     * Determine whether the library contains the given artifact.
-     * 
-     * @param artifact
-     *            The artifact.
-     * @param suffix
-     *            The artifact file suffix.
-     * @param extension
-     *            The artifact file extension.
-     * @return True if the library contains the given artifact.
-     */
-    public boolean contains(Artifact artifact, String suffix, String extension) {
-        return getFile(artifact, suffix, extension).exists();
-    }
-
-    /**
-     * Get the file for the given artifact file with the given suffix and given
-     * extension.
-     * 
-     * @param artifact
-     *            The artifact.
-     * @param suffix
-     *            The artifact file suffix.
-     * @param extension
-     *            The artifact file extension.
-     * @return The file.
-     */
-    public File getFile(Artifact artifact, String suffix, String extension) {
-        return new File(dir, artifact.getPath(suffix, extension));
-    }
-    
     public LibraryPath emptyPath(Set<Object> excludes) {
         return new LibraryPath(this, Collections.<PathPart>emptyList(), excludes);
     }
@@ -96,7 +65,7 @@ public class Library {
     }
     
     public LibraryEntry getEntry(Artifact artifact) {
-        File deps = new  File(dir, artifact.getPath("", "dep"));
+        File deps = new  File(dir, artifact.getPath("dep"));
         if (deps.exists()) {
             return new LibraryEntry(dir, artifact);
         }

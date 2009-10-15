@@ -16,7 +16,7 @@ public class ArtifactPart implements PathPart {
     }
     
     public File getFile() {
-        return new File(libraryDirectory, artifact.getPath("", "jar"));
+        return new File(libraryDirectory, artifact.getPath("jar"));
     }
     
     public URL getURL() throws MalformedURLException {

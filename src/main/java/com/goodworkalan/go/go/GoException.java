@@ -125,4 +125,7 @@ public class GoException extends CassandraException {
     
     /** Invocation of string constructor rejected the string data. */
     public final static int STRING_CONVERSION_ERROR = 604;
+    
+    /** Unable to resolve artifact. */
+    public final static int UNRESOLVED_ARTIFACT = 701;
 }
