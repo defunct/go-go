@@ -153,7 +153,6 @@ public final class CommandInterpreter {
                 } else if (argument[1].equals("artifacts")) {
                     File additional = new File(argument[2]);
                     if (additional.exists()) {
-                        System.out.println("Called!");
                         includes.addAll(Artifacts.read(additional));
                     }
                 } else {
