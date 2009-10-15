@@ -11,8 +11,11 @@ class Execution {
     
     private final CommandPart commandPart;
     
-    public Execution(Executor executor, CommandPart commandPart) {
+    private final InputOutput io;
+    
+    public Execution(Executor executor, InputOutput io, CommandPart commandPart) {
         this.commandPart = commandPart;
+        this.io = io;
         this.executor = executor;
     }
 
@@ -72,7 +75,7 @@ class Execution {
                     }
                 }
             }
-            Environment env = new Environment(System.in, System.err, System.out, part, executor);
+            Environment env = new Environment(io, part, executor);
             task.execute(env);
             executor.outputCache.put(key, new HashMap<Class<? extends Output>, Output>());
             for (Class<? extends Output> output : responder.getOutputs()) {

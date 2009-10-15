@@ -9,10 +9,10 @@ public class Hello extends Task {
     /**
      * Print "Hello, World!"
      * 
-     * @param environment The execution environment.
+     * @param env The execution environment.
      */
     @Override
-    public void execute(Environment environment) {
-        environment.out.println("Hello, World!");
+    public void execute(Environment env) {
+        env.io.out.println("Hello, World!");
     }
 }

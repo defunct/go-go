@@ -101,9 +101,9 @@ public final class CommandInterpreter {
      */
     public int execute(InputOutput io, String...arguments) {
         try {
-            command(arguments).execute();
+            command(arguments).execute(io);
         } catch (GoError e) {
-            return catcher.inspect(e, System.err, System.out);
+            return catcher.inspect(e, io.err, io.out);
         }
         return 0;
     }

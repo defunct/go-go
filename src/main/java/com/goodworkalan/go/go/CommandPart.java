@@ -281,9 +281,12 @@ public class CommandPart {
         return Collections.unmodifiableList(path);
     }
 
-
     public void execute() {
-        new Executor().execute(this);
+        execute(new InputOutput());
+    }
+
+    public void execute(InputOutput io) {
+        new Executor().execute(io, this);
     }
 
     public CommandKey getKey_() {

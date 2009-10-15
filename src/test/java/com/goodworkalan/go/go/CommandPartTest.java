@@ -4,6 +4,6 @@ public class CommandPartTest {
     public void commands() {
         CommandInterpreter ci = new CommandInterpreter();
         CommandPart hello = ci.command("hello");
-        hello.execute();
+        hello.execute(new InputOutput());
     }
 }
