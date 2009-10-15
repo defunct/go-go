@@ -65,17 +65,6 @@ public final class CommandInterpreter {
     }
 
     /**
-     * Execute the given arguments with the command interpreter.
-     * 
-     * @param arguments
-     *            The arguments to execute.
-     * @return The exit code.
-     */
-    public int execute(List<String> arguments) {
-        return execute(new InputOutput(), arguments);
-    }
-
-    /**
      * Execute the given arguments with the command interpreter using the given
      * input/output streams.
      * 

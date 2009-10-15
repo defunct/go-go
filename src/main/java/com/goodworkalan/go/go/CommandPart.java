@@ -281,10 +281,6 @@ public class CommandPart {
         return Collections.unmodifiableList(path);
     }
 
-    public void execute() {
-        execute(new InputOutput());
-    }
-
     public void execute(InputOutput io) {
         new Executor().execute(io, this);
     }
