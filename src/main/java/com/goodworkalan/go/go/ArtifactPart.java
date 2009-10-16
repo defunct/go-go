@@ -20,7 +20,7 @@ public class ArtifactPart implements PathPart {
     }
     
     public URL getURL() throws MalformedURLException {
-        return new URL("jar:" + getFile().toURL().toExternalForm() + "!/");
+        return new URL("jar:" + getFile().toURI().toURL().toExternalForm() + "!/");
     }
     
     public Artifact getArtifact() {

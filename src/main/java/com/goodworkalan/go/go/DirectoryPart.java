@@ -40,7 +40,7 @@ public class DirectoryPart implements PathPart {
      * @return The path part as a URL.
      */
     public URL getURL() throws MalformedURLException {
-        return dir.toURL();
+        return dir.toURI().toURL();
     }
     
     public Artifact getArtifact() {
