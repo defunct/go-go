@@ -2,9 +2,7 @@ package com.goodworkalan.go.go;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -38,9 +36,43 @@ public class Include {
         this.artifact = artifact;
         this.excludes = new HashSet<Artifact>(Arrays.asList(excludes));
     }
-    
-    public Include(boolean optional, Artifact artifact, List<Artifact> excludes) {
+
+    /**
+     * Create an include structure.
+     * 
+     * @param optional
+     *            Whether or not the include is optional.
+     * @param artifact
+     *            The artifact to include.
+     * @param excludes
+     *            The artifact dependencies to exclude.
+     */
+    public Include(boolean optional, Artifact artifact, Collection<Artifact> excludes) {
         this(optional, artifact, excludes.toArray(new Artifact[excludes.size()]));
+    }
+    
+    /**
+     * Create an include structure that is not optional.
+     * 
+     * @param artifact
+     *            The artifact to include.
+     * @param excludes
+     *            The artifact dependencies to exclude.
+     */
+    public Include(Artifact artifact, Artifact...excludes) {
+        this(false, artifact, excludes);
+    }
+
+    /**
+     * Create an include structure that is not optional.
+     * 
+     * @param artifact
+     *            The artifact to include.
+     * @param excludes
+     *            The artifact dependencies to exclude.
+     */
+    public Include(Artifact artifact, Collection<Artifact> excludes) {
+        this(false, artifact, excludes);
     }
 
     /**
@@ -68,9 +100,5 @@ public class Include {
      */
     public Set<Artifact> getExcludes() {
         return excludes;
-    }
-
-    public Collection<PathPart> getPathParts() {
-        return Collections.<PathPart>singletonList(new ResolutionPart(artifact, excludes));
     }
 }
