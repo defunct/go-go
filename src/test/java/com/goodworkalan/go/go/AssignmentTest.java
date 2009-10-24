@@ -27,7 +27,7 @@ public class AssignmentTest {
     }
     
     @Test
-    public void reflectionExcpetion() throws SecurityException, NoSuchMethodException {
+    public void reflectionExcpetion() throws SecurityException {
         for (final java.lang.reflect.Method method : Dubious.class.getDeclaredMethods()) {
             if (method.getName().equals("setPrivate")) {
                 new GoExceptionCatcher(GoException.ASSIGNMENT_FAILED, new Runnable() {

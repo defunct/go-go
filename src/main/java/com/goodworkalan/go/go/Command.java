@@ -12,6 +12,7 @@ import java.lang.annotation.Target;
  * 
  * @author Alan Gutierrez
  */
+//FIXME Maybe rename GoGoCommand, so you can reuse Command?
 @Documented
 @Target({ ElementType.TYPE })
 @Retention(RetentionPolicy.RUNTIME)

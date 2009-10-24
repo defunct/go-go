@@ -14,6 +14,7 @@ import java.lang.annotation.Target;
  * 
  * @author Alan Gutierrez
  */
+// FIXME Maybe rename GoGoArgument, so you can reuse Command?
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)

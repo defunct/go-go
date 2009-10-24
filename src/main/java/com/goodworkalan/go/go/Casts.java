@@ -43,6 +43,8 @@ class Casts {
             return Byte.class;
         } else if (short.class.equals(primitive)) {
             return Short.class;
+        } else if (char.class.equals(primitive)) {
+            return Character.class;
         } else if (int.class.equals(primitive)) {
             return Integer.class;
         } else if (long.class.equals(primitive)) {

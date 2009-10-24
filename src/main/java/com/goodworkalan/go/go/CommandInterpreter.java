@@ -130,6 +130,13 @@ public final class CommandInterpreter {
                     if (artifacts.exists()) {
                         includes.addAll(Artifacts.read(artifacts));
                     }
+                } else if (argument.startsWith("--go:define=")) {
+                    String[] definition = argument.substring(argument.indexOf('=') + 1).split(":", 2);
+                    if (definition.length != 2) {
+                        throw new GoError(0);
+                    }
+                    System.out.println(definition[0] + "=" + definition[1]);
+                    System.setProperty(definition[0], definition[1]);
                 } else {
                     throw new GoException(0);
                 }

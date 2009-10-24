@@ -44,6 +44,7 @@ public class Library {
         return resolve(parts, new HashSet<Object>());
     }
     
+    // FIXME Do not revisit prototypes?
     public LibraryPath resolve(Collection<PathPart> parts, Set<Object> exclude) {
         Map<Object, PathPart> expanded = new LinkedHashMap<Object, PathPart>();
         Collection<PathPart> current = parts;
