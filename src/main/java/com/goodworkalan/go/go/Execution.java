@@ -9,14 +9,15 @@ class Execution {
     
     private final Map<Class<? extends Task>, Map<Class<? extends Output>, Output>> outputs = new HashMap<Class<? extends Task>, Map<Class<? extends Output>,Output>>();
     
-    private final CommandPart commandPart;
+    private final CommandPart part;
     
-    private final InputOutput io;
-    
-    public Execution(Executor executor, InputOutput io, CommandPart commandPart) {
-        this.commandPart = commandPart;
-        this.io = io;
+    public Execution(Executor executor, CommandPart part) {
+        this.part = part;
         this.executor = executor;
+    }
+    
+    public <T extends Arguable> T getArguments(Class<T> argumentClass) {
+        return argumentClass.cast(getArguments(part.getCommandInterpreter(), part.getCommandPath(), argumentClass));
     }
 
     /**
@@ -25,42 +26,29 @@ class Execution {
      * @param taskClass
      *            A task to execute.
      */
-    public void execute(Class<? extends Task> taskClass) {
+    public void execute(InputOutput io, Class<? extends Task> taskClass) {
         // Short circuit this method if the given task has already been run.
         if (outputs.containsKey(taskClass)) {
             return;
         }
-        CommandInterpreter ci = commandPart.getCommandInterpreter();
+        CommandInterpreter ci = this.part.getCommandInterpreter();
         Responder responder = ci.responders.get(taskClass);
         if (responder == null) {
             throw new GoException(0);
         }
-        CommandPart part = commandPart.task(taskClass);
+        CommandPart part = this.part.task(taskClass);
         CommandKey key = part.getKey_();
         if (!executor.outputCache.containsKey(key)) {
             List<CommandPart> parts = part.getCommandPath();
             Task task = ci.taskFactory.newTask(taskClass);
             for (Class<? extends Arguable> argument : responder.getArguables()) {
-                Responder container = ci.responders.get(taskClass(argument.getDeclaringClass()));
                 // FIXME Assert that arguable is a static class.
-                Arguable arguable = ci.taskFactory.newArguable(argument);
-                int index = getDepth(container);
-                if (index < parts.size()) {
-                    for (Conversion conversion : parts.get(index).getConversions()) {
-                        String[] pair = conversion.getName().split(":");
-                        if (pair[0].equals(container.getName())) {
-                            Assignment assignment = container.getAssignments().get(pair[1]);
-                            if (assignment.getDeclaringClass().equals(argument)) {
-                                assignment.setValue(arguable, conversion.getValue());
-                            }
-                        }
-                    }
-                }
+                Arguable arguable = getArguments(ci, parts, argument);
                 responder.setArguable(task, argument, arguable);
             }
             for (Class<? extends Output> input : responder.getInputs()) {
                 Responder container = ci.responders.get(taskClass(input.getDeclaringClass()));
-                execute(container.getTaskClass());
+                execute(io, container.getTaskClass());
                 responder.setInput(task, input, outputs.get(container.getTaskClass()).get(input));
             }
             int index = getDepth(responder);
@@ -84,6 +72,26 @@ class Execution {
         }
         outputs.put(taskClass, new HashMap<Class<? extends Output>, Output>(executor.outputCache.get(key)));
     }
+
+    private Arguable getArguments(CommandInterpreter ci, List<CommandPart> parts, Class<? extends Arguable> argument) {
+        Arguable arguable = ci.taskFactory.newArguable(argument);
+        Responder container = ci.responders.get(taskClass(argument.getDeclaringClass()));
+        int index = getDepth(container);
+        if (index < parts.size()) {
+            for (Conversion conversion : parts.get(index).getConversions()) {
+                System.out.println("BLURDY: " + container.getName());
+                System.out.println(conversion.getName());
+                String[] pair = conversion.getName().split(":");
+                if (pair[0].equals(container.getName())) {
+                    Assignment assignment = container.getAssignments().get(pair[1]);
+                    if (assignment.getDeclaringClass().equals(argument)) {
+                        assignment.setValue(arguable, conversion.getValue());
+                    }
+                }
+            }
+        }
+        return arguable;
+    }
     
     @SuppressWarnings("unchecked")
     private Class<? extends Task> taskClass(Class taskClass) {
@@ -101,6 +109,6 @@ class Execution {
         if (parent == null) {
             return 0;
         }
-        return getDepth(commandPart.getCommandInterpreter().responders.get(parent)) + 1;
+        return getDepth(part.getCommandInterpreter().responders.get(parent)) + 1;
     }
 }

@@ -19,5 +19,7 @@ import java.lang.annotation.Target;
 public @interface Command {
     String name() default "";
     
+    boolean hidden() default false;
+    
     Class<? extends Task> parent() default Task.class;
 }

@@ -282,7 +282,7 @@ public class CommandPart {
     }
 
     public void execute(InputOutput io) {
-        new Executor().execute(io, this);
+        new Executor(this).execute(this, io);
     }
 
     public CommandKey getKey_() {
