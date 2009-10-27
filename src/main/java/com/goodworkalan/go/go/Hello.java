@@ -5,13 +5,12 @@ package com.goodworkalan.go.go;
  *
  * @author Alan Gutierrez
  */
-public class Hello extends Task {
+public class Hello implements Commandable {
     /**
      * Print "Hello, World!"
      * 
      * @param env The execution environment.
      */
-    @Override
     public void execute(Environment env) {
         env.io.out.println("Hello, World!");
     }

@@ -85,7 +85,7 @@ public class CommandPart {
         return Collections.unmodifiableList(arguments);
     }
     
-    public Class<? extends Task> getTaskClass() {
+    public Class<? extends Commandable> getTaskClass() {
         return responder.getTaskClass();
     }
     
@@ -101,7 +101,7 @@ public class CommandPart {
         return new CommandPart(commandInterpreter, child, this);
     }
     
-    public CommandPart command(Class<? extends Task> taskClass) {
+    public CommandPart command(Class<? extends Commandable> taskClass) {
         Responder child = commandInterpreter.responders.get(taskClass);
         if (!child.getParentTaskClass().equals(responder.getTaskClass())) {
             throw new GoException(0);
@@ -109,7 +109,7 @@ public class CommandPart {
         return new CommandPart(commandInterpreter, child, this);
     }
     
-    public CommandPart command(Class<? extends Task> taskClass, List<String> arguments) {
+    public CommandPart command(Class<? extends Commandable> taskClass, List<String> arguments) {
         return command(taskClass).arguments(arguments);
     }
     
@@ -182,7 +182,7 @@ public class CommandPart {
         return part;
     }
     
-    public CommandPart task(Class<? extends Task> taskClass) {
+    public CommandPart task(Class<? extends Commandable> taskClass) {
         if (taskClass.equals(responder.getTaskClass())) {
             return this;
         }
@@ -192,7 +192,7 @@ public class CommandPart {
         }
         CommandPart part = getRoot();
         List<CommandPart> parts = getCommandPath();
-        List<Class<? extends Task>> tasks = getTaskClassPath(responder);
+        List<Class<? extends Commandable>> tasks = getTaskClassPath(responder);
         int i = 0, stop = Math.min(tasks.size(), parts.size());
         for (; i < stop && tasks.get(i).equals(parts.get(i).getTaskClass()); i++);
         for (; i < stop; i++) {
@@ -216,7 +216,7 @@ public class CommandPart {
             throw new GoException(0);
         }
 
-        Class<? extends Task> parent = responder.getParentTaskClass();
+        Class<? extends Commandable> parent = responder.getParentTaskClass();
         Responder responder; 
         if (parent == null) {
             responder = commandInterpreter.commands.get(qualified[0]);
@@ -268,15 +268,15 @@ public class CommandPart {
     }
     
     
-    private void getTaskClassPath(List<Class<? extends Task>> path, Responder responder) {
+    private void getTaskClassPath(List<Class<? extends Commandable>> path, Responder responder) {
         if (responder.getParentTaskClass() != null) {
             getTaskClassPath(path, commandInterpreter.responders.get(responder.getParentTaskClass()));
         }
         path.add(responder.getTaskClass());
     }
     
-    private List<Class<? extends Task>> getTaskClassPath(Responder responder) {
-        List<Class<? extends Task>> path = new ArrayList<Class<? extends Task>>();
+    private List<Class<? extends Commandable>> getTaskClassPath(Responder responder) {
+        List<Class<? extends Commandable>> path = new ArrayList<Class<? extends Commandable>>();
         getTaskClassPath(path, responder);
         return Collections.unmodifiableList(path);
     }

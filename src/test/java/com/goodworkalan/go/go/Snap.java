@@ -1,6 +1,6 @@
 package com.goodworkalan.go.go;
 
-public class Snap extends Task {
+public class Snap implements Commandable {
     private boolean verbose;
     
     @Argument
@@ -10,5 +10,8 @@ public class Snap extends Task {
     
     public boolean isVerbose() {
         return verbose;
+    }
+    
+    public void execute(Environment env) {
     }
 }

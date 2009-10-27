@@ -10,7 +10,7 @@ import java.util.List;
  */
 class Casts {
     @SuppressWarnings("unchecked")
-    public static Class<? extends Task> taskClass(Class taskClass) {
+    public static Class<? extends Commandable> taskClass(Class taskClass) {
         return taskClass;
     }
 

@@ -8,7 +8,7 @@ import java.lang.annotation.Target;
 
 /**
  * Annotation applied to the setter methods of argument properties for
- * {@link Task} Beans. The property must be either a <code>String</code>
+ * {@link Commandable} Beans. The property must be either a <code>String</code>
  * property or an object that with a constructor that takes a single
  * <code>String</code> argument.
  * 

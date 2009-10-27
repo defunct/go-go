@@ -5,7 +5,7 @@ import static com.goodworkalan.go.go.GoException.*;
 import com.goodworkalan.reflective.ReflectiveException;
 import com.goodworkalan.reflective.ReflectiveFactory;
 
-public class ReflectionTaskFactory implements TaskFactory {
+public class ReflectionTaskFactory implements CommandFactory {
     private final ReflectiveFactory reflectiveFactory;
 
     ReflectionTaskFactory(ReflectiveFactory reflectiveFactory) {
@@ -16,7 +16,7 @@ public class ReflectionTaskFactory implements TaskFactory {
         this(new ReflectiveFactory());
     }
 
-    public Task newTask(Class<? extends Task> taskClass) {
+    public Commandable newTask(Class<? extends Commandable> taskClass) {
         try {
             return reflectiveFactory.getConstructor(taskClass).newInstance();
         } catch (ReflectiveException e) {

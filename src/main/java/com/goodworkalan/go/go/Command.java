@@ -7,7 +7,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Annotation applied to {@link Task} Beans to specify an command name other
+ * Annotation applied to {@link Commandable} Beans to specify an command name other
  * than the one derived from the class name.
  * 
  * @author Alan Gutierrez
@@ -21,5 +21,5 @@ public @interface Command {
     
     boolean hidden() default false;
     
-    Class<? extends Task> parent() default Task.class;
+    Class<? extends Commandable> parent() default Commandable.class;
 }

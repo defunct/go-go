@@ -1,6 +1,7 @@
 package com.goodworkalan.go.go;
 
 @Command(parent = Snap.class)
-public class Compile extends Task {
-    
+public class Compile implements Commandable {
+    public void execute(Environment env) {
+    }
 }

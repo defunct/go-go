@@ -3,13 +3,13 @@ package com.goodworkalan.go.go;
 import java.util.List;
 
 public class CommandKey {
-    private final Class<? extends Task> taskClass;
+    private final Class<? extends Commandable> taskClass;
     
     private final List<String> arguments;
     
     private final List<String> remaining;
     
-    public CommandKey(Class<? extends Task> taskClass, List<String> arguments, List<String> remaining) {
+    public CommandKey(Class<? extends Commandable> taskClass, List<String> arguments, List<String> remaining) {
         this.taskClass = taskClass;
         this.arguments = arguments;
         this.remaining = remaining;

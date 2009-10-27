@@ -26,7 +26,7 @@ import java.util.TreeMap;
  * 
  * @author Alan Gutierrez
  */
-final class TaskLoader {
+final class CommandLoader {
     /** A set of keys of artifacts that have already been included. */
     private final Set<Object> seen = new HashSet<Object>();
     
@@ -45,7 +45,7 @@ final class TaskLoader {
     public final Map<String, Responder> commands = new TreeMap<String, Responder>();
 
     /** The map of tasks to responders. */
-    public final Map<Class<? extends Task>, Responder> responders = new HashMap<Class<? extends Task>, Responder>();
+    public final Map<Class<? extends Commandable>, Responder> responders = new HashMap<Class<? extends Commandable>, Responder>();
 
     private final ClassLoader threadClassLoader = Thread.currentThread().getContextClassLoader();
 
@@ -56,7 +56,7 @@ final class TaskLoader {
      * @param artifactFile
      *            The artifact file.
      */
-    public TaskLoader(Include...includes) {
+    public CommandLoader(Include...includes) {
         seen.add("com.goodworkalan/go-go");
         seen.add("com.goodworkalan/reflective");
         seen.add("com.goodworkalan/cassandra");
@@ -101,7 +101,7 @@ final class TaskLoader {
         while (resources.hasMoreElements()) {
             URL url = resources.nextElement();
             if (!urls.contains(url)) {
-                Set<Class<? extends Task>> tasks = new HashSet<Class<? extends Task>>();
+                Set<Class<? extends Commandable>> tasks = new HashSet<Class<? extends Commandable>>();
                 
                 urls.add(url);
                 BufferedReader lines = new BufferedReader(new InputStreamReader(url.openStream()));
@@ -136,7 +136,7 @@ final class TaskLoader {
                                 Thread.currentThread().setContextClassLoader(libraryPath.getClassLoader(threadClassLoader));
                                 classLoaderDirty = true;
                             }
-                        } else if (Task.class.isAssignableFrom(foundClass)) {
+                        } else if (Commandable.class.isAssignableFrom(foundClass)) {
                             tasks.add(taskClass(foundClass));
                         } else {
                             throw new GoException(0);
@@ -145,11 +145,11 @@ final class TaskLoader {
                 } catch (IOException e) {
                     throw new GoException(0, e);
                 }
-                for (Class<? extends Task> taskClass : tasks) {
+                for (Class<? extends Commandable> taskClass : tasks) {
                     if (!responders.containsKey(taskClass)) {
                         Responder responder = new Responder(taskClass);
                         responders.put(taskClass, responder);
-                        Class<? extends Task> parentTaskClass = null;
+                        Class<? extends Commandable> parentTaskClass = null;
                         while ((parentTaskClass = responder.getParentTaskClass()) != null) {
                             Responder parent = responders.get(parentTaskClass);
                             if (parent == null) {

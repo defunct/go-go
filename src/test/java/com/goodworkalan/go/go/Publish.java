@@ -1,5 +1,6 @@
 package com.goodworkalan.go.go;
 
-public class Publish extends Task {
-
+public class Publish implements Commandable {
+    public void execute(Environment env) {
+    }
 }

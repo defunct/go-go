@@ -1,7 +1,7 @@
 package com.goodworkalan.go.go;
 
 @Command(parent = Snap.class)
-public class Welcome extends Task {
+public class Welcome implements Commandable {
     public String greeting;
     
     @Argument
@@ -9,7 +9,6 @@ public class Welcome extends Task {
         this.greeting = greeting;
     }
 
-    @Override
     public void execute(Environment env) {
         env.io.out.println(greeting);
     }

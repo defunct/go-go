@@ -31,13 +31,13 @@ import com.goodworkalan.reflective.ReflectiveFactory;
  */
 class Responder {
     /** The task class. */
-    private final Class<? extends Task> taskClass;
+    private final Class<? extends Commandable> taskClass;
 
     /** The name of the command. */
     private final String name;
 
     /** The parent task if any. */
-    private final Class<? extends Task> parent;
+    private final Class<? extends Commandable> parent;
 
     /** A map of verbose argument names to assignment strategies. */
     private final Map<String, Assignment> assignments;
@@ -62,7 +62,7 @@ class Responder {
      * @param taskClass
      *            The task class.
      */
-    public Responder(Class<? extends Task> taskClass) {
+    public Responder(Class<? extends Commandable> taskClass) {
         this.arguables = new HashMap<Class<? extends Arguable>, Method>();
         this.inputs = new HashMap<Class<? extends Output>, Method>();
         this.assignments = new TreeMap<String, Assignment>();
@@ -73,13 +73,13 @@ class Responder {
         if (command == null || command.name().equals("")) {
             String className = taskClass.getCanonicalName();
             className = className.replaceFirst("^.*\\.", "");
-            className = className.replaceFirst("Task$", "");
+            className = className.replaceFirst("Command$", "");
             name = hyphenate(className);
         } else {
             name = command.name();
         }
-        Class<? extends Task> parent = null;
-        if (command != null && !command.parent().equals(Task.class)) {
+        Class<? extends Commandable> parent = null;
+        if (command != null && !command.parent().equals(Commandable.class)) {
             parent = command.parent();
         }
 
@@ -135,19 +135,19 @@ class Responder {
         if (type.getDeclaringClass() == null) {
             throw new GoException(0);
         }
-        if (!Task.class.isAssignableFrom(type.getDeclaringClass())) {
+        if (!Commandable.class.isAssignableFrom(type.getDeclaringClass())) {
             throw new GoException(0);
         }
     }
 
-    private static void gatherNestedAssignments(Class<? extends Task> taskClass, Map<String, Assignment> assignments) {
+    private static void gatherNestedAssignments(Class<? extends Commandable> taskClass, Map<String, Assignment> assignments) {
         for (Class<?> nestedClass : taskClass.getDeclaredClasses()) {
             if (Arguable.class.isAssignableFrom(nestedClass)) {
                 gatherAssignments(arguableClass(nestedClass), assignments);
             }
         }
         Class<?> superclass = taskClass.getSuperclass();
-        if (Task.class.isAssignableFrom(superclass)) {
+        if (Commandable.class.isAssignableFrom(superclass)) {
             gatherNestedAssignments(taskClass(superclass), assignments);
         }
     }
@@ -208,8 +208,8 @@ class Responder {
         return string.toString();
     }
     
-    public void checkEndlessRecursion(Map<Class<? extends Task>, Responder> tasks, Set<Class<? extends Task>> seen) {
-        Set<Class<? extends Task>> subSeen = new HashSet<Class<? extends Task>>(seen);
+    public void checkEndlessRecursion(Map<Class<? extends Commandable>, Responder> tasks, Set<Class<? extends Commandable>> seen) {
+        Set<Class<? extends Commandable>> subSeen = new HashSet<Class<? extends Commandable>>(seen);
         subSeen.add(taskClass);
         for (Class<? extends Output> intputClass : inputs.keySet()) {
             Class<? extends Arguable> taskClass = taskClass(intputClass.getDeclaringClass());
@@ -251,7 +251,7 @@ class Responder {
      * 
      * @return The task class.
      */
-    public Class<? extends Task> getTaskClass() {
+    public Class<? extends Commandable> getTaskClass() {
         return taskClass;
     }
 
@@ -260,7 +260,7 @@ class Responder {
      * 
      * @return The parent task for null if none.
      */
-    public Class<? extends Task> getParentTaskClass() {
+    public Class<? extends Commandable> getParentTaskClass() {
         return parent;
     }
 
@@ -272,7 +272,7 @@ class Responder {
         return arguables.keySet();
     }
     
-    public void setArguable(Task task, Class<? extends Arguable> arguable, Arguable value) {
+    public void setArguable(Commandable task, Class<? extends Arguable> arguable, Arguable value) {
         try {
             arguables.get(arguable).invoke(task, value);
         } catch (ReflectiveException e) {
@@ -284,7 +284,7 @@ class Responder {
         return inputs.keySet();
     }
     
-    public void setInput(Task task, Class<? extends Output> input, Output value) {
+    public void setInput(Commandable task, Class<? extends Output> input, Output value) {
         try {
             inputs.get(input).invoke(task, value);
         } catch (ReflectiveException e) {
@@ -296,7 +296,7 @@ class Responder {
         return outputs.keySet();
     }
     
-    public Output getOutput(Task task, Class<? extends Output> output) {
+    public Output getOutput(Commandable task, Class<? extends Output> output) {
         try {
             return (Output) outputs.get(output).invoke(task);
         } catch (ReflectiveException e) {

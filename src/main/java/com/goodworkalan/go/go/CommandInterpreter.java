@@ -18,11 +18,11 @@ import java.util.Map;
  * @author Alan Gutierrez
  */
 public final class CommandInterpreter {
-    final TaskFactory taskFactory = new ReflectionTaskFactory();
+    final CommandFactory taskFactory = new ReflectionTaskFactory();
     
     final Map<String, Responder> commands;
 
-    final Map<Class<? extends Task>, Responder> responders;
+    final Map<Class<? extends Commandable>, Responder> responders;
 
     private final Library library;
     
@@ -37,7 +37,7 @@ public final class CommandInterpreter {
     }
  
     public CommandInterpreter(ErrorCatcher catcher, Include...transactions) {
-        TaskLoader tasks = new TaskLoader(transactions);
+        CommandLoader tasks = new CommandLoader(transactions);
 
         this.catcher = catcher;
         this.commands = tasks.commands;
@@ -45,7 +45,7 @@ public final class CommandInterpreter {
         this.library = tasks.library;
         
         for (Responder responder : responders.values()) {
-            responder.checkEndlessRecursion(responders, new HashSet<Class<? extends Task>>());
+            responder.checkEndlessRecursion(responders, new HashSet<Class<? extends Commandable>>());
         }
     }
     

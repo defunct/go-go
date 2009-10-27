@@ -7,7 +7,7 @@ import com.goodworkalan.reflective.Method;
 import com.goodworkalan.reflective.ReflectiveException;
 
 /**
- * Assigns a command line argument to a property in a {@link Task} Bean.
+ * Assigns a command line argument to a property in a {@link Commandable} Bean.
  * 
  * @author Alan Gutierrez
  */

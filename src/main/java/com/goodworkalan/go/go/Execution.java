@@ -7,7 +7,7 @@ import java.util.Map;
 class Execution {
     private final Executor executor;
     
-    private final Map<Class<? extends Task>, Map<Class<? extends Output>, Output>> outputs = new HashMap<Class<? extends Task>, Map<Class<? extends Output>,Output>>();
+    private final Map<Class<? extends Commandable>, Map<Class<? extends Output>, Output>> outputs = new HashMap<Class<? extends Commandable>, Map<Class<? extends Output>,Output>>();
     
     private final CommandPart part;
     
@@ -26,7 +26,7 @@ class Execution {
      * @param taskClass
      *            A task to execute.
      */
-    public void execute(InputOutput io, Class<? extends Task> taskClass) {
+    public void execute(InputOutput io, Class<? extends Commandable> taskClass) {
         // Short circuit this method if the given task has already been run.
         if (outputs.containsKey(taskClass)) {
             return;
@@ -40,7 +40,7 @@ class Execution {
         CommandKey key = part.getKey_();
         if (!executor.outputCache.containsKey(key)) {
             List<CommandPart> parts = part.getCommandPath();
-            Task task = ci.taskFactory.newTask(taskClass);
+            Commandable task = ci.taskFactory.newTask(taskClass);
             for (Class<? extends Arguable> argument : responder.getArguables()) {
                 // FIXME Assert that arguable is a static class.
                 Arguable arguable = getArguments(ci, parts, argument);
@@ -94,7 +94,7 @@ class Execution {
     }
     
     @SuppressWarnings("unchecked")
-    private Class<? extends Task> taskClass(Class taskClass) {
+    private Class<? extends Commandable> taskClass(Class taskClass) {
         return taskClass;
     }
     
@@ -105,7 +105,7 @@ class Execution {
      * @return The depth of the task class in the task hierarchy.
      */
     private int getDepth(Responder responder) {
-        Class<? extends Task> parent = responder.getParentTaskClass();
+        Class<? extends Commandable> parent = responder.getParentTaskClass();
         if (parent == null) {
             return 0;
         }

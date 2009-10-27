@@ -1,7 +1,7 @@
 package com.goodworkalan.go.go;
 
-public interface TaskFactory {
-    public Task newTask(Class<? extends Task> taskClass);
+public interface CommandFactory {
+    public Commandable newTask(Class<? extends Commandable> taskClass);
     
     public Arguable newArguable(Class<? extends Arguable> arguableClass);
 }
