@@ -42,12 +42,12 @@ public class ResolutionPart implements PathPart {
         if (entry == null) {
             throw new GoException(UNRESOLVED_ARTIFACT).put("artifact", include.getArtifact());
         }
-        for (Include include : Artifacts.read(new File(entry.getDirectory(), entry.getArtifact().getPath("dep")))) {
-            if (!this.include.getExcludes().contains(include.getArtifact())) {
+        for (Include subInclude : Artifacts.read(new File(entry.getDirectory(), entry.getArtifact().getPath("dep")))) {
+            if (!include.getExcludes().contains(subInclude.getArtifact())) {
                 Set<Artifact> subExcludes = new HashSet<Artifact>();
-                subExcludes.addAll(this.include.getExcludes());
                 subExcludes.addAll(include.getExcludes());
-                additional.add(new ResolutionPart(include.getArtifact(), subExcludes));
+                subExcludes.addAll(subInclude.getExcludes());
+                additional.add(new ResolutionPart(subInclude.getArtifact(), subExcludes));
             }
         }
         return Collections.<PathPart>singletonList(new ArtifactPart(entry.getDirectory(), entry.getArtifact()));
