@@ -1,8 +1,10 @@
 package com.goodworkalan.go.go;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -100,5 +102,20 @@ public class Include {
      */
     public Set<Artifact> getExcludes() {
         return excludes;
+    }
+
+    /**
+     * Return a list of the lines that represent this include in an artifacts
+     * file.
+     * 
+     * @return A list of artifact file lines.
+     */
+    public List<String> getArtifactFileLines() {
+        List<String> lines = new ArrayList<String>();
+        lines.add((optional ? "~" : "+") + " " + artifact);
+        for (Artifact exclude : excludes) {
+            lines.add("- " + exclude);
+        }
+        return lines;
     }
 }
