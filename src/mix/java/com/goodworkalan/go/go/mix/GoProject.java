@@ -14,7 +14,6 @@ public class GoProject extends ProjectModule {
                 .main()
                     .depends()
                         .artifact(new Artifact("com.goodworkalan/cassandra/0.7"))
-                        .artifact(new Artifact("com.goodworkalan/comfort-io/0.1"))
                         .artifact(new Artifact("com.goodworkalan/reflective/0.1"))
                         .end()
                     .end()
