@@ -8,13 +8,12 @@ import java.lang.annotation.Target;
 
 /**
  * Annotation applied to the setter methods of argument properties for
- * {@link Commandable} Beans. The property must be either a <code>String</code>
- * property or an object that with a constructor that takes a single
- * <code>String</code> argument.
+ * {@link Commandable} beans and {@link Arguable} beans. The property must be
+ * either a <code>String</code> property or an object that with a constructor
+ * that takes a single <code>String</code> argument.
  * 
  * @author Alan Gutierrez
  */
-// FIXME Maybe rename GoGoArgument, so you can reuse Command?
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)

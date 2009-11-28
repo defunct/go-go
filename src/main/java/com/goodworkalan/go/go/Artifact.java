@@ -8,7 +8,11 @@ import java.util.List;
 
 
 /**
- * A file needed for the build, usually a jar file.
+ * A jar artifact needed for execution.
+ * <p>
+ * This class describes a single jar library artifact. The artifacts are storied
+ * in a Maven 2 formatted repository. An artifact represents and entry in that
+ * repository. The <code>Artifact</code> class obtains artifacts 
  *
  * @author Alan Gutierrez
  */
