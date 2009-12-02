@@ -29,8 +29,15 @@ public class ProgramQueue {
     
     private FutureTask<Integer> addProgram(final Program program) {
         FutureTask<Integer> future = new FutureTask<Integer>(new Callable<Integer>() {
-            public Integer call() throws Exception {
-                int code = program.run(ProgramQueue.this);
+            public Integer call() {
+                // Exit codes really don't belong here. Put them in GoError.
+                // Then return an exception or terminal status.
+                int code = 1;
+                try {
+                    code = program.run(ProgramQueue.this);
+                } catch (Throwable e) { 
+                    e.printStackTrace();
+                }
                 synchronized (monitor) {
                     processCount--;
                     monitor.notify();
