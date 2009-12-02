@@ -6,14 +6,34 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
-
 /**
  * A jar artifact needed for execution.
  * <p>
  * This class describes a single jar library artifact. The artifacts are storied
  * in a Maven 2 formatted repository. An artifact represents and entry in that
- * repository. The <code>Artifact</code> class obtains artifacts 
- *
+ * repository. The <code>Artifact</code> class obtains artifacts
+ * <p>
+ * Classifiers are nipples, extra nipples, that create an odd number of nipples,
+ * 3 nipples or 5 nipples, more than the expected number, never an even number,
+ * that seems to be the Maven way, to had just one too many nipples.
+ * <p>
+ * As such, classifiers are buried in this class for the support of odd nippled
+ * projects that use classifiers. Java really ought not have multiple binary
+ * outputs, and when you do, you could build specify different outputs with
+ * suffixes or incredibly different builds with two checkouts of the same
+ * project. Please don't benipple your artifacts on our account.
+ * <p>
+ * An artifact is meant to describe a single jar library and it's relevant
+ * files, but a classifer makes an artifact a container, or a branch, with
+ * multiple binary files, but still one set of supporting files. As rarely as a
+ * classifer is used, this makes for a strange appendages, people are not going
+ * to expect this. You certainly can't use both a JDK 1.5 and JDK 1.4 version of
+ * the same library as a dependency, it's either one or the other, and you can
+ * easily specify one or the other using a project name.
+ * <p>
+ * The group answers, "who?" The name answers, "what?" The version answers,
+ * "when?"
+ * 
  * @author Alan Gutierrez
  */
 public class Artifact {
@@ -25,6 +45,9 @@ public class Artifact {
 
     /** The artifact version. */
     private final String version;
+    
+    /** The stupid classifier. */
+    private final String classifier;
 
     /**
      * Create a dependency.
@@ -35,16 +58,25 @@ public class Artifact {
      *            The dependency name.
      * @param version
      *            The dependency version.
+     * @param version
+     *            The stupid classifier.
      */
-    public Artifact(String group, String name, String version) {
+    public Artifact(String group, String name, String version, String classifier) {
+        assert group != null;
+        assert name != null;
+        assert version != null;
+        assert classifier != null;
         this.group = group;
         this.name = name;
         this.version = version;
+        this.classifier = classifier;
     }
 
     /**
      * Create an artifact by parsing the given file name assuming the given
      * suffix and extension.
+     * <p>
+     * FIXME Why isn't this simply a constructor?
      * 
      * @param file
      *            An artifact file.
@@ -71,20 +103,36 @@ public class Artifact {
             group.append(separator).append(part.getName());
             separator = ".";
         }
-        return new Artifact(group.toString(), name, version);
+        return new Artifact(group.toString(), name, version, "");
     }
-    
+
+    /**
+     * Create an artifact from an artifact specification string.
+     * <p>
+     * An artifact specification string takes the form
+     * <code>group/name/version/classifier</code>.
+     * <p>
+     * The version is optional and the classifier is an annoyance, that is also
+     * very optional.
+     * 
+     * @param artifact
+     *            The artifact string.
+     */
     public Artifact(String artifact) {
         List<String> parts = new ArrayList<String>(Arrays.asList(artifact.split("/")));
         if (parts.size() == 2) {
-            parts.add("*");
+            parts.add("");
         }
-        if (parts.size() != 3) {
+        if (parts.size() == 3) {
+            parts.add("");
+        }
+        if (parts.size() != 4) {
             throw new GoException(0);
         }
         this.group = parts.get(0);
         this.name = parts.get(1);
         this.version = parts.get(2);
+        this.classifier = parts.get(3);
     }
     
     /**
@@ -126,7 +174,30 @@ public class Artifact {
     public String getVersion() {
         return version;
     }
-    
+
+    /**
+     * Prepend the classifier to the suffix if a classifier was provided and the
+     * suffix is simply "jar".
+     * 
+     * @param suffix
+     *            The suffix.
+     * @return The suffix converted to a file suffix.
+     */
+    private String classifier(String suffix) {
+        return "jar".equals(suffix) && !classifier.equals("") ? "-" + classifier + suffix(suffix) : suffix(suffix);
+    }
+
+    /**
+     * Convert a suffix from slash delimited to dot delimited. Slash delimited
+     * suffixes are a way to denote the file extension part from the extended
+     * file name part. This means that you can specify
+     * "project-1.0-sources.tar.gz" by providing the suffix "sources/tar.gz".
+     * 
+     * @param suffix
+     *            The file suffix pattern.
+     * @return The file suffix converted to a file name ending and file
+     *         extension suffix for appending to a file name.
+     */
     private String suffix(String suffix) {
         String[] split = suffix.split("/");
         switch (split.length) {
@@ -151,7 +222,7 @@ public class Artifact {
      */
     public String getFileName(String suffix) {
         StringBuilder file = new StringBuilder();
-        file.append(name).append("-").append(version).append(suffix(suffix));
+        file.append(name).append("-").append(version).append(classifier(suffix));
         return file.toString();
     }
 
@@ -171,10 +242,17 @@ public class Artifact {
                 .append("/").append(name)
                 .append("/").append(version)
                 .append("/")
-                    .append(name).append("-").append(version).append(suffix(suffix));
+                    .append(name).append("-").append(version).append(classifier(suffix));
         return file.toString();
     }
-    
+
+    /**
+     * Create the relative path into a repository for the artifact directory.
+     * The directory named takes for form of the following where the dots in the
+     * group are replaced with file part separators.
+     * 
+     * @return The relative path into a repository of the artifact directory.
+     */
     public String getDirectoryPath() {
         StringBuilder file = new StringBuilder();
         file.append(group.replace(".", "/"))
@@ -194,9 +272,16 @@ public class Artifact {
     public boolean equals(Object object) {
         if (object instanceof Artifact) {
             Artifact artifact = (Artifact) object;
-            return group.equals(artifact.group)
-                && name.equals(artifact.name)
-                && version.equals(artifact.version);
+            if (group.equals(artifact.group)
+                    && name.equals(artifact.name)
+                    && version.equals(artifact.version)) {
+                if (classifier == null) {
+                    return artifact.classifier == null;
+                }
+                return classifier.equals(artifact.classifier);
+                
+            }
+            return false;
         }
         return false;
     }
@@ -211,9 +296,17 @@ public class Artifact {
         hashCode = hashCode * 37 + group.hashCode();
         hashCode = hashCode * 37 + name.hashCode();
         hashCode = hashCode * 37 + version.hashCode();
+        hashCode = hashCode * 37 + (classifier == null ? 1 : classifier.hashCode());
         return hashCode;
     }
-    
+
+    /**
+     * Generate a dependency file line with the given line type character.
+     * 
+     * @param prefix
+     *            The line type character.
+     * @return A dependency file line,
+     */
     private String line(String prefix) {
         StringBuilder line = new StringBuilder();
         line.append(prefix);
@@ -222,11 +315,21 @@ public class Artifact {
         line.append("\n");
         return line.toString();
     }
-    
+
+    /**
+     * Generate a dependency file line that will include this artifact.
+     * 
+     * @return A dependency file line,
+     */
     public String includeLine() {
         return line("+");
     }
-    
+
+    /**
+     * Generate a dependency file line that will exclude this artifact.
+     * 
+     * @return A dependency file line,
+     */
     public String excludeLine() {
         return line("-");
     }
@@ -238,6 +341,6 @@ public class Artifact {
      */
     @Override
     public String toString() {
-        return group + "/" + name + "/" + version;
+        return group + "/" + name + "/" + version + (classifier.equals("") ? "" : "/" + classifier);
     }
 }

@@ -10,7 +10,7 @@ public class GoProject extends ProjectModule {
     public void build(Builder builder) {
         builder
             .cookbook(JavaProject.class)
-                .produces(new Artifact("com.goodworkalan/go-go/0.1"))
+                .produces(new Artifact("com.goodworkalan/go-go/0.1.1"))
                 .main()
                     .depends()
                         .artifact(new Artifact("com.goodworkalan/cassandra/0.7"))
@@ -20,7 +20,7 @@ public class GoProject extends ProjectModule {
                 .test()
                     .depends()
                         .artifact(new Artifact("org.slf4j/slf4j-log4j12/1.4.2"))
-                        .artifact(new Artifact("org.testng/testng/5.10"))
+                        .artifact(new Artifact("org.testng/testng/5.10/jdk15"))
                         .artifact(new Artifact("org.mockito/mockito-core/1.6"))
                         .end()
                     .end()
