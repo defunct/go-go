@@ -23,7 +23,7 @@ classpath=
 separator=
 
 for file in \
-    com/goodworkalan/go-go/0.1.1/go-go-0.1.2.jar \
+    com/goodworkalan/go-go/0.1.2/go-go-0.1.2.jar \
     com/goodworkalan/cassandra/0.7/cassandra-0.7.jar \
     com/goodworkalan/reflective/0.1/reflective-0.1.jar
 do

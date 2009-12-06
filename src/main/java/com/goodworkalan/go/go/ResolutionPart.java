@@ -54,6 +54,6 @@ public class ResolutionPart implements PathPart {
     }
     
     public Object getUnversionedKey() {
-        throw new UnsupportedOperationException();
+        return include.getArtifact().getKey().subList(0, 2);
     }
 }
