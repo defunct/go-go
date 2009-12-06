@@ -30,11 +30,6 @@ import java.util.Collection;
  * 
  * @author Alan Gutierrez
  */
-// FIXME No one needs to worry about key.
-// FIXME Here is your new documentation style.
-// FIXME Make this a class.
-// FIXME Rename directory.
-// FIXME Maybe PathExpander as a builder?
 public interface PathPart {
     /**
      * Get the directory or archive file. If this is a prototype <code>PathPart</code>
@@ -71,13 +66,76 @@ public interface PathPart {
      */
     public Artifact getArtifact();
 
+    /**
+     * Expands a collection of path parts, turning unsolved path parts into path
+     * parts that have a file representation on the file system. Any unresolved
+     * path parts are sought in the given library.
+     * <p>
+     * There are unresolved path parts and resolved path parts. Unresolved path
+     * parts are path parts that need to be looked up in the library. Resolved
+     * path parts are path parts that are mapped to a file on the file system.
+     * <p>
+     * This is an application of the prototype design pattern. The unresolved
+     * path parts act as prototypes for the resolved path parts. The unresolved
+     * path parts in the input collection will add resolved path parts to the
+     * output collection. The resolved path parts simply add a copy of themselve
+     * <p>
+     * Each path part in the output path part collection will be unique
+     * according to {@link #getUnversionedKey()}. That is, no two part parts in
+     * the output path part collection will have the same value for
+     * {@link #getUnversionedKey()}. This means that duplicate entries in the
+     * input path part will be eliminated.
+     * <p>
+     * It also means that versions of dependent resources can be overridden by
+     * specifying them in the input path parts. If one of the unresolved path
+     * parts has a dependency on <code>group/project/1.1</code> and you want to
+     * use <code>group/project/1.2</code> instead, you can add an
+     * {@link ResolutionPart} that resolves <code>group/project/1.2</code> to
+     * the input path part collection. The path parts for
+     * <code>group/project/1.2</code> and <code>group/project/1.1</code> will
+     * have the same value for {@link #getUnversionedKey()}. The path part for
+     * <code>group/project/1.2</code> will be evaluated before any dependencies
+     * and override the path part for <code>group/project/1.2</code> 1.1
+     * version.
+     * <p>
+     * While resolving unresolved path parts, their unresolved dependencies are
+     * added When unresolved path parts are resolved, any dependent artifacts in
+     * at the end of the list of unresolved path parts to evaluate. Therefore,
+     * each unresolved path part in the input path part collection is resolved
+     * before any of it's dependencies are resolved. Using this method,
+     * dependencies are resolved in levels. The dependencies that are added by
+     * the unresolved path parts in the input path part collection are each
+     * resolved before any dependencies that they add, and so on.
+     * <p>
+     * If a path part exists in the output path part collection with the same
+     * value of {@link #getUnversionedKey()} as one in the list to evaluate, the
+     * path part is not evaluated. It is skipped. This will eliminate duplicates
+     * in the input path part collection. This means that we have the
+     * opportunity to override the version of an included artifact by explicitly
+     * including a specific version in the list of path parts provided to
+     * <code>expand</code>.
+     * <p>
+     * The output path part collection will contain only resolved path parts
+     * that have a file representation on the file system that can be used in a
+     * classpath. If you pass the output path part collection back to
+     * <code>expand()</code> you'll simply create a copy of the path part
+     * collection.
+     * 
+     * @param library
+     *            The library.
+     * @param expand
+     *            The list of path parts to expand.
+     * @return An expanded list of path parts that all have a file
+     *         representation on the file system.
+     */
     public Collection<PathPart> expand(Library library, Collection<PathPart> expand);
 
     /**
-     * A key that uniquely identifies the <code>PathPart</code> implementation
-     * that is used to ensure that directories are not repeated in the path.
+     * A key that identifies the <code>PathPart</code> implementation
+     * without versioning that is used to ensure that the first specified
+     * version of a jar is the one that is used.
      * 
-     * @return A unique key for the <code>PathPart</code>.
+     * @return A unique, unversioned key for the <code>PathPart</code>.
      */
-    public Object getKey();
+    public Object getUnversionedKey();
 }

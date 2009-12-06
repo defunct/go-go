@@ -7,7 +7,7 @@ import java.util.Collection;
 import java.util.Collections;
 
 /**
- * An expanding path part for a directory. 
+ * A path part that maps to a class directory on the file system. 
  *
  * @author Alan Gutierrez
  */
@@ -42,16 +42,35 @@ public class DirectoryPart implements PathPart {
     public URL getURL() throws MalformedURLException {
         return dir.toURI().toURL();
     }
-    
+
+    /**
+     * Return null since this class represents a specific directory on the file
+     * system and not an artifact that is looked up in a library.
+     * 
+     * @return The artifact backing this <code>PathPart</code>.
+     */
     public Artifact getArtifact() {
         return null;
     }
 
+    /**
+     * Returns a collection that contains a this directory path part since this
+     * directory path part is already resolved.
+     * 
+     * @return A collection containing this directory path part.
+     */
     public Collection<PathPart> expand(Library library, Collection<PathPart> expand) {
         return Collections.<PathPart>singletonList(this);
     }
 
-    public Object getKey() {
+    /**
+     * The unversioned key for a directory path part is simply the directory
+     * file. We don't really know the version number of the software it
+     * contains.
+     * 
+     * @return A unique, unversioned key for the path part.
+     */
+    public Object getUnversionedKey() {
         return dir;
     }
 }

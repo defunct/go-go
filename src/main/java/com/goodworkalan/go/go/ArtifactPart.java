@@ -31,7 +31,7 @@ public class ArtifactPart implements PathPart {
         return Collections.<PathPart>singletonList(this);
     }
     
-    public Object getKey() {
+    public Object getUnversionedKey() {
         return artifact.getKey().subList(0, 2);
     }
 }

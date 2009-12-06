@@ -83,12 +83,4 @@ public class LibraryPath {
     public Set<Object> getExcludes() {
         return Collections.unmodifiableSet(excludes);
     }
-    
-    public Set<Object> getKeys() {
-        Set<Object> keys = new HashSet<Object>();
-        for (PathPart part : parts) {
-            keys.add(part.getKey());
-        }
-        return keys;
-    }
 }

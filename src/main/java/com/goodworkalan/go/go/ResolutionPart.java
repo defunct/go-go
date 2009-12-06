@@ -53,7 +53,7 @@ public class ResolutionPart implements PathPart {
         return Collections.<PathPart>singletonList(new ArtifactPart(entry.getDirectory(), entry.getArtifact()));
     }
     
-    public Object getKey() {
+    public Object getUnversionedKey() {
         throw new UnsupportedOperationException();
     }
 }

@@ -51,11 +51,11 @@ public class Library {
         Collection<PathPart> next = new ArrayList<PathPart>();
         while (!current.isEmpty()) {
             for (PathPart part : current) {
-                Collection<PathPart> expansions = part.expand(this, next);
-                for (PathPart expansion : expansions) {
-                    Object key = expansion.getKey();
-                    if (!(exclude.contains(key) || expanded.containsKey(key))) {
-                        expanded.put(expansion.getKey(), expansion);
+                Object key = part.getUnversionedKey();
+                if (!(expanded.containsKey(key) || exclude.contains(key))) {
+                    Collection<PathPart> expansions = part.expand(this, next);
+                    for (PathPart expansion : expansions) {
+                        expanded.put(expansion.getUnversionedKey(), expansion);
                     }
                 }
             }
