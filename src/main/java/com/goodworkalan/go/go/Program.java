@@ -3,10 +3,7 @@
  */
 package com.goodworkalan.go.go;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -115,46 +112,7 @@ public final class Program {
                 each.remove();
             }
         }
-        File artifacts = new File(args.removeFirst());
-        try {
-            BufferedReader configuration = new BufferedReader(new FileReader(artifacts));
-            String line;
-            while ((line = configuration.readLine()) != null) {
-                line = line.trim();
-                if (line.startsWith("@")) {
-                    String[] argument = line.split("\\s+", 3);
-                    if (argument.length == 1) {
-                        throw new GoException(0);
-                    }
-                    if (argument[1].equals("debug")) {
-                        debug = true;
-                    } else if (argument[1].equals("no-debug")) {
-                        debug = false;
-                    } else if (argument[1].equals("artifacts")) {
-                        File additional = new File(argument[2]);
-                        if (additional.exists()) {
-                            includes.addAll(Artifacts.read(additional));
-                        }
-                    } else {
-                        throw new GoException(0);
-                    }
-                }
-            }
-            configuration.close();
-        } catch (IOException e) {
-            throw new GoException(0, e);
-        }
-        includes.addAll(Artifacts.read(artifacts));
         CommandInterpreter ci = new CommandInterpreter(new ErrorCatcher(), libraries);
-        try {
-            String name = artifacts.getName().toLowerCase();
-            if (name.endsWith(".bat")) {
-                name = name.substring(0, name.length() - 4);
-            }
-            ci.command(artifacts.getName());
-            args.addFirst(artifacts.getName());
-        } catch (GoException e) {
-        }
         if (debug) {
             System.out.println(args);
         }

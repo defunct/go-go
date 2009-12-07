@@ -6,7 +6,6 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -42,12 +41,15 @@ public final class CommandInterpreter {
         Map<List<String>, Artifact> programs = new HashMap<List<String>, Artifact>();
         for (File library : libraries) {
             File gogo = new File(library, "go-go");
+            if (!(gogo.isDirectory() && gogo.canRead())) {
+                continue;
+            }
             for (File directory : gogo.listFiles()) {
                 if (directory.isDirectory()) {
                     for (File file : directory.listFiles()) {
                         if (file.getName().endsWith(".go")) {
                             try {
-                                BufferedReader configuration = new BufferedReader(new FileReader(new File(library, "jav-a-go-go.commands.txt")));
+                                BufferedReader configuration = new BufferedReader(new FileReader(file));
                                 String line;
                                 while ((line = configuration.readLine()) != null) {
                                     line = line.trim();
@@ -56,8 +58,10 @@ public final class CommandInterpreter {
                                     }
                                     String[] record = line.split("\\s+", 2);
                                     Artifact artifact = new Artifact(record[0]);
-                                    for (String path : record[1].split(",")) {
-                                        programs.put(Arrays.asList(path.trim().split("\\s+")), artifact);
+                                    if (record.length > 1) {
+                                        for (String path : record[1].split(",")) {
+                                            programs.put(Arrays.asList(path.trim().split("\\s+")), artifact);
+                                        }
                                     }
                                 }
                             } catch (IOException e) {

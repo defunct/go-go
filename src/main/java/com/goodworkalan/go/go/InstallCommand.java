@@ -29,7 +29,7 @@ public class InstallCommand implements Commandable {
         List<String> commands = new ArrayList<String>();
         try {
             ZipFile zip = new ZipFile(new File(found.getDirectory(), found.getArtifact().getPath("jar")));
-            ZipEntry entry = zip.getEntry("META-INF/services/com.goodworkalan/go/go/CommandInterpreter");
+            ZipEntry entry = zip.getEntry("META-INF/services/com.goodworkalan.go.go.CommandInterpreter");
             if (entry != null) {
                 BufferedReader in = new BufferedReader(new InputStreamReader(zip.getInputStream(entry)));
                 String line;
@@ -42,7 +42,7 @@ public class InstallCommand implements Commandable {
                         } catch (ClassNotFoundException e) {
                             throw new GoException(0, e);
                         }
-                        Responder responder = loader.commands.get(taskClass);
+                        Responder responder = loader.responders.get(taskClass);
                         if (responder == null) {
                             throw new GoError(0);
                         }
@@ -53,7 +53,7 @@ public class InstallCommand implements Commandable {
                             if (taskClass == null) {
                                 break; 
                             }
-                            responder = loader.commands.get(taskClass);
+                            responder = loader.responders.get(taskClass);
                             if (responder == null) {
                                 throw new GoError(0);
                             }
