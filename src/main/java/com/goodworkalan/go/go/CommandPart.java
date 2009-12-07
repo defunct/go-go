@@ -4,6 +4,7 @@ import static com.goodworkalan.go.go.Casts.objectify;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -102,7 +103,7 @@ public class CommandPart {
     }
     
     public CommandPart command(Class<? extends Commandable> taskClass) {
-        Responder child = commandInterpreter.responders.get(taskClass);
+        Responder child = commandInterpreter.loader.responders.get(taskClass);
         if (!child.getParentTaskClass().equals(responder.getTaskClass())) {
             throw new GoException(0);
         }
@@ -155,6 +156,17 @@ public class CommandPart {
                     String value = pair.length == 1 ? null : pair[1]; 
                     part = part.argument(name, value);
                 } else {
+                    LinkedList<String> path = new LinkedList<String>();
+                    path.addFirst(argument);
+                    CommandPart current = this;
+                    while (current != null) {
+                        path.addFirst(current.responder.getName());
+                        current = current.getParent();
+                    }
+                    Artifact artifact = commandInterpreter.programs.get(path);
+                    if (artifact != null) {
+                        commandInterpreter.loader.addArtifacts(artifact);
+                    }
                     Responder child = part.responder.getCommand(argument);
                     if (child == null) {
                         part.remaining.add(argument);
@@ -186,7 +198,7 @@ public class CommandPart {
         if (taskClass.equals(responder.getTaskClass())) {
             return this;
         }
-        Responder responder = commandInterpreter.responders.get(taskClass);
+        Responder responder = commandInterpreter.loader.responders.get(taskClass);
         if (responder == null) {
             throw new GoException(0);
         }
@@ -219,9 +231,9 @@ public class CommandPart {
         Class<? extends Commandable> parent = responder.getParentTaskClass();
         Responder responder; 
         if (parent == null) {
-            responder = commandInterpreter.commands.get(qualified[0]);
+            responder = commandInterpreter.loader.commands.get(qualified[0]);
         } else {
-            responder = commandInterpreter.responders.get(parent).getCommand(qualified[0]);
+            responder = commandInterpreter.loader.responders.get(parent).getCommand(qualified[0]);
         }
         
         if (responder == null) {
@@ -270,7 +282,7 @@ public class CommandPart {
     
     private void getTaskClassPath(List<Class<? extends Commandable>> path, Responder responder) {
         if (responder.getParentTaskClass() != null) {
-            getTaskClassPath(path, commandInterpreter.responders.get(responder.getParentTaskClass()));
+            getTaskClassPath(path, commandInterpreter.loader.responders.get(responder.getParentTaskClass()));
         }
         path.add(responder.getTaskClass());
     }

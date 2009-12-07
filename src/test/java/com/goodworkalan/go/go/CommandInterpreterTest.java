@@ -1,12 +1,13 @@
 package com.goodworkalan.go.go;
 
-import org.testng.annotations.Test;
+import java.io.File;
+import java.util.Collections;
 
-import com.goodworkalan.go.go.CommandInterpreter;
+import org.testng.annotations.Test;
 
 public class CommandInterpreterTest {
     @Test
     public void constructor() {
-        new CommandInterpreter().execute("snap", "welcome", "--greeting=Hello, World!");
+        new CommandInterpreter(new ErrorCatcher(), Collections.<File>emptyList()).execute("go", "hello");
     }
 }

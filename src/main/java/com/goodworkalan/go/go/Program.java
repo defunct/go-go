@@ -14,11 +14,14 @@ import java.util.LinkedList;
 import java.util.List;
 
 public final class Program {
-    public File dir;
+    private final List<File> libraries;
     
-    public String[] arguments;
+    private final File dir;
     
-    public Program(File dir, String...arguments) {
+    private final String[] arguments;
+    
+    public Program(List<File> libraries, File dir, String...arguments) {
+        this.libraries = libraries;
         this.dir = dir;
         this.arguments = arguments;
     }
@@ -142,7 +145,7 @@ public final class Program {
             throw new GoException(0, e);
         }
         includes.addAll(Artifacts.read(artifacts));
-        CommandInterpreter ci = new CommandInterpreter(includes);
+        CommandInterpreter ci = new CommandInterpreter(new ErrorCatcher(), libraries);
         try {
             String name = artifacts.getName().toLowerCase();
             if (name.endsWith(".bat")) {

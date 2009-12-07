@@ -31,6 +31,10 @@ public class Library {
     public Library(File dir) {
         this.dir = dir;
     }
+    
+    public File getDirectory() {
+        return dir;
+    }
 
     public LibraryPath emptyPath(Set<Object> excludes) {
         return new LibraryPath(this, Collections.<PathPart>emptyList(), excludes);
@@ -65,6 +69,7 @@ public class Library {
         return new LibraryPath(this, expanded.values(), new HashSet<Object>(exclude));
     }
     
+    // FIXME Why library entry? Why not a PathPart?
     public LibraryEntry getEntry(Artifact artifact) {
         File deps = new  File(dir, artifact.getPath("dep"));
         if (deps.exists()) {

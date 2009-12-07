@@ -5,6 +5,7 @@ package com.goodworkalan.go.go;
  *
  * @author Alan Gutierrez
  */
+@Command(parent = GoCommand.class)
 public class Hello implements Commandable {
     /**
      * Print "Hello, World!"

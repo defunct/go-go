@@ -33,11 +33,6 @@ final class CommandLoader {
     /** The set of class path URLs that have been inspected for commands. */
     private final Set<URL> urls = new HashSet<URL>();
 
-    /**
-     * The set of dependency specification that have been inspected for imports.
-     */
-    private final Set<Class<?>> dependenciesClasses = new HashSet<Class<?>>();
-    
     /** The Java-a-Go-Go library. */
     public final Library library = new Library(new File(System.getProperty("user.home") + "/.m2/repository"));
     
@@ -47,7 +42,7 @@ final class CommandLoader {
     /** The map of tasks to responders. */
     public final Map<Class<? extends Commandable>, Responder> responders = new HashMap<Class<? extends Commandable>, Responder>();
 
-    private final ClassLoader threadClassLoader = Thread.currentThread().getContextClassLoader();
+    private LibraryPath libraryPath;
 
     /**
      * Load the tasks found in the libraries specified in the given artifact
@@ -56,25 +51,14 @@ final class CommandLoader {
      * @param artifactFile
      *            The artifact file.
      */
-    public CommandLoader(Include...includes) {
-        seen.add("com.goodworkalan/go-go");
-        seen.add("com.goodworkalan/reflective");
-        seen.add("com.goodworkalan/cassandra");
+    public CommandLoader() {
+        seen.add(new Artifact("com.goodworkalan/go-go").getKey().subList(0, 2));
+        seen.add(new Artifact("com.goodworkalan/reflective").getKey().subList(0, 2));
+        seen.add(new Artifact("com.goodworkalan/cassandra").getKey().subList(0, 2));
         
-        LibraryPath libraryPath = library.emptyPath(seen);
-        if (includes.length != 0) {
-            List<PathPart> parts = new ArrayList<PathPart>();
-            for (Include include : includes) {
-                parts.add(new ResolutionPart(include));
-            }
-            libraryPath = libraryPath.extend(parts);
-            Thread.currentThread().setContextClassLoader(libraryPath.getClassLoader(threadClassLoader));
-        }
-        try {
-            while ((libraryPath = loadConfigurations(libraryPath)) != null);
-        } catch (IOException e) {
-            throw new GoException(0, e);
-        }
+        libraryPath = library.emptyPath(seen);
+        
+        readConfigurations();
     }
 
     /**
@@ -94,77 +78,85 @@ final class CommandLoader {
      *             For any I/O error while reading the command interpreter
      *             definition files.
      */
-    private LibraryPath loadConfigurations(LibraryPath libraryPath) throws IOException {
-        boolean classLoaderDirty = false;
+    public void addArtifacts(Artifact...artifacts) {
+        List<Artifact> unseen = new ArrayList<Artifact>();
+        for (Artifact artifact : artifacts) {
+            Object key = artifact.getKey().subList(0, 2);
+            if (!seen.contains(key)) {
+                seen.add(key);
+                unseen.add(artifact);
+            }
+        }
+        if (!unseen.isEmpty()) {
+            List<PathPart> parts = new ArrayList<PathPart>();
+            for (Artifact artifact : unseen) {
+                parts.add(new ResolutionPart(artifact));
+            }
+            libraryPath = libraryPath.extend(parts);
+            ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+            classLoader = libraryPath.getClassLoader(classLoader);
+            Thread.currentThread().setContextClassLoader(classLoader);
+            readConfigurations();
+        }
+    }
+
+    private void readConfigurations() {
         ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-        Enumeration<URL> resources = classLoader.getResources("META-INF/services/com.goodworkalan.go.go.CommandInterpreter");
-        while (resources.hasMoreElements()) {
-            URL url = resources.nextElement();
-            if (!urls.contains(url)) {
-                Set<Class<? extends Commandable>> tasks = new HashSet<Class<? extends Commandable>>();
-                
-                urls.add(url);
-                BufferedReader lines = new BufferedReader(new InputStreamReader(url.openStream()));
-                String className;
-                try {
-                    while ((className = lines.readLine()) != null) {
-                        if (className.trim().equals("")) {
-                            continue;
-                        }
-                        Class<?> foundClass;
-                        try {
-                            foundClass = classLoader.loadClass(className);
-                        } catch (ClassNotFoundException e) {
-                            throw new GoException(0, e);
-                        }
-                        if (Dependencies.class.isAssignableFrom(foundClass)) {
-                            if (!dependenciesClasses.contains(foundClass)) {
-                                dependenciesClasses.add(foundClass);
-                                Dependencies dependencies;
-                                try {
-                                    dependencies = (Dependencies) foundClass.newInstance();
-                                } catch (RuntimeException e) {
-                                    throw e;
-                                } catch (Exception e) {
-                                    throw new GoException(0, e);
-                                }
-                                Bundle bundle = new Bundle();
-                                dependencies.configure(bundle);
-                                for (Include include : bundle.getIncludes()) {
-                                    libraryPath = libraryPath.extend(new ResolutionPart(include));
-                                }
-                                Thread.currentThread().setContextClassLoader(libraryPath.getClassLoader(threadClassLoader));
-                                classLoaderDirty = true;
+        try {
+            Enumeration<URL> resources = classLoader.getResources("META-INF/services/com.goodworkalan.go.go.CommandInterpreter");
+            while (resources.hasMoreElements()) {
+                URL url = resources.nextElement();
+                if (!urls.contains(url)) {
+                    Set<Class<? extends Commandable>> tasks = new HashSet<Class<? extends Commandable>>();
+                    
+                    urls.add(url);
+                    BufferedReader lines = new BufferedReader(new InputStreamReader(url.openStream()));
+                    String className;
+                    try {
+                        while ((className = lines.readLine()) != null) {
+                            if (className.trim().equals("")) {
+                                continue;
                             }
-                        } else if (Commandable.class.isAssignableFrom(foundClass)) {
-                            tasks.add(taskClass(foundClass));
-                        } else {
-                            throw new GoException(0);
+                            Class<?> foundClass;
+                            try {
+                                foundClass = classLoader.loadClass(className);
+                            } catch (ClassNotFoundException e) {
+                                throw new GoException(0, e);
+                            }
+                            if (Commandable.class.isAssignableFrom(foundClass)) {
+                                tasks.add(taskClass(foundClass));
+                            } else {
+                                throw new GoException(0);
+                            }
                         }
+                    } catch (IOException e) {
+                        throw new GoException(0, e);
                     }
-                } catch (IOException e) {
-                    throw new GoException(0, e);
-                }
-                for (Class<? extends Commandable> taskClass : tasks) {
-                    if (!responders.containsKey(taskClass)) {
-                        Responder responder = new Responder(taskClass);
-                        responders.put(taskClass, responder);
-                        Class<? extends Commandable> parentTaskClass = null;
-                        while ((parentTaskClass = responder.getParentTaskClass()) != null) {
-                            Responder parent = responders.get(parentTaskClass);
-                            if (parent == null) {
-                                parent = new Responder(parentTaskClass);
-                                responders.put(parentTaskClass, parent);
+                    for (Class<? extends Commandable> taskClass : tasks) {
+                        if (!responders.containsKey(taskClass)) {
+                            Responder responder = new Responder(taskClass);
+                            responders.put(taskClass, responder);
+                            Class<? extends Commandable> parentTaskClass = null;
+                            while ((parentTaskClass = responder.getParentTaskClass()) != null) {
+                                Responder parent = responders.get(parentTaskClass);
+                                if (parent == null) {
+                                    parent = new Responder(parentTaskClass);
+                                    responders.put(parentTaskClass, parent);
+                                }
+                                parent.addCommand(responder);
+                                responder = parent;
                             }
-                            parent.addCommand(responder);
-                            responder = parent;
+                            // Will reassign sometimes, but that's okay.
+                            commands.put(responder.getName(), responder);
                         }
-                        // Will reassign sometimes, but that's okay.
-                        commands.put(responder.getName(), responder);
                     }
                 }
             }
+        } catch (IOException e) {
+            throw new GoException(0, e);
         }
-        return classLoaderDirty ? libraryPath : null;
+        for (Responder responder : responders.values()) {
+            responder.checkEndlessRecursion(responders, new HashSet<Class<? extends Commandable>>());
+        }
     }
 }

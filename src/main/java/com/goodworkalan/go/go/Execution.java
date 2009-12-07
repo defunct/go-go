@@ -32,7 +32,7 @@ class Execution {
             return;
         }
         CommandInterpreter ci = this.part.getCommandInterpreter();
-        Responder responder = ci.responders.get(taskClass);
+        Responder responder = ci.loader.responders.get(taskClass);
         if (responder == null) {
             throw new GoException(0);
         }
@@ -47,7 +47,7 @@ class Execution {
                 responder.setArguable(task, argument, arguable);
             }
             for (Class<? extends Output> input : responder.getInputs()) {
-                Responder container = ci.responders.get(taskClass(input.getDeclaringClass()));
+                Responder container = ci.loader.responders.get(taskClass(input.getDeclaringClass()));
                 execute(io, container.getTaskClass());
                 responder.setInput(task, input, outputs.get(container.getTaskClass()).get(input));
             }
@@ -75,7 +75,7 @@ class Execution {
 
     private Arguable getArguments(CommandInterpreter ci, List<CommandPart> parts, Class<? extends Arguable> argument) {
         Arguable arguable = ci.taskFactory.newArguable(argument);
-        Responder container = ci.responders.get(taskClass(argument.getDeclaringClass()));
+        Responder container = ci.loader.responders.get(taskClass(argument.getDeclaringClass()));
         int index = getDepth(container);
         if (index < parts.size()) {
             for (Conversion conversion : parts.get(index).getConversions()) {
@@ -109,6 +109,6 @@ class Execution {
         if (parent == null) {
             return 0;
         }
-        return getDepth(part.getCommandInterpreter().responders.get(parent)) + 1;
+        return getDepth(part.getCommandInterpreter().loader.responders.get(parent)) + 1;
     }
 }
