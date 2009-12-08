@@ -103,7 +103,7 @@ final class CommandLoader {
     private void readConfigurations() {
         ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
         try {
-            Enumeration<URL> resources = classLoader.getResources("META-INF/services/com.goodworkalan.go.go.CommandInterpreter");
+            Enumeration<URL> resources = classLoader.getResources("META-INF/services/com.goodworkalan.go.go.Commandable");
             while (resources.hasMoreElements()) {
                 URL url = resources.nextElement();
                 if (!urls.contains(url)) {

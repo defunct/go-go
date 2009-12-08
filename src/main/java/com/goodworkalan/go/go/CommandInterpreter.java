@@ -73,6 +73,8 @@ public final class CommandInterpreter {
             }
         }
 
+        System.out.println(System.getProperty("java.class.path"));
+
         programs.put(Arrays.asList("go"), new Artifact("com.goodworkalan/go-go"));
         programs.put(Arrays.asList("go", "hello"), new Artifact("com.goodworkalan/go-go"));
         programs.put(Arrays.asList("go", "install"), new Artifact("com.goodworkalan/go-go"));

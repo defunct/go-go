@@ -29,7 +29,7 @@ public class InstallCommand implements Commandable {
         List<String> commands = new ArrayList<String>();
         try {
             ZipFile zip = new ZipFile(new File(found.getDirectory(), found.getArtifact().getPath("jar")));
-            ZipEntry entry = zip.getEntry("META-INF/services/com.goodworkalan.go.go.CommandInterpreter");
+            ZipEntry entry = zip.getEntry("META-INF/services/com.goodworkalan.go.go.Commandable");
             if (entry != null) {
                 BufferedReader in = new BufferedReader(new InputStreamReader(zip.getInputStream(entry)));
                 String line;
