@@ -32,8 +32,8 @@
         </dependency>
         <dependency>
             <groupId>com.goodworkalan</groupId>
-            <artifactId>glob</artifactId>
-            <version>0.1</version>
+            <artifactId>comfort-io</artifactId>
+            <version>0.1.1</version>
         </dependency>
         <dependency>
             <groupId>com.goodworkalan</groupId>
