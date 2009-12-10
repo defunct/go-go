@@ -1,12 +1,11 @@
 ---
 layout: default
-title: I'm Not Wearing Any Pants
+title: Jav-a-Go-Go
 ---
-h1. I'm Not Wearing Any Pants
+h1. Jav-a-Go-Go
 
-Greetings visitor. You are welcome to paruse my wares. If you could please,
-forward this message to the appropriate parties:
+Ideally, I'd like each of these pages to be an expression of the project's nature, with a stab at a design for each project. Jav-a-Go-Go can have a sillotte of a Hullabloo era Go-Go dancer.
 
-Hello, World!
+This websites can maintain project blogs as well.
 
-In the interim, let's all just be happy that the killer bees are hibernating.
+I'm disappointed that I'm having a hard time editing in ViM. I'm not able to get the wrapping to work as expected.
