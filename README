@@ -1,0 +1,49 @@
+JAV-A-GO-GO
+
+Java command line application framework.
+
+    Source: http://github.com/bigeasy/go-go/tree/master
+    Documentation: http://wiki.github.com/bigeasy/go-go
+
+    Issues and Tasks: http://github.com/bigeasy/go-go/issues
+
+    License: The MIT License
+
+    Dependencies:
+        Comfort I/O:    http://github.com/bigeasy/comfort-io
+        Cassandra:      http://github.com/bigeasy/cassandra
+        Reflective:     http://github.com/bigeasy/reflective
+
+    Contact: alan@blogometer.com
+
+    See-Also:
+        Mix:            http://github.com/bigeasy/mix
+        Java Cups:      http://github.com/bigeasy/cups
+
+PURPOSE
+
+Jav-a-Go-Go is a Java extension that luanches your command line application,
+so you no longer have to provide a shell program / batch file that cobbles
+together a classpath.
+
+Jav-a-Go-Go from the command line is a tad verbose, but much less verbose than
+pounding out full CLASSPATH.
+
+$ java go.go cups maven --uri=http://repo2.maven.org/maven2/ --artifact=xom/xom/1.1
+
+In the above command line, "go.go" replaces the CLASSPATH, which is often much
+longer than five characters, and "cups maven" names the program to run, in the
+style of git or Subversion; program name and specific program command.
+
+Jav-a-Go-Go is launched from Java, it assembles your claspath from repository
+dependency information, converts your command line into Java types, a runs an
+execute method on the class that implements your program.
+
+MOTIVATION
+
+It is difficult to use Java from the command line. There are few Java command
+line applications, probably because Java programmers don't like to write those
+fussy shell program / batch file pairs. Jav-a-Go-Go runs without a bootstrap
+script because it uses a Java extension that consists a single class that
+gets the ball rolling. If java is in your path, and Jav-a-Go-Go is in your
+extensions directory, that is all the installation you'll ever need.
