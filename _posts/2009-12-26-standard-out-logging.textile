@@ -6,7 +6,7 @@ h1. {{ page.title }}
 
 p(meta). December 26th, 2009
 
-Logging got added to Jav-a-Go-Go quite by accident. Now I need to get it out.
+Logging got added to Jav-a-Go-Go quite by accident. Now I need to remove it.
 
 I created a little library some time ago, called Cassandra, which contained an exception class that was a simple, formatted exception. The @CassandraException@ class has a put method that could be chained, so you can add name value pairs to a hash, then reference those name value pairs in a message format string kept in a @ResourceBundle@. Cassandra encourages me to write meaningful exception messages, because littering my code with string constants discourages me from writing meaningful exception messages.
 
