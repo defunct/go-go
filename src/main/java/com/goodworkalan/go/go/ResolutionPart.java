@@ -21,8 +21,8 @@ public class ResolutionPart implements PathPart {
         this(new Include(artifact));
     }
 
-    public ResolutionPart(Artifact include, Set<Artifact> excludes) {
-        this(new Include(include, excludes));
+    public ResolutionPart(Artifact artifact, Set<Artifact> excludes) {
+        this(new Include(artifact, excludes));
     }
     
     public File getFile() {

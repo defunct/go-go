@@ -1,7 +1,7 @@
 package com.goodworkalan.go.go;
 
 import com.goodworkalan.cassandra.CassandraException;
-import com.goodworkalan.cassandra.Report;
+import com.goodworkalan.cassandra.Clue;
 
 public class GoException extends CassandraException {
     /** Serial version id. */
@@ -14,7 +14,7 @@ public class GoException extends CassandraException {
      *            The error code.
      */
     public GoException(int code) {
-        super(code, new Report());
+        super(code, new Clue());
     }
 
     /**
@@ -26,7 +26,7 @@ public class GoException extends CassandraException {
      *            The wrapped exception.
      */
     public GoException(int code, Throwable cause) {
-        super(code, new Report(), cause);
+        super(code, new Clue(), cause);
     }
 
     /**
@@ -38,7 +38,7 @@ public class GoException extends CassandraException {
      * @param report
      *            An initial report structure.
      */
-    public GoException(int code, Report report) {
+    public GoException(int code, Clue report) {
         super(code, report);
     }
 
@@ -53,7 +53,7 @@ public class GoException extends CassandraException {
      * @param The
      *            cause.
      */
-    public GoException(int code, Report report, Throwable cause) {
+    public GoException(int code, Clue report, Throwable cause) {
         super(code, report, cause);
     }
 

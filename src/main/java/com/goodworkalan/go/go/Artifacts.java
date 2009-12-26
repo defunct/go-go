@@ -16,7 +16,7 @@ import java.io.Reader;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.goodworkalan.cassandra.Report;
+import com.goodworkalan.cassandra.Clue;
 
 /**
  * A file reader that reads a list of dependencies from a file that 
@@ -45,7 +45,7 @@ public class Artifacts {
             List<Artifact> excludes = new ArrayList<Artifact>();
             List<Include> includes = new ArrayList<Include>();
             
-            Report report = new Report();
+            Clue report = new Clue();
             BufferedReader lines = new BufferedReader(reader);
             int lineNumber = 0;
             String line;
@@ -55,8 +55,8 @@ public class Artifacts {
                 if (!(line.startsWith("#") || line.startsWith("@") || line.equals(""))) {
                     String[] split = line.split("\\s+");
 
+                    Object mark = report.mark();
                     report
-                        .mark()
                         .put("line", line)
                         .put("lineNumber", lineNumber)
                         .put("startCharacter", split[0]);
@@ -91,7 +91,7 @@ public class Artifacts {
                     default:
                         throw new GoException(INVALID_ARTIFACTS_LINE_START, report);
                     }
-                    report.clear();
+                    report.clear(mark);
                 }
             }
             if (include != null) {

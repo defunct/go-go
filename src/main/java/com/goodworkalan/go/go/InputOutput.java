@@ -1,5 +1,6 @@
 package com.goodworkalan.go.go;
 
+import java.io.File;
 import java.io.InputStream;
 import java.io.PrintStream;
 
@@ -17,13 +18,16 @@ public class InputOutput {
 
     /** The error stream. */
     public final PrintStream err;
+    
+    /** The working directory. */
+    public final File dir;
 
     /**
      * Construct an input/output structure using the system input, error, and
-     * error streams.
+     * error streams and the given working directory.
      */
-    public InputOutput() {
-        this(System.in, System.out, System.err);
+    public InputOutput(File dir) {
+        this(System.in, System.out, System.err, dir);
     }
 
     /**
@@ -36,9 +40,17 @@ public class InputOutput {
      * @param err
      *            The error stream.
      */
-    public InputOutput(InputStream in, PrintStream out, PrintStream err) {
+    public InputOutput(InputStream in, PrintStream out, PrintStream err, File dir) {
         this.in = in;
         this.err = err;
         this.out = out;
+        this.dir = dir;
+    }
+    
+    public File relativize(File file) {
+        if (!file.isAbsolute()) {
+            return new File(dir, file.getPath());
+        }
+        return file;
     }
 }

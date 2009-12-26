@@ -232,7 +232,10 @@ public class Artifact {
      * of following the pattern where the dots in the group are replaced with
      * file part separators.
      * 
-     * <code><pre>group/name/version/name-version-suffix.extension</code></pre>
+     * <code><pre>group/name/version/name-version-suffix.extension</pre></code>
+     * 
+     * <p>
+     * FIXME Use {@link File#separator}.
      * 
      * @return The relative path into a repository for the artifact file.
      */

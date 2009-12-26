@@ -10,11 +10,12 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * A Jav-a-Go-Go format library. Libraries can live only on the local file
- * system, therefore a library id uniquely identified by the directory where it
- * lives.
+ * A Jav-a-Go-Go format library.
  * <p>
- * Simple enough to make it a list of directories, to implement a library path.
+ * Libraries can live only on the local file system, therefore a library id
+ * uniquely identified by the directory where it lives.
+ * <p>
+ * FIXME Make the file a list to make this a library path.
  * 
  * @author Alan Gutierrez
  */

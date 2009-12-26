@@ -3,6 +3,8 @@
  */
 package com.goodworkalan.go.go;
 
+import static com.goodworkalan.go.go.GoError.COMMAND_LINE_NO_ARGUMENTS;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -81,7 +83,7 @@ public final class Program {
     public int run(ProgramQueue queue) {
         LinkedList<String> args = new LinkedList<String>(Arrays.asList(arguments));
         if (args.isEmpty()) {
-            throw new GoException(0);
+            throw new GoException(COMMAND_LINE_NO_ARGUMENTS);
         }
         List<Include> includes = new ArrayList<Include>();
         boolean debug = false;
@@ -116,7 +118,7 @@ public final class Program {
         if (debug) {
             System.out.println(args);
         }
-        int code = ci.execute(new InputOutput(), args);
+        int code = ci.execute(new InputOutput(dir), args);
         if (debug) {
             System.out.printf("%.2fM/%.2fM\n", 
                     (double) Runtime.getRuntime().totalMemory() /  1024 / 1024,

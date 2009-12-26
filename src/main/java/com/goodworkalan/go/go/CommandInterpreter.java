@@ -85,16 +85,18 @@ public final class CommandInterpreter {
     public Library getLibrary() {
         return loader.library;
     }
-    
+
     /**
      * Execute the given arguments with the command interpreter.
      * 
+     * @param dir
+     *            The working directory.
      * @param arguments
      *            The arguments to execute.
      * @return The exit code.
      */
-    public int execute(String...arguments) {
-        return execute(new InputOutput(), arguments);
+    public int execute(File dir, String...arguments) {
+        return execute(new InputOutput(dir), arguments);
     }
 
     /**
