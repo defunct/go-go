@@ -1,0 +1,25 @@
+---
+title: Standard Error Logging
+---
+
+h1. {{ page.title }}
+
+p(meta). December 26th, 2009
+
+I'm building a structured logging library Notice/Prattle and I was using Cassandra which is now based on Notice, so I have this common library for exceptions, now Cassandra is based on Notice, so I need to add that, because Cassandra now does structured errors, so now I am adding Notice and all of it's facilities to Mix.
+
+Which means ClassLoaders galore. I'm adding ClassLoaders logic, to Mix, and now I have to have a common base for all Mix programs, all of the Notice, Prattle Cassandra dependencies need to be added.
+
+And the Notice loggers are fancy. They send email or write out YAML or JSON structured log messages. They are meant to send out trauma form within a container. A way for your application to send you an email, or keep a record of it's life while you are on the golf course.
+
+To launch a Mix application, you'll have to specify a logger configuration to get logging messages, and they will be formatted like logging messages, with dates and levels.
+
+Mix was using threads as a trick to mimic fork, but now I have the problem of having to have a shared base framework, with _pluggale_ framework components in addition to the _pluggable_ programs themselves so that this becomes more like Commons Logging, a bridge, with the question of, if a program has a custom recorder, where does that recorder get added? To the sink of the framework, or in a separate sink thread that is a child of the program thread?
+
+Now to use this logging, the person who fires off the library is going to have give a logging configuration and a recorder library.
+
+Logging is for long running applications. A command line program has a log. It is called standard error.
+
+Add a logging framework, and we start to stink like a container. Why not make it easier to create nicely formatted error messages, and have a very simple debugging switch, so that programs will emit verbose output to standard out?
+
+If you need logging in your program, add it to your program, but don't add it to this simple command line framework, it will get too complicated, and it will confuse what the framework is all about.
