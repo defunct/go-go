@@ -21,9 +21,6 @@ public class GoException extends RuntimeException {
      */
     public final static int TERMINAL_BACKSLASH = 202;
 
-    /** A variable substitution in the property file creates an infinite loop. */
-    public final static int PROPERTY_LOOP = 101;
-
     /** A line in an artifact file begins with an invalid character. */
     public final static int INVALID_ARTIFACTS_LINE_START = 301;
 
@@ -74,6 +71,9 @@ public class GoException extends RuntimeException {
     
     /** Unable to find the responder for a class during installation. */
     public final static int CANNOT_FIND_RESPONDER = 801;
+    
+    /** Command class missing. */
+    public final static int COMMAND_CLASS_MISSING = 101;
     
     
     /**

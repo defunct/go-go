@@ -24,6 +24,9 @@ public class GoError extends GoException {
     
     /** Invalid system property definition parameter. */
     public static int INVALID_DEFINE_PARAMETER = 1004;
+    
+    /** Invalid argument to bootstrap. */
+    public static int INVALID_ARGUMENT = 1005;
 
     /**
      * Create a go error with the given error code.

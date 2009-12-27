@@ -148,6 +148,34 @@ public class CommandPart {
         return extend(arguments.toArray(new String[arguments.size()]));
     }
     
+    List<String> getCommandLine(List<String> commandLine) {
+        if (getParent() != null) {
+            getParent().getCommandLine(commandLine);
+        }
+        commandLine.add(responder.getName());
+        for (int i = 0; i < verbosity; i++) {
+            commandLine.add("--" + responder.getName() + ":verbose");
+        }
+        commandLine.addAll(arguments);
+        commandLine.addAll(remaining);
+        return commandLine;
+    }
+    
+    public List<String> getCommandLine() {
+        return getCommandLine(new ArrayList<String>());
+    }
+    
+    public List<String> getCommand() {
+        List<String> commandLine = new ArrayList<String>();
+        commandLine.add(responder.getName());
+        for (int i = 0; i < verbosity; i++) {
+            commandLine.add("--" + responder.getName() + ":verbose");
+        }
+        commandLine.addAll(arguments);
+        commandLine.addAll(remaining);
+        return commandLine;
+    }
+    
     CommandPart extend(String[] arguments, int offset) {
         CommandPart part = this;
         boolean remaining = false;
@@ -292,6 +320,26 @@ public class CommandPart {
         copy.conversions.add(new Conversion(name, assignment.convertValue(value)));
         copy.arguments.add("--" + qualified[0] + ':' + qualified[1] + '=' + value);
 
+        return copy;
+    }
+    
+    public CommandPart remove(String name) {
+        if (name.indexOf(':') == -1) {
+            name = responder.getName() + ':' + name;
+        }
+        
+        CommandPart copy = new CommandPart(this, 0);
+        int i = 0, stop = copy.conversions.size();
+        while (i < stop) {
+            if (conversions.get(i).getName().equals(name)) {
+                conversions.remove(i);
+                arguments.remove(i);
+                stop--;
+            } else {
+                i++;
+            }
+        }
+        
         return copy;
     }
     

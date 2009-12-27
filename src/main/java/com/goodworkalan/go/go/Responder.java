@@ -272,6 +272,8 @@ class Responder {
         return arguables.keySet();
     }
     
+    // FIXME Can we add arguable here? So we can extend make?
+    
     public void setArguable(Commandable task, Class<? extends Arguable> arguable, Arguable value) {
         try {
             arguables.get(arguable).invoke(task, value);

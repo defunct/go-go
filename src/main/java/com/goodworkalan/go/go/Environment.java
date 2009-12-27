@@ -64,6 +64,10 @@ public class Environment {
     }
 
     public void error(Class<?> context, String token, Object...arguments) {
+        error(io, context, token, arguments);
+    }
+    
+    public static void error(InputOutput io, Class<?> context, String token, Object...arguments) {
         String className = context.getCanonicalName();
         int index = className.lastIndexOf('.');
         if (index > -1) {
@@ -80,9 +84,9 @@ public class Environment {
         try {
             io.err.println(String.format(bundle.getString(key), arguments));
         } catch (MissingResourceException e) {
-            error(Environment.class, "message.missing");
+            error(io, Environment.class, "message.missing", key);
         } catch (MissingFormatArgumentException e) {
-            error(Environment.class, "argument.missing", e.getMessage());
+            error(io, Environment.class, "argument.missing", e.getMessage());
         }
     }
 }

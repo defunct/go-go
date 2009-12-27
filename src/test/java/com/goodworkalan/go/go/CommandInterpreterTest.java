@@ -8,6 +8,6 @@ import org.testng.annotations.Test;
 public class CommandInterpreterTest {
     @Test
     public void constructor() {
-        new CommandInterpreter(new ErrorCatcher(), Collections.<File>emptyList()).execute("go", "hello");
+        new CommandInterpreter(null, new ErrorCatcher(), Collections.<File>emptyList()).execute("go", "hello");
     }
 }

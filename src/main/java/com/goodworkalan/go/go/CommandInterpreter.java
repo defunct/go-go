@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.goodworkalan.go.go.GoException.*;
 
 /**
  * Make sense of the command line.
@@ -18,26 +19,17 @@ import java.util.Map;
  */
 public final class CommandInterpreter {
     final CommandFactory taskFactory = new ReflectionTaskFactory();
-    
-//    final Map<String, Responder> commands;
-//
-//    final Map<Class<? extends Commandable>, Responder> responders;
 
     private final ErrorCatcher catcher;
-    
+
+    final ProgramQueue queue;
+
     final Map<List<String>, Artifact> programs;
-    
+
     final CommandLoader loader;
-    
-//    public CommandInterpreter(Map<List<String>, Artifact> programs, List<Include> includes) {
-//        this(programs, includes.toArray(new Include[includes.size()]));
-//    }
-//    
-//    public CommandInterpreter(Map<List<String>, Artifact> programs, Include...includes) {
-//        this(new ErrorCatcher(), programs, includes);
-//    }
- 
-    public CommandInterpreter(ErrorCatcher catcher, List<File> libraries) {
+
+    CommandInterpreter(ProgramQueue queue, ErrorCatcher catcher,
+            List<File> libraries) {
         Map<List<String>, Artifact> programs = new HashMap<List<String>, Artifact>();
         for (File library : libraries) {
             File gogo = new File(library, "go-go");
@@ -49,18 +41,22 @@ public final class CommandInterpreter {
                     for (File file : directory.listFiles()) {
                         if (file.getName().endsWith(".go")) {
                             try {
-                                BufferedReader configuration = new BufferedReader(new FileReader(file));
+                                BufferedReader configuration = new BufferedReader(
+                                        new FileReader(file));
                                 String line;
                                 while ((line = configuration.readLine()) != null) {
                                     line = line.trim();
-                                    if (line.length() == 0 || line.startsWith("#")) {
+                                    if (line.length() == 0
+                                            || line.startsWith("#")) {
                                         continue;
                                     }
                                     String[] record = line.split("\\s+", 2);
                                     Artifact artifact = new Artifact(record[0]);
                                     if (record.length > 1) {
                                         for (String path : record[1].split(",")) {
-                                            programs.put(Arrays.asList(path.trim().split("\\s+")), artifact);
+                                            programs.put(Arrays.asList(path
+                                                    .trim().split("\\s+")),
+                                                    artifact);
                                         }
                                     }
                                 }
@@ -73,15 +69,19 @@ public final class CommandInterpreter {
             }
         }
 
-        programs.put(Arrays.asList("go"), new Artifact("com.goodworkalan/go-go"));
-        programs.put(Arrays.asList("go", "hello"), new Artifact("com.goodworkalan/go-go"));
-        programs.put(Arrays.asList("go", "install"), new Artifact("com.goodworkalan/go-go"));
+        programs.put(Arrays.asList("go"),
+                new Artifact("com.goodworkalan/go-go"));
+        programs.put(Arrays.asList("go", "hello"), new Artifact(
+                "com.goodworkalan/go-go"));
+        programs.put(Arrays.asList("go", "install"), new Artifact(
+                "com.goodworkalan/go-go"));
         this.loader = new CommandLoader();
 
         this.catcher = catcher;
         this.programs = programs;
+        this.queue = queue;
     }
-    
+
     public Library getLibrary() {
         return loader.library;
     }
@@ -95,7 +95,7 @@ public final class CommandInterpreter {
      *            The arguments to execute.
      * @return The exit code.
      */
-    public int execute(String...arguments) {
+    public int execute(String... arguments) {
         return execute(new InputOutput(), arguments);
     }
 
@@ -112,7 +112,7 @@ public final class CommandInterpreter {
     public int execute(InputOutput io, List<String> arguments) {
         return execute(io, arguments.toArray(new String[arguments.size()]));
     }
-    
+
     /**
      * Execute the given arguments with the command interpreter using the given
      * input/output streams.
@@ -123,7 +123,7 @@ public final class CommandInterpreter {
      *            The arguments to execute.
      * @return The exit code.
      */
-    public int execute(InputOutput io, String...arguments) {
+    public int execute(InputOutput io, String... arguments) {
         try {
             command(arguments).execute(io);
         } catch (GoError e) {
@@ -131,31 +131,23 @@ public final class CommandInterpreter {
         }
         return 0;
     }
-    
-    public CommandPart command(String...arguments) {
+
+    public CommandPart command(String... arguments) {
         if (arguments.length == 0) {
             throw new GoException(0);
         }
         List<String> commandPath = new ArrayList<String>();
         commandPath.add(arguments[0]);
-        
+
         Artifact artifact = programs.get(commandPath);
         if (artifact != null) {
             loader.addArtifacts(artifact);
         }
-        
+
         Responder responder = loader.commands.get(arguments[0]);
         if (responder == null) {
-            throw new GoException(0);
+            throw new GoException(COMMAND_CLASS_MISSING, arguments[0]);
         }
         return new CommandPart(this, responder, null).extend(arguments, 1);
-    }
-
-    public static void main(String...arguments) {
-        
-    }
-    
-    public static void main(List<File> libraries, String...arguments) {
-        System.exit(new ProgramQueue().start(new Program(libraries, arguments)));
     }
 }

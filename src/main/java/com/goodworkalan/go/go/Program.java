@@ -3,22 +3,20 @@
  */
 package com.goodworkalan.go.go;
 
-import static com.goodworkalan.go.go.GoError.COMMAND_LINE_NO_ARGUMENTS;
-import static com.goodworkalan.go.go.GoError.INVALID_DEFINE_PARAMETER;
-
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 
+/**
+ * A Jav-a-Go-Go program.
+ * 
+ * @author Alan Gutierrez
+ */
 public final class Program {
     private final List<File> libraries;
     
-    private final String[] arguments;
+    private final List<String> arguments;
     
-    public Program(List<File> libraries, String...arguments) {
+    public Program(List<File> libraries, List<String> arguments) {
         this.libraries = libraries;
         this.arguments = arguments;
     }
@@ -79,50 +77,15 @@ public final class Program {
      * @return The desired exit code of program.
      */
     public int run(ProgramQueue queue) {
-        LinkedList<String> args = new LinkedList<String>(Arrays.asList(arguments));
-        if (args.isEmpty()) {
-            throw new GoException(COMMAND_LINE_NO_ARGUMENTS);
-        }
-        List<Include> includes = new ArrayList<Include>();
-        boolean debug = false;
-        for (Iterator<String> each = args.iterator(); each.hasNext();) {
-            String argument = each.next();
-            if (argument.equals("--")) {
-                break;
-            } else if (argument.startsWith("--go:")) {
-                if (argument.equals("--go:debug")) {
-                    debug = true;
-                } else if (argument.equals("--go:no-debug")) {
-                    debug = false;
-                } else if (argument.startsWith("--go:artifacts=")) {
-                    File artifacts = new File(argument.substring(argument.indexOf('=') + 1));
-                    if (artifacts.exists()) {
-                        includes.addAll(Artifacts.read(artifacts));
-                    }
-                } else if (argument.startsWith("--go:define=")) {
-                    String define = argument.substring(argument.indexOf('=') + 1);
-                    String[] definition = define.split(":", 2);
-                    if (definition.length != 2) {
-                        throw new GoError('a', INVALID_DEFINE_PARAMETER, define);
-                    }
-                    System.out.println(definition[0] + "=" + definition[1]);
-                    System.setProperty(definition[0], definition[1]);
-                } else {
-                    throw new GoException(0);
-                }
-                each.remove();
-            }
-        }
-        CommandInterpreter ci = new CommandInterpreter(new ErrorCatcher(), libraries);
-        if (debug) {
-            System.out.println(args);
-        }
-        int code = ci.execute(new InputOutput(), args);
-        if (debug) {
-            System.out.printf("%.2fM/%.2fM\n", 
-                    (double) Runtime.getRuntime().totalMemory() /  1024 / 1024,
-                    (double) Runtime.getRuntime().freeMemory() / 1024 / 1024);
-        }
+        InputOutput io = new InputOutput();
+        CommandInterpreter ci = new CommandInterpreter(queue, new ErrorCatcher(), libraries);
+        queue.verbose(io, "start", arguments);
+        long start = System.currentTimeMillis();
+        int code = ci.execute(io, arguments);
+        queue.verbose(io, "stop",
+                System.currentTimeMillis() - start,
+                (double) Runtime.getRuntime().totalMemory() / 1024 / 1024,
+                (double) Runtime.getRuntime().freeMemory() / 1024 / 1024);
         return code;
     }
 }

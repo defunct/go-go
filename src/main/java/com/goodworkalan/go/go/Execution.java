@@ -79,8 +79,6 @@ class Execution {
         int index = getDepth(container);
         if (index < parts.size()) {
             for (Conversion conversion : parts.get(index).getConversions()) {
-                System.out.println("BLURDY: " + container.getName());
-                System.out.println(conversion.getName());
                 String[] pair = conversion.getName().split(":");
                 if (pair[0].equals(container.getName())) {
                     Assignment assignment = container.getAssignments().get(pair[1]);
