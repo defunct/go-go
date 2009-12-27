@@ -9,6 +9,6 @@ import static org.testng.Assert.assertEquals;
 public class ProgramQueueTest {
     @Test
     public void run() {
-        assertEquals(new ProgramQueue().start(new Program(Collections.singletonList(new File(System.getProperty("user.home") + File.separator + ".m2" + File.separator + "repository")), new File("."), "src/test/resources/blank.txt", "snap", "welcome", "--greeting=Hello, World!")), 0);
+        assertEquals(new ProgramQueue().start(new Program(Collections.singletonList(new File(System.getProperty("user.home") + File.separator + ".m2" + File.separator + "repository")), "src/test/resources/blank.txt", "snap", "welcome", "--greeting=Hello, World!")), 0);
     }
 }

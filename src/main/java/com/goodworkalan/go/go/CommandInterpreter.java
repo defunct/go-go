@@ -95,8 +95,8 @@ public final class CommandInterpreter {
      *            The arguments to execute.
      * @return The exit code.
      */
-    public int execute(File dir, String...arguments) {
-        return execute(new InputOutput(dir), arguments);
+    public int execute(String...arguments) {
+        return execute(new InputOutput(), arguments);
     }
 
     /**
@@ -156,6 +156,6 @@ public final class CommandInterpreter {
     }
     
     public static void main(List<File> libraries, String...arguments) {
-        System.exit(new ProgramQueue().start(new Program(libraries, new File("."), arguments)));
+        System.exit(new ProgramQueue().start(new Program(libraries, arguments)));
     }
 }

@@ -16,13 +16,10 @@ import java.util.List;
 public final class Program {
     private final List<File> libraries;
     
-    private final File dir;
-    
     private final String[] arguments;
     
-    public Program(List<File> libraries, File dir, String...arguments) {
+    public Program(List<File> libraries, String...arguments) {
         this.libraries = libraries;
-        this.dir = dir;
         this.arguments = arguments;
     }
 
@@ -120,7 +117,7 @@ public final class Program {
         if (debug) {
             System.out.println(args);
         }
-        int code = ci.execute(new InputOutput(dir), args);
+        int code = ci.execute(new InputOutput(), args);
         if (debug) {
             System.out.printf("%.2fM/%.2fM\n", 
                     (double) Runtime.getRuntime().totalMemory() /  1024 / 1024,
