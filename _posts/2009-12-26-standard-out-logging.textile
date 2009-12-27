@@ -35,8 +35,74 @@ Also, one might want to provide the user with a nice way to create a little comm
 
 Standard out is reserved for program output. Structured data that can be fed to other command line tools. Not for messages. When you add verbose or debug, blather goes to standard out, because you can get a meaningful error from the exit code, you don't need to parse standard out to know how the program ended.
 
+Here is what I came up with. Every command takes a @verbose@ argument.
 
+@java go.go mix --verbose make clean@
 
+Here, the @MixCommand@ class does not specify an @addVerbose@ method, because verbose is a property of the @CommandPart@. Every command has a @verbose@ switch.
 
+If someone complains bitterly at some point, saying that they need verbose for some other purpose, then we can make the verbosity switch configurable use the @@Command@ annotation as in @@Command(verbose = "debgging")@. However, verbose is such a standard, we will hopefully never cross the bridge to the land of great surprises. We will document the @verbose@ argument as a convention and state an opinion.
 
+At first I had @verbose@ and @debug@ to have levels, but it occurred to me that I was two steps down the path of eating up the user namespace, instead of one. If I could have one special case, reserved argument that did one very useful thing, then no one will complain about the encroachment, but two bites out of the name space for a lonely feature looks like a sloppy design.
 
+So, lets reuse @verbose@ to indicate debugging. Each time verbose appears on the command line, it increases the verbosity of the command.
+
+@java go.go mix --verbose --verbose make clean@
+
+The maximum verbosity is inherited. In the command below @mix@ and @make@ are implemented as @Commandable@ while @clean@ is an argument passed to @make@. Make will inherit a verbosity of @2@ from the mix command, and will emit debugging output, even though it's verbosity is @1@.
+
+@java go.go mix --verbose --verbose make --verbose clean@
+
+In the command below the @mix@ command will have a verbosity of @1@ and the @make@ command will have a verbosity of @2@.
+
+@java go.go mix --verbose make --verbose --verbose clean@
+
+How do you get to the verbosity?
+
+<pre name="code" class="foo">
+package com.goodworkalan.mix;
+
+public  class MakeCommand implements Commandable {
+	private Mix.Configuration configuration;
+	
+	public void setConfiguration(Mix.Configuration configuration) {
+		this.configuration = configuration;
+	}
+	
+    public void execute(Environment env) {
+		env.verbose("start", env.getRemaining());
+		for (String target : env.getRemaining()) {
+			env.verbose("build", target);
+			for (Task task : configuration.getProject().getRecipe(target)) {
+				env.debug("task", task.getClass().getCannonicalName());
+				task.execute(env);
+			}
+		}
+    }
+} 
+</pre>
+
+The messages above are written to standard out. They are read from a properties file named @stderr.properties@. The file is found in the same package as the command task class. In this case @com.goodworkalan.mix.stderr.properties@. Inside that file we put sprintf format strings.
+
+<pre>
+MakeCommand/start: Command [mix make] invoked with targets %s.
+MakeCommnad/build: \    Building target [%s].
+MakeCommnad/task:  \        Running a task of type [%s].
+</pre>
+
+Now when we run our command...
+
+<pre>java go.go mix --verbose make clean
+Command [mix make] invoked with targets [clean].
+    Building target[clean]
+</pre>
+
+Because we didn't type @--verbose@ twice, we don't see the debug output, only the verbose output.
+
+If you want to use a different context for the debugging output there, specify a specific @Class@ as the context.
+
+@env.debug(Javac.class, "compiling", sources)@
+
+Here the @Javac@ class is not a Jav-a-Go-Go command but a Mix task, part of a recipe to build a program. A @Javac@ class can have messages in @stderr.properties@, we just need pass the @Class@ to the @debug@ or @verbose@ method.
+
+That is logging for Jav-a-Go-Go.
