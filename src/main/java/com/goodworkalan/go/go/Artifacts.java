@@ -1,11 +1,11 @@
 package com.goodworkalan.go.go;
 
 import static com.goodworkalan.go.go.GoException.ARTIFACT_FILE_IO_EXCEPTION;
+import static com.goodworkalan.go.go.GoException.ARTIFACT_FILE_MISPLACED_EXCLUDE;
 import static com.goodworkalan.go.go.GoException.ARTIFACT_FILE_NOT_FOUND;
 import static com.goodworkalan.go.go.GoException.INVALID_ARTIFACTS_LINE_START;
 import static com.goodworkalan.go.go.GoException.INVALID_EXCLUDE_LINE;
 import static com.goodworkalan.go.go.GoException.INVALID_INCLUDE_LINE;
-import static com.goodworkalan.go.go.GoException.ARTIFACT_FILE_MISPLACED_EXCLUDE;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -16,8 +16,6 @@ import java.io.Reader;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.goodworkalan.cassandra.Clue;
-
 /**
  * A file reader that reads a list of dependencies from a file that 
  * contains a repository name and the dependency files.
@@ -27,25 +25,23 @@ import com.goodworkalan.cassandra.Clue;
 public class Artifacts {
     public static List<Include> read(File file) {
         try {
-            try {
-                return read(new FileReader(file));
-            } catch (FileNotFoundException e) {
-                throw new GoException(ARTIFACT_FILE_NOT_FOUND, e);
-            }
-        } catch (GoException e) {
-            e.put("file", file);
-            throw e;
+            return read(file.toString(), new FileReader(file));
+        } catch (FileNotFoundException e) {
+            throw new GoException(ARTIFACT_FILE_NOT_FOUND, e, file);
         }
     }
      
     public static List<Include> read(Reader reader) {
+        return read("UNKNOWN", reader);
+    }
+    
+    private static List<Include> read(String context, Reader reader) {
         try {
             Artifact include = null;
             boolean optional = false;
             List<Artifact> excludes = new ArrayList<Artifact>();
             List<Include> includes = new ArrayList<Include>();
             
-            Clue report = new Clue();
             BufferedReader lines = new BufferedReader(reader);
             int lineNumber = 0;
             String line;
@@ -55,14 +51,8 @@ public class Artifacts {
                 if (!(line.startsWith("#") || line.startsWith("@") || line.equals(""))) {
                     String[] split = line.split("\\s+");
 
-                    Object mark = report.mark();
-                    report
-                        .put("line", line)
-                        .put("lineNumber", lineNumber)
-                        .put("startCharacter", split[0]);
-                    
                     if (split[0].length() != 1) {
-                        throw new GoException(INVALID_ARTIFACTS_LINE_START, report);
+                        throw new GoException(INVALID_ARTIFACTS_LINE_START, split[0], lineNumber, context);
                     }
                     
                     char flag = split[0].charAt(0);
@@ -75,23 +65,22 @@ public class Artifacts {
                         }
                         optional = flag == '~';
                         if (split.length != 2) {
-                            throw new GoException(INVALID_INCLUDE_LINE, report);
+                            throw new GoException(INVALID_INCLUDE_LINE, lineNumber, context);
                         }
                         include = new Artifact(split[1]);
                         break;
                     case '-':
                         if (split.length != 2) {
-                            throw new GoException(INVALID_EXCLUDE_LINE, report);
+                            throw new GoException(INVALID_EXCLUDE_LINE, lineNumber, context);
                         }
                         if (include == null) {
-                            throw new GoException(ARTIFACT_FILE_MISPLACED_EXCLUDE, report);
+                            throw new GoException(ARTIFACT_FILE_MISPLACED_EXCLUDE, lineNumber, context);
                         }
                         excludes.add(new Artifact(split[1]));
                         break;
                     default:
-                        throw new GoException(INVALID_ARTIFACTS_LINE_START, report);
+                        throw new GoException(INVALID_ARTIFACTS_LINE_START, split[0], lineNumber, context);
                     }
-                    report.clear(mark);
                 }
             }
             if (include != null) {
@@ -99,7 +88,7 @@ public class Artifacts {
             }
             return includes;
         } catch (IOException e) {
-            throw new GoException(ARTIFACT_FILE_IO_EXCEPTION, e);
+            throw new GoException(ARTIFACT_FILE_IO_EXCEPTION, e, context);
         }
     }
 }

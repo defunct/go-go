@@ -26,7 +26,7 @@ public class ConstructorConverter implements Converter {
         try {
             this.constructor = reflectiveFactory.getConstructor(targetClass, String.class);
         } catch (ReflectiveException e) {
-            throw new GoException(CANNOT_CREATE_FROM_STRING, e).put("type", targetClass);
+            throw new GoException(CANNOT_CREATE_FROM_STRING, e, targetClass);
         }
     }
 
@@ -46,10 +46,10 @@ public class ConstructorConverter implements Converter {
         } catch (ReflectiveException e) {
             if (e.getCode() == ReflectiveException.INVOCATION_TARGET) {
                 if (e.getCause().getCause() instanceof IllegalArgumentException) {
-                    throw new GoException(STRING_CONVERSION_ERROR, e).put("type", constructor.getNative().getDeclaringClass()).put("string", string);
+                    throw new GoException(STRING_CONVERSION_ERROR, e, constructor.getNative().getDeclaringClass(), string);
                 }
             }
-            throw new GoException(STRING_CONSTRUCTOR_ERROR, e).put("type", constructor.getNative().getDeclaringClass()).put("string", string);
+            throw new GoException(STRING_CONSTRUCTOR_ERROR, e, constructor.getNative().getDeclaringClass(), string);
         }
     }
 }

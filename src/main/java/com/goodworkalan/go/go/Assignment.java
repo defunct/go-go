@@ -53,16 +53,12 @@ class Assignment {
      */
     public void setValue(Arguable arguable, Object value) {
         try {
-            try {
-                setter.invoke(arguable, value);
-            } catch (ReflectiveException e) {
-                if (e.getCode() == ReflectiveException.INVOCATION_TARGET) {
-                    throw new GoException(ASSIGNMENT_EXCEPTION_THROWN, e);
-                }
-                throw new GoException(ASSIGNMENT_FAILED, e);
+            setter.invoke(arguable, value);
+        } catch (ReflectiveException e) {
+            if (e.getCode() == ReflectiveException.INVOCATION_TARGET) {
+                throw new GoException(ASSIGNMENT_EXCEPTION_THROWN, e, getType(), setter.getNative().getName());
             }
-        } catch (GoException e) {
-            throw e.put("targetType", getType()).put("setter", setter.getNative().getName());
+            throw new GoException(ASSIGNMENT_FAILED, e, getType(), setter.getNative().getName());
         }
     }
 

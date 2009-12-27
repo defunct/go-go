@@ -1,5 +1,9 @@
 package com.goodworkalan.go.go;
 
+import static com.goodworkalan.go.go.GoError.CANNOT_CREATE_BOOT_CONFIGURATION_DIRECTORY;
+import static com.goodworkalan.go.go.GoError.CANNOT_WRITE_BOOT_CONFIGURATION;
+import static com.goodworkalan.go.go.GoException.CANNOT_FIND_RESPONDER;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileWriter;
@@ -44,7 +48,7 @@ public class InstallCommand implements Commandable {
                         }
                         Responder responder = loader.responders.get(taskClass);
                         if (responder == null) {
-                            throw new GoError(0);
+                            throw new GoException(CANNOT_FIND_RESPONDER, taskClass);
                         }
                         LinkedList<String> path = new LinkedList<String>();
                         for (;;) {
@@ -55,7 +59,7 @@ public class InstallCommand implements Commandable {
                             }
                             responder = loader.responders.get(taskClass);
                             if (responder == null) {
-                                throw new GoError(0);
+                                throw new GoException(CANNOT_FIND_RESPONDER, taskClass);
                             }
                         }
                         StringBuilder command = new StringBuilder();
@@ -75,7 +79,7 @@ public class InstallCommand implements Commandable {
         File gogo = new File(library.getDirectory(), "go-go");
         File group = new File(gogo, artifact.getGroup());
         if (!group.isDirectory() && !group.mkdirs()) {
-            throw new GoError(0);
+            throw new GoError('a', CANNOT_CREATE_BOOT_CONFIGURATION_DIRECTORY, group);
         }
         StringBuilder line = new StringBuilder();
         line.append(artifact).append(" ");
@@ -91,7 +95,7 @@ public class InstallCommand implements Commandable {
             writer.write("\n");
             writer.close();
         } catch (IOException e) {
-            throw new GoError(0, e);
+            throw new GoError('a', CANNOT_WRITE_BOOT_CONFIGURATION, e, configuration);
         }
     }
 }

@@ -4,6 +4,7 @@
 package com.goodworkalan.go.go;
 
 import static com.goodworkalan.go.go.GoError.COMMAND_LINE_NO_ARGUMENTS;
+import static com.goodworkalan.go.go.GoError.INVALID_DEFINE_PARAMETER;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -102,9 +103,10 @@ public final class Program {
                         includes.addAll(Artifacts.read(artifacts));
                     }
                 } else if (argument.startsWith("--go:define=")) {
-                    String[] definition = argument.substring(argument.indexOf('=') + 1).split(":", 2);
+                    String define = argument.substring(argument.indexOf('=') + 1);
+                    String[] definition = define.split(":", 2);
                     if (definition.length != 2) {
-                        throw new GoError(0);
+                        throw new GoError('a', INVALID_DEFINE_PARAMETER, define);
                     }
                     System.out.println(definition[0] + "=" + definition[1]);
                     System.setProperty(definition[0], definition[1]);

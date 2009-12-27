@@ -1,61 +1,16 @@
 package com.goodworkalan.go.go;
 
-import com.goodworkalan.cassandra.CassandraException;
-import com.goodworkalan.cassandra.Clue;
+import java.util.MissingResourceException;
+import java.util.ResourceBundle;
 
-public class GoException extends CassandraException {
+
+public class GoException extends RuntimeException {
     /** Serial version id. */
     private static final long serialVersionUID = 1L;
 
-    /**
-     * Create an exception with the given error code.
-     * 
-     * @param code
-     *            The error code.
-     */
-    public GoException(int code) {
-        super(code, new Clue());
-    }
+    private final int code;
 
-    /**
-     * Create a mix exception with the given error code and cause.
-     * 
-     * @param code
-     *            The error code.
-     * @param cause
-     *            The wrapped exception.
-     */
-    public GoException(int code, Throwable cause) {
-        super(code, new Clue(), cause);
-    }
-
-    /**
-     * Create an exception with the given error code and the given initial
-     * report structure.
-     * 
-     * @param code
-     *            The error code.
-     * @param report
-     *            An initial report structure.
-     */
-    public GoException(int code, Clue report) {
-        super(code, report);
-    }
-
-    /**
-     * Create an exception with the given error code and the given initial
-     * report structure that wraps the given cause exception.
-     * 
-     * @param The
-     *            error code.
-     * @param report
-     *            An initial report structure.
-     * @param The
-     *            cause.
-     */
-    public GoException(int code, Clue report, Throwable cause) {
-        super(code, report, cause);
-    }
+    private final Object[] arguments;
 
     /** A Task has multiple Task type attributes indicating multiple parents. */
     public final static int MULTIPLE_TASK_PARENTS = 102;
@@ -102,18 +57,6 @@ public class GoException extends CassandraException {
     /** Unable to assign a task property. */
     public final static int ASSIGNMENT_FAILED = 402;
 
-    /** Unable to create an XML parser to read a POM. */
-    public final static int CANNOT_CREATE_XML_PARSER = 501;
-
-    /** POM file not found. */
-    public final static int POM_FILE_NOT_FOUND = 502;
-
-    /** An I/O exception was thrown while reading a POM file. */
-    public final static int POM_IO_EXCEPTION = 503;
-
-    /** Unable to parse the XML in a POM file. */
-    public final static int POM_SAX_EXCEPTION = 504;
-    
     /** Unable to create task. */
     public final static int CANNOT_CREATE_TASK = 601;
     
@@ -128,4 +71,61 @@ public class GoException extends CassandraException {
     
     /** Unable to resolve artifact. */
     public final static int UNRESOLVED_ARTIFACT = 701;
+    
+    /** Unable to find the responder for a class during installation. */
+    public final static int CANNOT_FIND_RESPONDER = 801;
+    
+    
+    /**
+     * Create an exception with the given error code.
+     * 
+     * @param code
+     *            The error code.
+     * @param arguments
+     *            The format arguments.
+     */
+    public GoException(int code, Object...arguments) {
+        this(code, null, arguments);
+    }
+
+    /**
+     * Create a mix exception with the given error code and cause.
+     * 
+     * @param code
+     *            The error code.
+     * @param cause
+     *            The wrapped exception.
+     * @param arguments
+     *            The format arguments.
+     */
+    public GoException(int code, Throwable cause, Object...arguments) {
+        super(null, cause);
+        this.code = code;
+        this.arguments = arguments;
+    }
+
+    /**
+     * Get the error code.
+     * 
+     * @return The error code.
+     */
+    public int getCode() {
+        return code;
+    }
+
+    /**
+     * Returns the detail message string of this error.
+     * 
+     * @return The detail message string of this error.
+     */
+    @Override
+    public String getMessage() {
+        ResourceBundle bundle = ResourceBundle.getBundle(getClass().getPackage().getName() + ".exceptions");
+        String key = Integer.toString(code);
+        try {
+            return String.format(bundle.getString(key), arguments);
+        } catch (MissingResourceException e) {
+            return key;
+        }
+    }
 }
