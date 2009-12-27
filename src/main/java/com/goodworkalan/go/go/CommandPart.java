@@ -20,6 +20,8 @@ public class CommandPart {
     private final List<Conversion> conversions;
     
     private final List<String> remaining;
+
+    private final int verbosity;
     
     CommandPart(CommandInterpreter commandInterpreter, Responder responder, CommandPart parent) {
         this.commandInterpreter = commandInterpreter;
@@ -28,15 +30,17 @@ public class CommandPart {
         this.arguments = new ArrayList<String>();
         this.conversions = new ArrayList<Conversion>();
         this.remaining = new ArrayList<String>();
+        this.verbosity = 0;
     }
     
-    CommandPart(CommandPart copy) {
+    CommandPart(CommandPart copy, int verbosity) {
         this.commandInterpreter = copy.commandInterpreter;
         this.parent = copy.parent;
         this.responder = copy.responder;
         this.arguments = new ArrayList<String>(copy.arguments);
         this.conversions = new ArrayList<Conversion>(copy.conversions);
         this.remaining = new ArrayList<String>(copy.remaining);
+        this.verbosity = copy.verbosity + verbosity;
     }
     
     public CommandInterpreter getCommandInterpreter() {
@@ -72,6 +76,10 @@ public class CommandPart {
         List<CommandPart> path = new ArrayList<CommandPart>();
         getCommandPath(path);
         return Collections.unmodifiableList(path);
+    }
+    
+    public int getVerbosity() {
+        return verbosity;
     }
     
     public List<Conversion> getConversions() {
@@ -181,7 +189,7 @@ public class CommandPart {
     }
 
     public CommandPart remaining(String...remaining) {
-        CommandPart part = new CommandPart(this);
+        CommandPart part = new CommandPart(this, 0);
         for (String argument : remaining) {
             part.remaining.add(argument);
         }
@@ -189,7 +197,7 @@ public class CommandPart {
     }
     
     public CommandPart remaining(List<String> remaining) {
-        CommandPart part = new CommandPart(this);
+        CommandPart part = new CommandPart(this, 0);
         part.remaining.addAll(remaining);
         return part;
     }
@@ -241,22 +249,30 @@ public class CommandPart {
         }
 
         Assignment assignment = null;
+        
+        if(qualified[1].equals("verbose")) {
+            return new CommandPart(this, 1);
+        }
+
+        if(qualified[1].equals("no-verbose")) {
+            return new CommandPart(this, -1);
+        }
 
         // Check for a negated boolean flag.
         if (value == null) {
             // FIXME Ensure that there are no arguments beginning with no.
             if (qualified[1].startsWith("no-")) {
                 String negate = qualified[1].substring(3);
-                assignment = responder.getAssignments().get(negate); 
-                if (assignment != null) {
-                    if (objectify(assignment.getType()).equals(Boolean.class)) {
-                        name = responder.getName() + ':' + negate;
-                        value = "false";
-                    } else {
-                        assignment = null;
+                    assignment = responder.getAssignments().get(negate); 
+                    if (assignment != null) {
+                        if (objectify(assignment.getType()).equals(Boolean.class)) {
+                            name = responder.getName() + ':' + negate;
+                            value = "false";
+                        } else {
+                            assignment = null;
+                        }
                     }
                 }
-            }
         }
         
         // If the value is not specified, but the type is boolean, then
@@ -271,7 +287,7 @@ public class CommandPart {
             }
         }
         
-        CommandPart copy = new CommandPart(this);
+        CommandPart copy = new CommandPart(this, 0);
         
         copy.conversions.add(new Conversion(name, assignment.convertValue(value)));
         copy.arguments.add("--" + qualified[0] + ':' + qualified[1] + '=' + value);

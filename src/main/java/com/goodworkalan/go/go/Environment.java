@@ -1,6 +1,7 @@
 package com.goodworkalan.go.go;
 
 import java.util.Locale;
+import java.util.MissingFormatArgumentException;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 
@@ -35,18 +36,34 @@ public class Environment {
         this.executor = executor;
     }
     
-    public void error(String message, Object...arguments) {
-        error(0, part.getTaskClass(), message, arguments);
-    }
-    
-    public void error(int indent, String message, Object...arguments) {
-        error(indent, part.getTaskClass(), message, arguments);
-    }
-    public void error(Class<?> context, String token, Object...arguments) {
-        error(0, context, token, arguments);
+    public void verbose(String message, Object...arguments) {
+        verbose(part.getTaskClass(), message, arguments);
     }
 
-    public void error(int indent, Class<?> context, String token, Object...arguments) {
+    public void verbose(Class<?> context, String token, Object...arguments) {
+        error(1, context, token, arguments);
+    }
+    
+    public void debug(String message, Object...arguments) {
+        debug(part.getTaskClass(), message, arguments);
+    }
+
+    public void debug(Class<?> context, String token, Object...arguments) {
+        error(2, context, token, arguments);
+    }
+
+    public void error(int level, Class<?> context, String token, Object...arguments) {
+        CommandPart current = part;
+        while (current != null) {
+            if (current.getVerbosity() >= level) {
+                error(context, token, arguments);
+                break;
+            }
+            current = current.getParent();
+        }
+    }
+
+    public void error(Class<?> context, String token, Object...arguments) {
         String className = context.getCanonicalName();
         int index = className.lastIndexOf('.');
         if (index > -1) {
@@ -60,13 +77,12 @@ public class Environment {
             bundle = ResourceBundle.getBundle(Environment.class.getPackage().getName() + ".stderr");
             key = "Environment/bundle.missing";
         }
-        while (indent-- != 0) {
-            io.err.print("    ");
-        }
         try {
             io.err.println(String.format(bundle.getString(key), arguments));
         } catch (MissingResourceException e) {
-            error(0, Environment.class, "message.missing");
+            error(Environment.class, "message.missing");
+        } catch (MissingFormatArgumentException e) {
+            error(Environment.class, "argument.missing", e.getMessage());
         }
     }
 }
