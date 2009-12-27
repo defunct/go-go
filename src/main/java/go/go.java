@@ -56,8 +56,6 @@ public class go {
         // Here's a list of the bootstrap dependencies for Jav-a-Go-Go.
         String[] dependencies = new String[] {
             "com/goodworkalan/go-go/0.1.3/go-go-0.1.3.jar",
-            "com/goodworkalan/notice/0.1/notice-0.1.jar",
-            "com/goodworkalan/cassandra/0.7.1/cassandra-0.7.1.jar",
             "com/goodworkalan/reflective/0.1/reflective-0.1.jar"
         };
         
