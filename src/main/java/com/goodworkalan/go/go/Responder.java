@@ -9,7 +9,6 @@ import java.beans.BeanInfo;
 import java.beans.IntrospectionException;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
-import java.lang.reflect.Modifier;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -20,7 +19,6 @@ import java.util.TreeMap;
 
 import com.goodworkalan.reflective.Method;
 import com.goodworkalan.reflective.ReflectiveException;
-import com.goodworkalan.reflective.ReflectiveFactory;
 
 /**
  * A wrapper around a task that maps task properties to assignment and parameter
@@ -57,7 +55,8 @@ class Responder {
     private final Map<String, Class<?>> arguments;
 
     /**
-     * Create wrapper around the given class that extends <code>Task</code>.
+     * Create wrapper around the given class that implements
+     * <code>Commandable</code>.
      * 
      * @param taskClass
      *            The task class.
@@ -74,7 +73,7 @@ class Responder {
             String className = taskClass.getCanonicalName();
             className = className.replaceFirst("^.*\\.", "");
             className = className.replaceFirst("Command$", "");
-            name = hyphenate(className);
+            name = Assignment.hyphenate(className);
         } else {
             name = command.name();
         }
@@ -83,8 +82,9 @@ class Responder {
             parent = command.parent();
         }
 
-        gatherAssignments(taskClass, assignments);
-        gatherNestedAssignments(taskClass, assignments);
+        Assignment.gatherAssignments(taskClass, assignments);
+        Assignment.gatherNestedAssignments(taskClass, assignments);
+
         BeanInfo info;
         try {
             info = Introspector.getBeanInfo(taskClass, Object.class);
@@ -140,74 +140,6 @@ class Responder {
         }
     }
 
-    private static void gatherNestedAssignments(Class<? extends Commandable> taskClass, Map<String, Assignment> assignments) {
-        for (Class<?> nestedClass : taskClass.getDeclaredClasses()) {
-            if (Arguable.class.isAssignableFrom(nestedClass)) {
-                gatherAssignments(arguableClass(nestedClass), assignments);
-            }
-        }
-        Class<?> superclass = taskClass.getSuperclass();
-        if (Commandable.class.isAssignableFrom(superclass)) {
-            gatherNestedAssignments(taskClass(superclass), assignments);
-        }
-    }
-
-    private static void gatherAssignments(Class<? extends Arguable> arguableClass, Map<String, Assignment> assignment) {
-        ReflectiveFactory reflectiveFactory = new ReflectiveFactory();
-        for (java.lang.reflect.Method method : arguableClass.getMethods()) {
-            if (method.getName().startsWith("add")
-                && method.getName().length() != 3
-                && Modifier.isPublic(method.getModifiers())
-                && method.getParameterTypes().length == 1) {
-                Argument argument = method.getAnnotation(Argument.class);
-                if (argument != null) {
-                    String verbose = argument.value();
-                    if (verbose.equals("")) {
-                        String name = method.getName();
-                        name = name.substring(3);
-                        name = name.substring(0, 1).toLowerCase() + name.substring(1);
-                        verbose = hyphenate(name);
-                    }
-                    if (assignment.containsKey(verbose)) {
-                        throw new GoException(0);
-                    }
-                    Class<?> type =  objectify(method.getParameterTypes()[0]);
-                    if (type.equals(String.class)) {
-                        assignment.put(verbose, new Assignment(arguableClass, new Method(method), new StringConverter()));
-                    } else {
-                        assignment.put(verbose, new Assignment(arguableClass, new Method(method), new ConstructorConverter(reflectiveFactory, type)));
-                    }
-                }
-            }
-        }
-        Class<?> superclass = arguableClass.getSuperclass();
-        if (Arguable.class.isAssignableFrom(superclass)) {
-            gatherAssignments(arguableClass(superclass), assignment);
-        }
-    }
-
-    /**
-     * Convert a camel case name into a command line hyphenated name by
-     * replacing capital letters with lower case letters preceeded by hyphens.
-     * 
-     * @param camelCase
-     *            The camel case name.
-     * @return A hyphenated name.
-     */
-    private static String hyphenate(String camelCase) {
-        StringBuilder string = new StringBuilder();
-        string.append(Character.toLowerCase(camelCase.charAt(0)));
-        for (int i = 1, stop = camelCase.length(); i < stop; i++) {
-            char ch = camelCase.charAt(i);
-            if (Character.isUpperCase(ch)) {
-                string.append('-').append(Character.toLowerCase(ch));
-            } else {
-                string.append(ch);
-            }
-        }
-        return string.toString();
-    }
-    
     public void checkEndlessRecursion(Map<Class<? extends Commandable>, Responder> tasks, Set<Class<? extends Commandable>> seen) {
         Set<Class<? extends Commandable>> subSeen = new HashSet<Class<? extends Commandable>>(seen);
         subSeen.add(taskClass);
