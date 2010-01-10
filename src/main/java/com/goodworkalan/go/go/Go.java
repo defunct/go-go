@@ -1,6 +1,7 @@
 package com.goodworkalan.go.go;
 
 import java.io.File;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -24,5 +25,9 @@ public class Go {
      */
     public static void main(List<File> libraries, String...arguments) {
         System.exit(new ProgramQueue(libraries, arguments).start());
+    }
+    
+    public static CommandInterpreter interpreter(List<File> libraries) {
+        return new CommandInterpreter(Collections.<List<String>, Artifact>emptyMap(), null, new ErrorCatcher(), libraries);
     }
 }

@@ -52,10 +52,8 @@ final class CommandLoader {
      *            The artifact file.
      */
     public CommandLoader() {
-        // FIXME Remove one of these.
         seen.add(new Artifact("com.goodworkalan/go-go").getKey().subList(0, 2));
         seen.add(new Artifact("com.goodworkalan/reflective").getKey().subList(0, 2));
-        seen.add(new Artifact("com.goodworkalan/cassandra").getKey().subList(0, 2));
         
         libraryPath = library.emptyPath(seen);
         

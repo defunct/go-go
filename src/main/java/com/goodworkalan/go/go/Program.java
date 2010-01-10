@@ -3,8 +3,14 @@
  */
 package com.goodworkalan.go.go;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * A Jav-a-Go-Go program.
@@ -77,8 +83,51 @@ public final class Program {
      * @return The desired exit code of program.
      */
     public int run(ProgramQueue queue) {
+        Map<List<String>, Artifact> programs = new HashMap<List<String>, Artifact>();
+        for (File library : libraries) {
+            File gogo = new File(library, "go-go");
+            if (!(gogo.isDirectory() && gogo.canRead())) {
+                continue;
+            }
+            for (File directory : gogo.listFiles()) {
+                if (directory.isDirectory()) {
+                    for (File file : directory.listFiles()) {
+                        if (file.getName().endsWith(".go")) {
+                            try {
+                                BufferedReader configuration = new BufferedReader(
+                                        new FileReader(file));
+                                String line;
+                                while ((line = configuration.readLine()) != null) {
+                                    line = line.trim();
+                                    if (line.length() == 0
+                                            || line.startsWith("#")) {
+                                        continue;
+                                    }
+                                    String[] record = line.split("\\s+", 2);
+                                    Artifact artifact = new Artifact(record[0]);
+                                    if (record.length > 1) {
+                                        for (String path : record[1].split(",")) {
+                                            programs.put(Arrays.asList(path
+                                                    .trim().split("\\s+")),
+                                                    artifact);
+                                        }
+                                    }
+                                }
+                            } catch (IOException e) {
+                                throw new GoException(0, e);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        programs.put(Arrays.asList("boot"), new Artifact("com.goodworkalan/go-go"));
+        programs.put(Arrays.asList("boot", "hello"), new Artifact("com.goodworkalan/go-go"));
+        programs.put(Arrays.asList("boot", "install"), new Artifact("com.goodworkalan/go-go"));
+
         InputOutput io = new InputOutput();
-        CommandInterpreter ci = new CommandInterpreter(queue, new ErrorCatcher(), libraries);
+        CommandInterpreter ci = new CommandInterpreter(programs, queue, new ErrorCatcher(), libraries);
         queue.verbose(io, "start", arguments);
         long start = System.currentTimeMillis();
         int code = ci.execute(io, arguments);
