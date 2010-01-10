@@ -1,3 +1,3 @@
-com.goodworkalan.go.go.Hello
+com.goodworkalan.go.go.HelloCommand
 com.goodworkalan.go.go.InstallCommand
-com.goodworkalan.go.go.GoCommand
+com.goodworkalan.go.go.BootCommand

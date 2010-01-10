@@ -20,7 +20,7 @@ public class ReflectionTaskFactory implements CommandFactory {
         try {
             return reflectiveFactory.getConstructor(taskClass).newInstance();
         } catch (ReflectiveException e) {
-            throw new GoException(CANNOT_CREATE_TASK, e);
+            throw new GoException(CANNOT_CREATE_TASK, e, taskClass.getCanonicalName());
         }
     }
     

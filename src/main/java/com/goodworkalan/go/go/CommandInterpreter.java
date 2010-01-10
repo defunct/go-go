@@ -69,12 +69,10 @@ public final class CommandInterpreter {
             }
         }
 
-        programs.put(Arrays.asList("go"),
-                new Artifact("com.goodworkalan/go-go"));
-        programs.put(Arrays.asList("go", "hello"), new Artifact(
-                "com.goodworkalan/go-go"));
-        programs.put(Arrays.asList("go", "install"), new Artifact(
-                "com.goodworkalan/go-go"));
+        programs.put(Arrays.asList("boot"), new Artifact("com.goodworkalan/go-go"));
+        programs.put(Arrays.asList("boot", "hello"), new Artifact("com.goodworkalan/go-go"));
+        programs.put(Arrays.asList("boot", "install"), new Artifact("com.goodworkalan/go-go"));
+
         this.loader = new CommandLoader();
 
         this.catcher = catcher;

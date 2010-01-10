@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-@Command(parent = GoCommand.class)
+@Command(parent = BootCommand.class)
 public class InstallCommand implements Commandable {
     private Artifact artifact;
     
