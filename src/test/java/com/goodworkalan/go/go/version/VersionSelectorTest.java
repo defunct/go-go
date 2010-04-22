@@ -10,7 +10,7 @@ import org.testng.annotations.Test;
  *
  * @author Alan Gutierrez
  */
-public class VersionMatcherTest {
+public class VersionSelectorTest {
     /** Test selection. */
     @Test
     public void choose() {
