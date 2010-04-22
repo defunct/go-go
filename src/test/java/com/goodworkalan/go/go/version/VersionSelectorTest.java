@@ -19,7 +19,6 @@ public class VersionSelectorTest {
             "3", "3.1", "3.1.1", "3.1.2", "3.2", "3.2.4", "3.2.1", "3.1.14", "3.2.3",
             "3.3.5", "3.3.6"
         };
-        // FIXME Why not just do -0.2 or +0.2.3?
         assertEquals(new VersionSelector("0.2.+2").select("0.2.2", "0.2.3", "3.2.2"), "0.2.3");
         assertEquals(new VersionSelector("0.2.+2").select(versions), "0.2.3");
         assertNull(new VersionSelector("1.3").select(versions));
