@@ -39,7 +39,7 @@ public class Artifacts {
         try {
             Artifact include = null;
             boolean optional = false;
-            List<Artifact> excludes = new ArrayList<Artifact>();
+            List<List<String>> excludes = new ArrayList<List<String>>();
             List<Include> includes = new ArrayList<Include>();
             
             BufferedReader lines = new BufferedReader(reader);
@@ -76,7 +76,7 @@ public class Artifacts {
                         if (include == null) {
                             throw new GoException(ARTIFACT_FILE_MISPLACED_EXCLUDE, lineNumber, context);
                         }
-                        excludes.add(new Artifact(split[1]));
+                        excludes.add(Include.exclude(split[1]));
                         break;
                     default:
                         throw new GoException(INVALID_ARTIFACTS_LINE_START, split[0], lineNumber, context);

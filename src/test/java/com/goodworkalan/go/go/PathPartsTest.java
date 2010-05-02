@@ -1,0 +1,19 @@
+package com.goodworkalan.go.go;
+
+import static org.testng.Assert.assertEquals;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.testng.annotations.Test;
+
+public class PathPartsTest {
+    @Test
+    public void files() {
+        List<PathPart> parts = new ArrayList<PathPart>();
+        parts.add(new DirectoryPart(new File("classes")));
+        File[] files = PathParts.files(parts);
+        assertEquals(files[0], new File("classes"));
+    }
+}

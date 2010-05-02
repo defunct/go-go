@@ -1,8 +1,10 @@
 package com.goodworkalan.go.go;
 
 /**
- * FIXME We want to be able to have an exception, so that a command line
- * switch will turn errors into stack traces.
+ * FIXME We want to be able to have an exception, so that a command line switch
+ * will turn errors into stack traces.
+ * <p>
+ * FIXME Implement with Erroneous when you create it.
  * 
  * @author Alan Gutierrez
  */

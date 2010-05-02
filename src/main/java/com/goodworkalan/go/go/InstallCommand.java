@@ -11,10 +11,13 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Writer;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
+
+import com.goodworkalan.reflective.ReflectiveFactory;
 
 @Command(parent = BootCommand.class)
 public class InstallCommand implements Commandable {
@@ -26,13 +29,13 @@ public class InstallCommand implements Commandable {
     }
     
     public void execute(Environment env) {
-        CommandLoader loader = new CommandLoader();
+        Executor loader = new Executor(new ReflectiveFactory(), new Library(new File(System.getProperty("user.home") + File.separator + ".m2" + File.separator + "repository")), new HashMap<List<String>, Artifact>());
         loader.addArtifacts(artifact);
         ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-        LibraryEntry found = env.part.getCommandInterpreter().getLibrary().getEntry(artifact);
+        ArtifactPart found = env.library.getPathPart(artifact);
         List<String> commands = new ArrayList<String>();
         try {
-            ZipFile zip = new ZipFile(new File(found.getDirectory(), found.getArtifact().getPath("jar")));
+            ZipFile zip = new ZipFile(new File(found.getLibraryDirectory(), found.getArtifact().getPath("jar")));
             ZipEntry entry = zip.getEntry("META-INF/services/com.goodworkalan.go.go.Commandable");
             if (entry != null) {
                 BufferedReader in = new BufferedReader(new InputStreamReader(zip.getInputStream(entry)));
@@ -75,8 +78,7 @@ public class InstallCommand implements Commandable {
         } catch (IOException e) {
             throw new GoException(0, e);
         }
-        Library library = env.part.getCommandInterpreter().getLibrary();
-        File gogo = new File(library.getDirectory(), "go-go");
+        File gogo = new File(env.library.getDirectories()[0], "go-go");
         File group = new File(gogo, artifact.getGroup());
         if (!group.isDirectory() && !group.mkdirs()) {
             throw new GoError('a', CANNOT_CREATE_BOOT_CONFIGURATION_DIRECTORY, group);

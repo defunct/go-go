@@ -1,7 +1,6 @@
 package com.goodworkalan.go.go;
 
 import java.io.File;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collection;
 import java.util.Collections;
@@ -33,8 +32,13 @@ public class JarPart implements PathPart {
         return file;
     }
     
-    public URL getURL() throws MalformedURLException {
-        return new URL("jar:" + file.toURI().toURL().toExternalForm() + "!/");
+    /**
+     * Get the jar protocol URL for this artifact part.
+     * 
+     * @return The URL.
+     */
+    public URL getURL() {
+        return PathParts.toURL("jar:" + PathParts.toURL(file.toURI().toString()).toExternalForm() + "!/");
     }
 
     /**

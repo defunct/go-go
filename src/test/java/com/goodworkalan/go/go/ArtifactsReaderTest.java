@@ -4,6 +4,8 @@ import static org.testng.Assert.assertEquals;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.io.StringReader;
 
 import org.testng.annotations.Test;
@@ -99,5 +101,11 @@ public class ArtifactsReaderTest {
     @Test
     public void skipBlankLines() {
         assertEquals(Artifacts.read(new StringReader("\n\n")).size(), 0);
+    }
+    
+    @Test
+    public void read() {
+        Reader reader = new InputStreamReader(getClass().getResourceAsStream("example.dep"));
+        Artifacts.read(reader);
     }
 }

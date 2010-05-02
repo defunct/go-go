@@ -2,10 +2,11 @@ package com.goodworkalan.go.go;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -21,7 +22,7 @@ import java.util.Set;
  */
 public class Library {
     /** The library directory. */
-    private final File dir;
+    private final File[] dirs;
     
     /**
      * Create a library with the given library directory.
@@ -29,28 +30,36 @@ public class Library {
      * @param dir
      *            The library directory.
      */
-    public Library(File dir) {
-        this.dir = dir;
+    public Library(File...dirs) {
+        this.dirs = dirs;
     }
     
-    public File getDirectory() {
-        return dir;
+    public File[] getDirectories() {
+        return dirs;
     }
 
-    public LibraryPath emptyPath(Set<Object> excludes) {
-        return new LibraryPath(this, Collections.<PathPart>emptyList(), excludes);
+    /**
+     * Expand the given collection of path parts.
+     * 
+     * @param parts
+     *            The collection of path parts.
+     * @return An expanded collection of path parts.
+     */
+    public Collection<PathPart> resolve(Collection<PathPart> parts) {
+        return resolve(parts, Collections.<List<String>>emptySet());
     }
-    
-    public LibraryPath resolve(PathPart part) {
-        return resolve(Collections.<PathPart>singletonList(part));
-    }
-    
-    public LibraryPath resolve(Collection<PathPart> parts) {
-        return resolve(parts, new HashSet<Object>());
-    }
-    
-    // FIXME Do not revisit prototypes?
-    public LibraryPath resolve(Collection<PathPart> parts, Set<Object> exclude) {
+
+    /**
+     * Expand the given collection of path parts excluding artifacts whose
+     * unversioned key is in the given set of excludes.
+     * 
+     * @param parts
+     *            The collection of path parts.
+     * @param exclude
+     *            A set of unversioned keys of artifacts to exclude.
+     * @return An expanded collection of path parts.
+     */
+    public Collection<PathPart> resolve(Collection<PathPart> parts, Set<List<String>> exclude) {
         Map<Object, PathPart> expanded = new LinkedHashMap<Object, PathPart>();
         Collection<PathPart> current = parts;
         Collection<PathPart> next = new ArrayList<PathPart>();
@@ -67,14 +76,15 @@ public class Library {
             current = next;
             next = new ArrayList<PathPart>();
         }
-        return new LibraryPath(this, expanded.values(), new HashSet<Object>(exclude));
+        return new ArrayList<PathPart>(expanded.values());
     }
     
-    // FIXME Why library entry? Why not a PathPart?
-    public LibraryEntry getEntry(Artifact artifact) {
-        File deps = new  File(dir, artifact.getPath("dep"));
-        if (deps.exists()) {
-            return new LibraryEntry(dir, artifact);
+    public ArtifactPart getPathPart(Artifact artifact) {
+        for (File dir : dirs) {
+            File deps = new  File(dir, artifact.getPath("dep"));
+            if (deps.exists()) {
+                return new ArtifactPart(dir, artifact);
+            }
         }
         return null;
     }
@@ -90,7 +100,7 @@ public class Library {
     @Override
     public boolean equals(Object object) {
         if (object instanceof Library) {
-            return dir.equals(((Library) object).dir);
+            return Arrays.asList(dirs).equals(Arrays.asList(((Library) object).dirs));
         }
         return false;
     }
@@ -102,6 +112,6 @@ public class Library {
      */
     @Override
     public int hashCode() {
-        return dir.hashCode();
+        return Arrays.asList(dirs).hashCode();
     }
 }

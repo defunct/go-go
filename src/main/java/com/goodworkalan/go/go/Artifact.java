@@ -142,10 +142,20 @@ public class Artifact {
      */
     public List<String> getKey() {
         List<String> key =  new ArrayList<String>();
-        key.add(name);
         key.add(group);
+        key.add(name);
         key.add(version);
         return key;
+    }
+
+    /**
+     * Get a key that uniquely defines the artifact project name without version
+     * of classifier.
+     * 
+     * @return The unversioned key.
+     */
+    public List<String> getUnversionedKey() {
+        return getKey().subList(0, 2);
     }
 
     /**

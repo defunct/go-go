@@ -7,6 +7,9 @@ package com.goodworkalan.go.go;
  * @author Alan Gutierrez
  */
 class Conversion {
+    /** The command name. */
+    public final String command;
+
     /** The qualified argument name. */
     public final String name;
     
@@ -22,11 +25,12 @@ class Conversion {
      * @param value
      *            The argument value.
      */
-    public Conversion(String name, Object value) {
+    public Conversion(String command, String name, Object value) {
+        this.command = command;
         this.name = name;
         this.value = value;
     }
-
+    
     /**
      * Get the qualified argument name.
      * 

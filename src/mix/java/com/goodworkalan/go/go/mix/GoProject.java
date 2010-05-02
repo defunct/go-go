@@ -10,10 +10,13 @@ public class GoProject extends ProjectModule {
     public void build(Builder builder) {
         builder
             .cookbook(JavaProject.class)
-                .produces(new Artifact("com.goodworkalan/go-go/0.1.3"))
+                .produces(new Artifact("com.goodworkalan/go-go/0.1.4"))
                 .main()
                     .depends()
                         .artifact(new Artifact("com.goodworkalan/reflective/0.1"))
+                        .artifact(new Artifact("com.github.bigeasy.danger/danger/0.1"))
+                        .artifact(new Artifact("com.github.bigeasy.class-boxer/class-boxer/0.1"))
+                        .artifact(new Artifact("com.goodworkalan/infuse/0.1"))
                         .end()
                     .end()
                 .test()

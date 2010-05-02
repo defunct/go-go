@@ -4,10 +4,15 @@ import static com.goodworkalan.go.go.GoError.COMMAND_LINE_NO_ARGUMENTS;
 import static com.goodworkalan.go.go.GoError.INVALID_ARGUMENT;
 import static com.goodworkalan.go.go.GoError.INVALID_DEFINE_PARAMETER;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
@@ -29,12 +34,60 @@ public class ProgramQueue {
     /** The linked list of programs to run. */
     private final LinkedList<FutureTask<Integer>> programs = new LinkedList<FutureTask<Integer>>();
     
+    /** The list of commands available in all libraries. */
+    private final Map<List<String>, Artifact> commands;
+
     /** A monitor to guard the programs list and thread count. */
     private final Object monitor = new Object();
     
     /** The number of threads running. */
     private int threadCount;
     
+    public ProgramQueue(List<File> libraries, String...arguments) {
+        Map<List<String>, Artifact> commands = new HashMap<List<String>, Artifact>();
+        for (File library : libraries) {
+            File gogo = new File(library, "go-go");
+            if (!(gogo.isDirectory() && gogo.canRead())) {
+                continue;
+            }
+            for (File directory : gogo.listFiles()) {
+                if (directory.isDirectory()) {
+                    for (File file : directory.listFiles()) {
+                        if (file.getName().endsWith(".go")) {
+                            try {
+                                BufferedReader configuration = new BufferedReader(new FileReader(file));
+                                String line;
+                                while ((line = configuration.readLine()) != null) {
+                                    line = line.trim();
+                                    if (line.length() == 0 || line.startsWith("#")) {
+                                        continue;
+                                    }
+                                    String[] record = line.split("\\s+", 2);
+                                    Artifact artifact = new Artifact(record[0]);
+                                    if (record.length > 1) {
+                                        for (String path : record[1].split(",")) {
+                                            commands.put(Arrays.asList(path.trim().split("\\s+")), artifact);
+                                        }
+                                    }
+                                }
+                            } catch (IOException e) {
+                                throw new GoException(0, e);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    
+        commands.put(Arrays.asList("boot"), new Artifact("com.goodworkalan/go-go"));
+        commands.put(Arrays.asList("boot", "hello"), new Artifact("com.goodworkalan/go-go"));
+        commands.put(Arrays.asList("boot", "install"), new Artifact("com.goodworkalan/go-go"));
+    
+        this.libraries = libraries;
+        this.arguments = arguments;
+        this.commands = commands;
+    }
+
     /**
      * Print the verbose output if the verbose argument has been specified.
      * 
@@ -60,15 +113,10 @@ public class ProgramQueue {
         return verbosity;
     }
 
-    public ProgramQueue(List<File> libraries, String...arguments) {
-        this.libraries = libraries;
-        this.arguments = arguments;
-    }
-    
     public int fork(InputOutput io, List<String> arguments) {
         FutureTask<Integer> future = null;
         synchronized (monitor) {
-            future = addProgram(new Program(libraries, arguments));
+            future = addProgram(new Program(libraries, commands, arguments));
             monitor.notify();
         }
         try {
@@ -124,7 +172,7 @@ public class ProgramQueue {
                 throw new GoError('a', INVALID_ARGUMENT, argument);
             }
         }
-        FutureTask<Integer> future = addProgram(new Program(libraries, args));
+        FutureTask<Integer> future = addProgram(new Program(libraries, commands, args));
         loop();
         try {
             return future.get();

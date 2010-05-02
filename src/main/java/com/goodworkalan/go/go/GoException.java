@@ -1,16 +1,23 @@
 package com.goodworkalan.go.go;
 
-import java.util.MissingResourceException;
 import java.util.ResourceBundle;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
+import com.goodworkalan.danger.CodedDanger;
 
-public class GoException extends RuntimeException {
+/**
+ * A general purpose exception that indicates that an error occurred in one 
+ * of the classes in the go package.
+ *   
+ * @author Alan Gutierrez
+ */
+public class GoException extends CodedDanger {
+    /** The cache of resource bundles for <code>CodedDanger</code>. */
+    private final static ConcurrentMap<String, ResourceBundle> BUNDLES = new ConcurrentHashMap<String, ResourceBundle>();
+
     /** Serial version id. */
     private static final long serialVersionUID = 1L;
-
-    private final int code;
-
-    private final Object[] arguments;
 
     /** A Task has multiple Task type attributes indicating multiple parents. */
     public final static int MULTIPLE_TASK_PARENTS = 102;
@@ -47,6 +54,12 @@ public class GoException extends RuntimeException {
     
     /** A repository type is missing an implementation. */
     public final static int MISSING_REPOSITORY_IMPLEMENTATION = 321;
+    
+    /** Invalid exclude string. */
+    public final static int INVALID_EXCLUDE = 322;
+    
+    /** Attempted to parse malformed URL. */
+    public final static int MALFORMED_URL = 323;
 
     /** An exception was thrown during task property assignment. */
     public final static int ASSIGNMENT_EXCEPTION_THROWN = 401;
@@ -75,7 +88,6 @@ public class GoException extends RuntimeException {
     /** Command class missing. */
     public final static int COMMAND_CLASS_MISSING = 101;
     
-    
     /**
      * Create an exception with the given error code.
      * 
@@ -85,7 +97,7 @@ public class GoException extends RuntimeException {
      *            The format arguments.
      */
     public GoException(int code, Object...arguments) {
-        this(code, null, arguments);
+        super(BUNDLES, code, null, arguments);
     }
 
     /**
@@ -99,33 +111,6 @@ public class GoException extends RuntimeException {
      *            The format arguments.
      */
     public GoException(int code, Throwable cause, Object...arguments) {
-        super(null, cause);
-        this.code = code;
-        this.arguments = arguments;
-    }
-
-    /**
-     * Get the error code.
-     * 
-     * @return The error code.
-     */
-    public int getCode() {
-        return code;
-    }
-
-    /**
-     * Returns the detail message string of this error.
-     * 
-     * @return The detail message string of this error.
-     */
-    @Override
-    public String getMessage() {
-        ResourceBundle bundle = ResourceBundle.getBundle(getClass().getPackage().getName() + ".exceptions");
-        String key = Integer.toString(code);
-        try {
-            return String.format(bundle.getString(key), arguments);
-        } catch (MissingResourceException e) {
-            return key;
-        }
+        super(BUNDLES, code, cause, arguments);
     }
 }

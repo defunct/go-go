@@ -1,7 +1,6 @@
 package com.goodworkalan.go.go;
 
 import java.io.File;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collection;
 
@@ -48,13 +47,8 @@ public interface PathPart {
      * <code>UnsupportedOperationException</code> is thrown.
      * 
      * @return The URL for the directory or archive file.
-     * @throws MalformedURLException
-     *             Probably never, since the file is converted first to a
-     *             <code>URI</code> object before it is converted to a
-     *             <code>URL</code> object, you'll get a
-     *             <code>URISyntaxException</code> first.
      */
-    public URL getURL() throws MalformedURLException;
+    public URL getURL();
 
     /**
      * Get the directory artifact or null if the directory was not obtained by

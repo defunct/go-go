@@ -1,7 +1,6 @@
 package com.goodworkalan.go.go;
 
 import java.io.File;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collection;
 import java.util.Collections;
@@ -39,8 +38,8 @@ public class DirectoryPart implements PathPart {
      * 
      * @return The path part as a URL.
      */
-    public URL getURL() throws MalformedURLException {
-        return dir.toURI().toURL();
+    public URL getURL() {
+        return PathParts.toURL(dir.getAbsolutePath().toString());
     }
 
     /**
