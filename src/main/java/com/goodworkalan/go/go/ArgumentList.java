@@ -56,7 +56,7 @@ public class ArgumentList extends ArrayList<String> {
         Iterator<String> arguments = iterator();
         while (arguments.hasNext()) {
             String argument = arguments.next();
-            String[] pair = argument.substring(2).split(":");
+            String[] pair = argument.substring(2).split("=");
             if (pair[0].equals(name)) {
                 arguments.remove();
                 return pair[1];
@@ -77,7 +77,7 @@ public class ArgumentList extends ArrayList<String> {
         Iterator<String> arguments = iterator();
         while (arguments.hasNext()) {
             String argument = arguments.next();
-            String[] pair = argument.substring(2).split(":");
+            String[] pair = argument.substring(2).split("=");
             if (pair[0].equals(name)) {
                 return pair[1];
             }
