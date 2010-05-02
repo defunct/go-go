@@ -96,6 +96,27 @@ public class Include {
     }
 
     /**
+     * Create an include structure from the given artifact string excluding
+     * artifacts that match the given exclude strings.
+     * 
+     * @param optional
+     *            Whether or not the include is optional.
+     * @param artifact
+     *            The artifact to include.
+     * @param excludes
+     *            The artifact dependencies to exclude.
+     */
+    public Include(boolean optional, String artifact, String...excludes) {
+        this.optional = optional;
+        this.artifact = new Artifact(artifact);
+        this.excludes = new HashSet<List<String>>();
+
+        for (String exclude : excludes) {
+            this.excludes.add(exclude(exclude));
+        }
+    }
+
+    /**
      * Get whether or not the include is optional.
      * 
      * @return True if the include is optional.

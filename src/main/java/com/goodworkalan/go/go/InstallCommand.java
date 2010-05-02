@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -33,7 +34,9 @@ public class InstallCommand implements Commandable {
     }
     
     public void execute(Environment env) {
-        Executor loader = new Executor(new ReflectiveFactory(), new Library(new File(System.getProperty("user.home") + File.separator + ".m2" + File.separator + "repository")), new HashMap<List<String>, Artifact>());
+        ProgramThreadFactory factory = new ProgramThreadFactory();
+        ThreadPoolExecutor executor = ProgramQueue.getThreadPoolExecutor(factory);
+        Executor loader = new Executor(new ReflectiveFactory(), new Library(new File(System.getProperty("user.home") + File.separator + ".m2" + File.separator + "repository")), new HashMap<List<String>, Artifact>(), factory, executor, 0);
         loader.addArtifacts(new ResolutionPart(artifact));
         ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
         ArtifactPart found = env.library.getPathPart(artifact);

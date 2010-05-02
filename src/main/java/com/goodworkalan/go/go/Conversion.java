@@ -30,22 +30,4 @@ class Conversion {
         this.name = name;
         this.value = value;
     }
-    
-    /**
-     * Get the qualified argument name.
-     * 
-     * @return The qualified argument name.
-     */
-    public String getName() {
-        return name;
-    }
-
-    /**
-     * Get the converted argument value.
-     * 
-     * @return The converted argument value.
-     */
-    public Object getValue() {
-        return value;
-    }
 }

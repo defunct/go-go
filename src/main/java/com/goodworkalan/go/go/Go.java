@@ -22,6 +22,6 @@ public class Go {
      *            The command line arguments.
      */
     public static void main(List<File> libraries, String...arguments) {
-        System.exit(new ProgramQueue(libraries, arguments).start());
+        System.exit(new ProgramQueue(libraries, arguments).run(new InputOutput()));
     }
 }

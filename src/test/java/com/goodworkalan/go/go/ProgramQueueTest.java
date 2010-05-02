@@ -1,4 +1,5 @@
 package com.goodworkalan.go.go;
+
 import java.io.File;
 import java.util.Collections;
 import java.util.List;
@@ -16,7 +17,7 @@ public class ProgramQueueTest {
     /** Run a simple program queue. */
     @Test
     public void run() {
-        assertEquals(new ProgramQueue(Collections.singletonList(new File(System.getProperty("user.home") + File.separator + ".m2" + File.separator + "repository")), "boot", "hello").start(), 0);
+        assertEquals(new ProgramQueue(Collections.singletonList(new File(System.getProperty("user.home") + File.separator + ".m2" + File.separator + "repository")), "boot", "hello").run(new InputOutput()), 0);
     }
 
     private List<File> getLibrary() {
@@ -26,6 +27,6 @@ public class ProgramQueueTest {
     /** Call another command from the executor. */
     @Test
     public void runButton() {
-        assertEquals(new ProgramQueue(getLibrary(), "snap", "--mississippi", "--button:saratoga=Nippissing").start(), 0);
+        assertEquals(new ProgramQueue(getLibrary(), "snap", "--mississippi", "--button:saratoga=Nippissing").run(new InputOutput()), 0);
     }
 }

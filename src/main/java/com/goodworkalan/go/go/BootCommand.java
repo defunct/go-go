@@ -7,7 +7,12 @@ package com.goodworkalan.go.go;
  */
 @Command
 public class BootCommand implements Commandable {
+    /**
+     * Do nothing for now.
+     * 
+     * @param env
+     *            The environment.
+     */
     public void execute(Environment env) {
-        System.out.println(env.remaining);
     }
 }

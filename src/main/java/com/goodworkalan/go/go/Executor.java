@@ -3,7 +3,8 @@ package com.goodworkalan.go.go;
 import static com.goodworkalan.go.go.GoException.ASSIGNMENT_EXCEPTION_THROWN;
 import static com.goodworkalan.go.go.GoException.ASSIGNMENT_FAILED;
 import static com.goodworkalan.go.go.GoException.CANNOT_CREATE_TASK;
-import static com.goodworkalan.go.go.GoException.COMMAND_CLASS_MISSING;
+import static com.goodworkalan.go.go.GoException.*;
+import static com.goodworkalan.go.go.GoException.EXIT;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -22,12 +23,12 @@ import java.util.TreeMap;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
+import java.util.concurrent.ThreadPoolExecutor;
 
 import com.goodworkalan.go.go.library.Artifact;
 import com.goodworkalan.go.go.library.Include;
 import com.goodworkalan.go.go.library.Library;
 import com.goodworkalan.go.go.library.PathPart;
-import com.goodworkalan.go.go.library.PathParts;
 import com.goodworkalan.go.go.library.ResolutionPart;
 import com.goodworkalan.infuse.InfusionException;
 import com.goodworkalan.reflective.ReflectiveException;
@@ -36,9 +37,22 @@ import com.goodworkalan.retry.Retry;
 import com.goodworkalan.utility.Primitives;
 
 public class Executor {
+    private final int systemVerbosity;
+    
     /** Used to construct commands. */
     private final ReflectiveFactory reflective;
-
+    
+    /**
+     * The thread factory that extends the class path by setting the context
+     * class loader with a class loader built from a path part collection.
+     */
+    private final ProgramThreadFactory threadFactory;
+    
+    /**
+     * An executor service.
+     */
+    private final ThreadPoolExecutor threadPool;
+    
     /** A map of commands and their arguments to a list of their outputs. */ 
     private final Map<List<List<String>>, List<Object>> cache = new HashMap<List<List<String>>, List<Object>>();
 
@@ -93,19 +107,24 @@ public class Executor {
      * @param artifactFile
      *            The artifact file.
      */
-    public Executor(ReflectiveFactory reflective, Library library, Map<List<String>, Artifact> programs) {
-        seen.add(Include.exclude("com.goodworkalan/danger"));
-        seen.add(Include.exclude("com.goodworkalan/verbiage"));
-        seen.add(Include.exclude("com.goodworkalan/go-go"));
-        seen.add(Include.exclude("com.goodworkalan/infuse"));
-        seen.add(Include.exclude("com.goodworkalan/class-boxer"));
-        seen.add(Include.exclude("com.goodworkalan/class-association"));
-        seen.add(Include.exclude("com.goodworkalan/reflective"));
+    Executor(ReflectiveFactory reflective, Library library, Map<List<String>, Artifact> programs, ProgramThreadFactory threadFactory, ThreadPoolExecutor threadPool, int systemVerbosity) {
+        seen.add(Include.exclude("com.github.bigeasy.danger/danger"));
+        seen.add(Include.exclude("com.github.bigeasy.verbiage/verbiage"));
+        seen.add(Include.exclude("com.github.bigeasy.go-go/go-go"));
+        seen.add(Include.exclude("com.github.bigeasy.infuse/infuse"));
+        seen.add(Include.exclude("com.github.bigeasy.retry/retry"));
+        seen.add(Include.exclude("com.github.bigeasy.class-boxer/class-boxer"));
+        seen.add(Include.exclude("com.github.bigeasy.class-association/class-association"));
+        seen.add(Include.exclude("com.github.bigeasy.reflective/reflective"));
         this.programs = programs;
         this.reflective = reflective;
         this.library = library;
         this.parent = null;
+        this.threadFactory = threadFactory;
+        this.threadPool = threadPool;
+        this.systemVerbosity = systemVerbosity;
     }
+
     /**
      * Construct a child executor to run in a thread that has an extended class loader.
      * 
@@ -121,6 +140,9 @@ public class Executor {
         this.commands.putAll(parent.commands);
         this.responders.putAll(parent.responders);
         this.parts.addAll(parent.parts);
+        this.threadFactory = parent.threadFactory;
+        this.threadPool = parent.threadPool;
+        this.systemVerbosity = parent.systemVerbosity;
     }
     
     Collection<PathPart> addArtifacts(PathPart pathPart) {
@@ -162,7 +184,7 @@ public class Executor {
         return subPath;
     }
 
-    private void readConfigurations() {
+    private void readConfigurations(InputOutput io) {
         ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
         try {
             Enumeration<URL> resources = classLoader.getResources("META-INF/services/com.goodworkalan.go.go.Commandable");
@@ -194,8 +216,10 @@ public class Executor {
                     } catch (IOException e) {
                         throw new GoException(0, e);
                     }
+                    List<String> classNames = new ArrayList<String>();
                     for (Class<? extends Commandable> taskClass : tasks) {
                         if (!responders.containsKey(taskClass)) {
+                            classNames.add(taskClass.getCanonicalName());
                             Responder responder = new Responder(taskClass);
                             responders.put(taskClass, responder);
                             Class<? extends Commandable> parentTaskClass = null;
@@ -212,6 +236,7 @@ public class Executor {
                             commands.put(responder.getName(), responder);
                         }
                     }
+                    debug(io, "readConfiguration", url, classNames);
                 }
             }
         } catch (IOException e) {
@@ -220,6 +245,7 @@ public class Executor {
     }
 
     private Outcome resume(Environment env, Responder responder, List<String> arguments, int offset, Class<?> outcomeClass) {
+        readConfigurations(env.io);
         if (offset == 0) {
             responder = commands.get(arguments.get(0));
             if (responder == null) {
@@ -344,10 +370,7 @@ public class Executor {
                 return executor.execute(env, commands, outcomeClass, offset);
             }
         });
-        Thread thread = new Thread(future);
-        thread.setContextClassLoader(PathParts.getClassLoader(parts, Thread.currentThread().getContextClassLoader()));
-        thread.run();
-        return waitForOutcome(future);
+        return waitForOutcome(parts, future);
     }
 
     private Outcome execute(Environment env, Map<String, Responder> commands, Class<?> outcomeClass, int offset) {
@@ -359,7 +382,11 @@ public class Executor {
             Environment subEnv = new Environment(env, commandable.getClass(), offset);
 
             // Execute the command.
-            commandable.execute(subEnv);
+            try {
+                commandable.execute(subEnv);
+            } catch (Exit exit) {
+                throw new GoException(EXIT, exit);
+            }
             
             env.parentOutputs.get(env.parentOutputs.size() - 1).addAll(subEnv.outputs);
             
@@ -389,9 +416,9 @@ public class Executor {
             // Set the arguments for the command.
             for (Conversion conversion : env.conversions.get(i)) {
                 if (conversion.command.equals(responder.getName())) {
-                    Assignment assignment = responder.getAssignments().get(conversion.getName());
+                    Assignment assignment = responder.getAssignments().get(conversion.name);
                     try {
-                        assignment.setter.set(commandable, conversion.getValue());
+                        assignment.setter.set(commandable, conversion.value);
                     } catch (ReflectiveException e) {
                         if (e.getCode() == ReflectiveException.INVOCATION_TARGET) {
                             throw new GoException(ASSIGNMENT_EXCEPTION_THROWN, e, commandable.getClass().getCanonicalName(), assignment.setter.getNative().getName());
@@ -403,8 +430,14 @@ public class Executor {
             
             // Create sub environment.
             Environment subEnv = new Environment(env, commandable.getClass(), i + 1);
+            
             // Execute the command.
-            commandable.execute(subEnv);
+            try {
+                commandable.execute(subEnv);
+            } catch (Exit exit) {
+                throw new GoException(EXIT, exit);
+            }
+            
             env.parentOutputs.add(subEnv.outputs);
             if (!subEnv.pathParts.isEmpty()) {
                 Collection<PathPart> unseen = addArtifacts(subEnv.pathParts);
@@ -440,26 +473,22 @@ public class Executor {
                 return executor.resume(env, responder, arguments, offset, outcomeClass);
             }
         });
-        Thread thread = new Thread(future);
-        thread.setContextClassLoader(PathParts.getClassLoader(unseen, Thread.currentThread().getContextClassLoader()));
-        thread.run();
-        return waitForOutcome(future);
+        return waitForOutcome(unseen, future);
     }
 
-    private Outcome waitForOutcome(FutureTask<Outcome> future) {
+    private Outcome waitForOutcome(Collection<PathPart> parts, FutureTask<Outcome> future) {
+        threadFactory.partsQueue.offer(parts);
+        threadPool.execute(future);
         try {
             return Retry.retry(future);
         } catch (ExecutionException e) {
-            if (e instanceof Erroneous) {
-                return new Outcome(((Erroneous) e).getCode(), null);
-            }
-            return new Outcome(1, null);
+            throw new GoException(FUTURE_EXECUTION, e);
         }
     }
 
     Outcome start(InputOutput io, List<String> arguments, Class<?> outcomeClass) {
-        readConfigurations();
         Environment env = new Environment(library, io, this);
+        readConfigurations(env.io);
         Artifact artifact = programs.get(flatten(arguments.get(0)));
         if (artifact != null) {
             Collection<PathPart> unseen = addArtifacts(new ResolutionPart(artifact));
@@ -514,4 +543,21 @@ public class Executor {
 
     public void fork(InputOutput io, Object...arguments) {
     }
+    
+    /**
+     * Print the verbose output if the verbose argument has been specified.
+     * 
+     * @param io
+     *            The InputOutput structure.
+     * @param message
+     *            The message key.
+     * @param arguments
+     *            The message format arguments.
+     */
+    private void debug(InputOutput io, String message, Object...arguments) {
+        if (systemVerbosity > 1) {
+            Environment.error(io, Executor.class, message, arguments);
+        }
+    }
+
 }

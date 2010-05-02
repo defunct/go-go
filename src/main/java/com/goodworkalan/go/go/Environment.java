@@ -93,6 +93,9 @@ public class Environment {
         this.parentOutputs.addAll(env.parentOutputs);
         this.verbosity = env.verbosity + verbosityIncrement;
         this.hiddenCommands = env.hiddenCommands;
+        if (offset == env.commands.size()) {
+            this.remaining.addAll(env.remaining);
+        }
     }
     
     Environment(Environment env, int verbosityIncrement) {

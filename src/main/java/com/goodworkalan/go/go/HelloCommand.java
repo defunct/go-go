@@ -1,8 +1,9 @@
 package com.goodworkalan.go.go;
 
 /**
- * A task that is always present to test a Jav-a-Go-Go installation.
- *
+ * A task that is always present to test a Jav-a-Go-Go installation use to check
+ * that Jav-a-Go-Go exists.
+ * 
  * @author Alan Gutierrez
  */
 @Command(parent = BootCommand.class)

@@ -79,6 +79,12 @@ public class GoException extends CodedDanger {
     /** Invocation of string constructor rejected the string data. */
     public final static int STRING_CONVERSION_ERROR = 604;
     
+    /** An exception occurred while executing a future. */
+    public final static int FUTURE_EXECUTION = 605;
+    
+    /** Command exited by throwing exit code. */
+    public final static int EXIT = 606;
+    
     /** Unable to resolve artifact. */
     public final static int UNRESOLVED_ARTIFACT = 701;
     

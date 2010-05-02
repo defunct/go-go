@@ -9,6 +9,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ThreadPoolExecutor;
 
 import org.testng.annotations.Test;
 
@@ -20,7 +21,9 @@ public class EnvironmentTest {
     public Executor getExecutor() {
         Map<List<String>, Artifact> programs = new HashMap<List<String>, Artifact>();
         Library library = new Library(new File[0]);
-        return new Executor(new ReflectiveFactory(), library, programs);
+        ProgramThreadFactory threadFactory = new ProgramThreadFactory();
+        ThreadPoolExecutor threadPool = ProgramQueue.getThreadPoolExecutor(threadFactory);
+        return new Executor(new ReflectiveFactory(), library, programs, threadFactory, threadPool, 0);
 
     }
 
