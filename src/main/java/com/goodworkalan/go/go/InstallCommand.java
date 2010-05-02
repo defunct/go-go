@@ -17,6 +17,9 @@ import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
+import com.goodworkalan.go.go.library.Artifact;
+import com.goodworkalan.go.go.library.ArtifactPart;
+import com.goodworkalan.go.go.library.Library;
 import com.goodworkalan.reflective.ReflectiveFactory;
 
 @Command(parent = BootCommand.class)

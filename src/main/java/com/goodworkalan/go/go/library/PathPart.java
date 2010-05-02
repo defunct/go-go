@@ -1,8 +1,9 @@
-package com.goodworkalan.go.go;
+package com.goodworkalan.go.go.library;
 
 import java.io.File;
 import java.net.URL;
 import java.util.Collection;
+
 
 /**
  * A prototype interface for an archive or directory in a file path. Given a

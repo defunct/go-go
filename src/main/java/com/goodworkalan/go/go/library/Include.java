@@ -1,4 +1,4 @@
-package com.goodworkalan.go.go;
+package com.goodworkalan.go.go.library;
 
 import static com.goodworkalan.go.go.GoException.INVALID_EXCLUDE;
 
@@ -8,6 +8,8 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import com.goodworkalan.go.go.GoException;
 
 /**
  * An artifact include structure that groups the artifact, its excluded

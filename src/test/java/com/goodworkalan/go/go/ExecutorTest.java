@@ -10,6 +10,8 @@ import java.util.Map;
 
 import org.testng.annotations.Test;
 
+import com.goodworkalan.go.go.library.Artifact;
+import com.goodworkalan.go.go.library.Library;
 import com.goodworkalan.reflective.ReflectiveFactory;
 
 /**

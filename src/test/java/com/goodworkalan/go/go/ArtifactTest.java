@@ -7,6 +7,8 @@ import java.io.File;
 
 import org.testng.annotations.Test;
 
+import com.goodworkalan.go.go.library.Artifact;
+
 /**
  * Unit tests for the Artifact class.
  *

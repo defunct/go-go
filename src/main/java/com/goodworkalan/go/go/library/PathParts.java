@@ -1,4 +1,4 @@
-package com.goodworkalan.go.go;
+package com.goodworkalan.go.go.library;
 
 import static com.goodworkalan.go.go.GoException.MALFORMED_URL;
 
@@ -9,6 +9,8 @@ import java.net.URLClassLoader;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.Set;
+
+import com.goodworkalan.go.go.GoException;
 
 /**
  * Static utility methods for converting path part collections into useful

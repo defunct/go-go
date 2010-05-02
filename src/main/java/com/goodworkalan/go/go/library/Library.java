@@ -1,4 +1,4 @@
-package com.goodworkalan.go.go;
+package com.goodworkalan.go.go.library;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -9,6 +9,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 
 /**
  * A Jav-a-Go-Go format library.

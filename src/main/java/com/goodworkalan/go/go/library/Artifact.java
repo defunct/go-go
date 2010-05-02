@@ -1,10 +1,12 @@
-package com.goodworkalan.go.go;
+package com.goodworkalan.go.go.library;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+
+import com.goodworkalan.go.go.GoException;
 
 /**
  * A jar artifact needed for execution.

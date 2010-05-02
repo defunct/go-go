@@ -1,9 +1,10 @@
-package com.goodworkalan.go.go;
+package com.goodworkalan.go.go.library;
 
 import java.io.File;
 import java.net.URL;
 import java.util.Collection;
 import java.util.Collections;
+
 
 /**
  * A path part that maps to a class directory on the file system. 

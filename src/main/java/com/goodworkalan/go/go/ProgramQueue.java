@@ -17,6 +17,8 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
 
+import com.goodworkalan.go.go.library.Artifact;
+
 /**
  * Queues pseudo-forked Jav-a-Go-Go programs for execution.
  * 

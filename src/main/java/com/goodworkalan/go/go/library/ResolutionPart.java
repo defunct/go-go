@@ -1,4 +1,4 @@
-package com.goodworkalan.go.go;
+package com.goodworkalan.go.go.library;
 
 import static com.goodworkalan.go.go.GoException.UNRESOLVED_ARTIFACT;
 
@@ -8,6 +8,8 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import com.goodworkalan.go.go.GoException;
 
 public class ResolutionPart extends ExpandingPathPart {
     private final Include include;

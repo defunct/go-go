@@ -1,7 +1,8 @@
-package com.goodworkalan.go.go;
+package com.goodworkalan.go.go.library;
 
 import java.io.File;
 import java.net.URL;
+
 
 /**
  * Implements the methods that expanding path parts do not implement as

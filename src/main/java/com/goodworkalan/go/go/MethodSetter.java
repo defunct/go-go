@@ -10,7 +10,7 @@ import com.goodworkalan.reflective.ReflectiveException;
  *
  * @author Alan Gutierrez
  */
-public class MethodSetter implements Setter {
+class MethodSetter implements Setter {
     /** The single argument void method. */
     private final Method method;
 

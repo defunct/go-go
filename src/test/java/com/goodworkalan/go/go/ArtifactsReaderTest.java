@@ -10,6 +10,8 @@ import java.io.StringReader;
 
 import org.testng.annotations.Test;
 
+import com.goodworkalan.go.go.library.Artifacts;
+
 /**
  * Test suite for artifacts file.
  *

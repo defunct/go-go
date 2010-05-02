@@ -7,6 +7,8 @@ import java.io.File;
 import java.util.List;
 import java.util.Map;
 
+import com.goodworkalan.go.go.library.Artifact;
+import com.goodworkalan.go.go.library.Library;
 import com.goodworkalan.reflective.ReflectiveFactory;
 
 /**

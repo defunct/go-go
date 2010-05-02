@@ -10,6 +10,9 @@ import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 import java.util.Set;
 
+import com.goodworkalan.go.go.library.Library;
+import com.goodworkalan.go.go.library.PathPart;
+
 /**
  * The environment in which a task is executed.
  * 

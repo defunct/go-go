@@ -8,6 +8,10 @@ import java.util.List;
 
 import org.testng.annotations.Test;
 
+import com.goodworkalan.go.go.library.DirectoryPart;
+import com.goodworkalan.go.go.library.PathPart;
+import com.goodworkalan.go.go.library.PathParts;
+
 public class PathPartsTest {
     @Test
     public void files() {

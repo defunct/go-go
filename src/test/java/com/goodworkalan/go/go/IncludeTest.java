@@ -4,6 +4,8 @@ import static com.goodworkalan.go.go.GoException.INVALID_EXCLUDE;
 
 import org.testng.annotations.Test;
 
+import com.goodworkalan.go.go.library.Include;
+
 /**
  * Unit tests for the {@link Include} class.
  *

@@ -15,6 +15,7 @@ public class GoProject extends ProjectModule {
                     .depends()
                         .artifact(new Artifact("com.goodworkalan/reflective/0.1"))
                         .artifact(new Artifact("com.github.bigeasy.danger/danger/0.1"))
+                        .artifact(new Artifact("com.github.bigeasy.retry/retry/0.1"))
                         .artifact(new Artifact("com.github.bigeasy.class-boxer/class-boxer/0.1"))
                         .artifact(new Artifact("com.goodworkalan/infuse/0.1"))
                         .end()

@@ -7,6 +7,8 @@ import java.io.File;
 
 import org.testng.annotations.Test;
 
+import com.goodworkalan.go.go.library.Library;
+
 /**
  * Unit test for the library class.
  * 

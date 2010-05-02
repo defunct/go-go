@@ -1,4 +1,4 @@
-package com.goodworkalan.go.go;
+package com.goodworkalan.go.go.library;
 
 import static com.goodworkalan.go.go.GoException.ARTIFACT_FILE_IO_EXCEPTION;
 import static com.goodworkalan.go.go.GoException.ARTIFACT_FILE_MISPLACED_EXCLUDE;
@@ -15,6 +15,8 @@ import java.io.IOException;
 import java.io.Reader;
 import java.util.ArrayList;
 import java.util.List;
+
+import com.goodworkalan.go.go.GoException;
 
 /**
  * A file reader that reads a list of dependencies from a file that 
