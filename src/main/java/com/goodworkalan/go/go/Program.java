@@ -14,7 +14,7 @@ import com.goodworkalan.reflective.ReflectiveFactory;
  * 
  * @author Alan Gutierrez
  */
-public final class Program {
+final class Program {
     private final List<File> libraries;
     
     private final List<String> arguments;

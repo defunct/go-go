@@ -22,7 +22,7 @@ import java.util.concurrent.FutureTask;
  * 
  * @author Alan Gutierrez
  */
-public class ProgramQueue {
+class ProgramQueue {
     private int verbosity = 0;
     
     /** The list of libraries. */
