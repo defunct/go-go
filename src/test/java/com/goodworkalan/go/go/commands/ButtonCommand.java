@@ -1,4 +1,8 @@
-package com.goodworkalan.go.go;
+package com.goodworkalan.go.go.commands;
+
+import com.goodworkalan.go.go.Argument;
+import com.goodworkalan.go.go.Commandable;
+import com.goodworkalan.go.go.Environment;
 
 /**
  * Top level command called by another command.

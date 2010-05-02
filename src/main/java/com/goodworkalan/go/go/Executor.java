@@ -430,11 +430,12 @@ public class Executor {
         return resume(env, null, arguments, 0, outcomeClass);
     }
 
-    public void run(InputOutput io, List<String> arguments) {
+    public int run(InputOutput io, List<String> arguments) {
+        return start(io, arguments, null).code;
     }
 
-    public void run(InputOutput io, Object...arguments) {
-        run(io, flatten(arguments));
+    public int run(InputOutput io, Object...arguments) {
+        return run(io, flatten(arguments));
     }
     
     public <T> T run(Class<T> type, InputOutput io, Object...arguments) {

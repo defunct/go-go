@@ -1,6 +1,9 @@
-com.goodworkalan.go.go.Welcome
-com.goodworkalan.go.go.JUnit
-com.goodworkalan.go.go.Snap
-com.goodworkalan.go.go.Compile
-com.goodworkalan.go.go.ButtonCommand
-com.goodworkalan.go.go.WatusiCommand
+com.goodworkalan.go.go.commands.Welcome
+com.goodworkalan.go.go.commands.JUnit
+com.goodworkalan.go.go.commands.Snap
+com.goodworkalan.go.go.commands.Compile
+com.goodworkalan.go.go.commands.ButtonCommand
+com.goodworkalan.go.go.commands.WatusiCommand
+com.goodworkalan.go.go.commands.PrattleCommand
+com.goodworkalan.go.go.commands.GetCommand
+com.goodworkalan.go.go.missing.NoBundleCommand

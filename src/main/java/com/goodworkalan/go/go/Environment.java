@@ -117,18 +117,35 @@ public class Environment {
         if (verbosity >= level) {
             error(context, token, arguments);
         }
-}
+    }
 
     public void error(Class<?> context, String token, Object...arguments) {
         error(io, context, token, arguments);
     }
-    
+
+    /**
+     * Display a formatted error message on the error stream in the given I/O
+     * bundle. The message is formatted using a message bundle named
+     * "stderr.properties" that is found in the same package as the given
+     * context class. The bundle string key is the class name joined with the
+     * given message token separated by a slash as in "TouchCommand/diskFull".
+     * <p>
+     * The bundle format strings are printf style <code>String.format</code>
+     * format strings. The given arguments are passed to the format.
+     * 
+     * @param io
+     *            The I/O bundle.
+     * @param context
+     *            The context used to find the bundle and half of the message
+     *            key.
+     * @param token
+     *            The message token.
+     * @param arguments
+     *            Arguments to pass to the format.
+     */
     public static void error(InputOutput io, Class<?> context, String token, Object...arguments) {
         String className = context.getCanonicalName();
-        int index = className.lastIndexOf('.');
-        if (index > -1) {
-            className = className.substring(index + 1);
-        }
+        className = className.substring(className.lastIndexOf('.') + 1);
         String key = className + "/" + token; 
         ResourceBundle bundle;
         try {

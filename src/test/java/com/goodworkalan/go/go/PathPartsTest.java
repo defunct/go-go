@@ -12,7 +12,13 @@ import com.goodworkalan.go.go.library.DirectoryPart;
 import com.goodworkalan.go.go.library.PathPart;
 import com.goodworkalan.go.go.library.PathParts;
 
+/**
+ * Unit tests for the {@PathParts} class.
+ *
+ * @author Alan Gutierrez
+ */
 public class PathPartsTest {
+    /** Test file generation. */
     @Test
     public void files() {
         List<PathPart> parts = new ArrayList<PathPart>();
