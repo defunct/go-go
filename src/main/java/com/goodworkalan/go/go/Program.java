@@ -13,6 +13,8 @@ import com.goodworkalan.reflective.ReflectiveFactory;
 
 /**
  * A Jav-a-Go-Go program.
+ * <p>
+ * FIXME Outgoing, just queue arguments.
  * 
  * @author Alan Gutierrez
  */

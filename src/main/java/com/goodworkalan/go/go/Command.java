@@ -21,5 +21,7 @@ public @interface Command {
     
     boolean hidden() default false;
     
+    boolean cache() default true;
+    
     Class<? extends Commandable> parent() default Commandable.class;
 }

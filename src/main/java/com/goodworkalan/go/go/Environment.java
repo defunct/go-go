@@ -47,6 +47,10 @@ public class Environment {
     /** The list of arguments remaining. */
     public final List<String> remaining = new ArrayList<String>();
     
+    final Set<PathPart> pathParts = new LinkedHashSet<PathPart>();
+
+    final LinkedList<Commandable> hiddenCommands;
+
     /** The verbosity. */
     public final int verbosity;
     
@@ -66,6 +70,7 @@ public class Environment {
         this.io = io;
         this.executor = executor;
         this.verbosity = 0;
+        this.hiddenCommands = new LinkedList<Commandable>();
     }
 
     /**
@@ -87,6 +92,7 @@ public class Environment {
         this.conversions.addAll(env.conversions.subList(0, offset));
         this.parentOutputs.addAll(env.parentOutputs);
         this.verbosity = env.verbosity + verbosityIncrement;
+        this.hiddenCommands = env.hiddenCommands;
     }
     
     Environment(Environment env, int verbosityIncrement) {
@@ -205,10 +211,6 @@ public class Environment {
         return null;
     }
 
-    final Set<PathPart> pathParts = new LinkedHashSet<PathPart>();
-    
-    final List<Commandable> hiddenCommands = new ArrayList<Commandable>();
-    
     public void extendClassPath(PathPart part) {
         pathParts.add(part);
     }

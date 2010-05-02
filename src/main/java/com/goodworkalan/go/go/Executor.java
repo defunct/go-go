@@ -48,7 +48,7 @@ public class Executor {
     private final Map<List<String>, Artifact> programs;
 
     /** A set of keys of artifacts that have already been included. */
-    private final Set<List<String>> seen = new HashSet<List<String>>();
+    private final Set<Object> seen = new HashSet<Object>();
     
     /** The set of class path URLs that have been inspected for commands. */
     private final Set<URL> urls = new HashSet<URL>();
@@ -122,6 +122,10 @@ public class Executor {
         this.responders.putAll(parent.responders);
         this.parts.addAll(parent.parts);
     }
+    
+    Collection<PathPart> addArtifacts(PathPart pathPart) {
+        return addArtifacts(Collections.singleton(pathPart));
+    }
 
     /**
      * Iterate through all of the command interpreter task and dependencies
@@ -140,22 +144,19 @@ public class Executor {
      *             For any I/O error while reading the command interpreter
      *             definition files.
      */
-    Collection<PathPart> addArtifacts(Artifact...artifacts) {
-        List<Artifact> unseen = new ArrayList<Artifact>();
-        for (Artifact artifact : artifacts) {
-            List<String> key = artifact.getKey().subList(0, 2);
+    Collection<PathPart> addArtifacts(Collection<PathPart> artifacts) {
+        List<PathPart> unseen = new ArrayList<PathPart>();
+        for (PathPart artifact : artifacts) {
+            Object key = artifact.getUnversionedKey();
             if (!seen.contains(key)) {
                 unseen.add(artifact);
             }
         }
         Collection<PathPart> subPath = new ArrayList<PathPart>();
         if (!unseen.isEmpty()) {
-            for (Artifact artifact : unseen) {
-                subPath.add(new ResolutionPart(artifact));
-            }
-            subPath = library.resolve(subPath, seen);
+            subPath = library.resolve(unseen, seen);
             for (PathPart part : subPath) {
-                seen.add(part.getArtifact().getUnversionedKey());
+                seen.add(part.getUnversionedKey());
             }
         }
         return subPath;
@@ -318,7 +319,7 @@ public class Executor {
                 } else {
                     Artifact artifact = programs.get(flatten(env.commands, argument));
                     if (artifact != null) {
-                        Collection<PathPart> unseen = addArtifacts(artifact);
+                        Collection<PathPart> unseen = addArtifacts(new ResolutionPart(artifact));
                         if (!unseen.isEmpty()) {
                             return load(unseen, env, responder, arguments, i, outcomeClass);
                         }
@@ -333,18 +334,49 @@ public class Executor {
                 }
             }
         }
-        return execute(env, outcomeClass);
+        return execute(env, commands, outcomeClass, 0);
     }
 
-    private Outcome execute(Environment env, Class<?> outcomeClass) {
-        Map<String, Responder> byCommand = commands; 
+    private Outcome loadAfterCommandable(Collection<PathPart> parts, final Environment env, final Map<String, Responder> commands, final Class<?> outcomeClass, final int offset) {
+        final Executor executor = new Executor(this);
+        FutureTask<Outcome> future = new FutureTask<Outcome>(new Callable<Outcome>() {
+            public Outcome call() {
+                return executor.execute(env, commands, outcomeClass, offset);
+            }
+        });
+        Thread thread = new Thread(future);
+        thread.setContextClassLoader(PathParts.getClassLoader(parts, Thread.currentThread().getContextClassLoader()));
+        thread.run();
+        return waitForOutcome(future);
+    }
+
+    private Outcome execute(Environment env, Map<String, Responder> commands, Class<?> outcomeClass, int offset) {
+        // Run any hidden commands.
+        while (!env.hiddenCommands.isEmpty()) {
+            Commandable commandable = env.hiddenCommands.removeFirst();
+
+            // Create sub environment.
+            Environment subEnv = new Environment(env, commandable.getClass(), offset);
+
+            // Execute the command.
+            commandable.execute(subEnv);
+            
+            env.parentOutputs.get(env.parentOutputs.size() - 1).addAll(subEnv.outputs);
+            
+            if (!subEnv.pathParts.isEmpty()) {
+                Collection<PathPart> unseen = addArtifacts(subEnv.pathParts);
+                if (!unseen.isEmpty()) {
+                    return loadAfterCommandable(unseen, env, commands, outcomeClass, offset);
+                }
+            }
+        }
         // Go through each command executing if it is not cached.
-        for (int i = 0, stop = env.commands.size(); i < stop; i++) {
+        for (int i = offset, stop = env.commands.size(); i < stop; i++) {
             // Find the responder.
-            Responder responder = byCommand.get(env.commands.get(i));
+            Responder responder = commands.get(env.commands.get(i));
             
             // Set up the lookup of a child responder.
-            byCommand = responder.commands;
+            commands = responder.commands;
             
             // Create an instance of the commandable.
             Commandable commandable;
@@ -373,12 +405,16 @@ public class Executor {
             Environment subEnv = new Environment(env, commandable.getClass(), i + 1);
             // Execute the command.
             commandable.execute(subEnv);
-            
-            if (!subEnv.pathParts.isEmpty()) {
-                
-            }
-            
             env.parentOutputs.add(subEnv.outputs);
+            if (!subEnv.pathParts.isEmpty()) {
+                Collection<PathPart> unseen = addArtifacts(subEnv.pathParts);
+                if (!unseen.isEmpty()) {
+                    return loadAfterCommandable(subEnv.pathParts, env, commands, outcomeClass, i + 1);
+                }
+            }
+            if (!env.hiddenCommands.isEmpty()) {
+                return execute(env, commands, outcomeClass, i + 1);
+            }
         }
         
         if (outcomeClass != null) {
@@ -397,7 +433,7 @@ public class Executor {
         return taskClass;
     }
     
-    Outcome load(Collection<PathPart> unseen, final Environment env, final Responder responder, final List<String> arguments, final int offset, final Class<?> outcomeClass) {
+    private Outcome load(Collection<PathPart> unseen, final Environment env, final Responder responder, final List<String> arguments, final int offset, final Class<?> outcomeClass) {
         final Executor executor = new Executor(this);
         FutureTask<Outcome> future = new FutureTask<Outcome>(new Callable<Outcome>() {
             public Outcome call() {
@@ -407,6 +443,10 @@ public class Executor {
         Thread thread = new Thread(future);
         thread.setContextClassLoader(PathParts.getClassLoader(unseen, Thread.currentThread().getContextClassLoader()));
         thread.run();
+        return waitForOutcome(future);
+    }
+
+    private Outcome waitForOutcome(FutureTask<Outcome> future) {
         try {
             return Retry.retry(future);
         } catch (ExecutionException e) {
@@ -422,7 +462,7 @@ public class Executor {
         Environment env = new Environment(library, io, this);
         Artifact artifact = programs.get(flatten(arguments.get(0)));
         if (artifact != null) {
-            Collection<PathPart> unseen = addArtifacts(artifact);
+            Collection<PathPart> unseen = addArtifacts(new ResolutionPart(artifact));
             if (!unseen.isEmpty()) {
                 return load(unseen, env, null, arguments, 0, outcomeClass);
             }

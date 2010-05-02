@@ -46,6 +46,6 @@ public class ArtifactPart implements PathPart {
     }
     
     public Object getUnversionedKey() {
-        return artifact.getKey().subList(0, 2);
+        return artifact.getUnversionedKey();
     }
 }

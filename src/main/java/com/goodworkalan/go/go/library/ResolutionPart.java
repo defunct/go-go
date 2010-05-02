@@ -47,6 +47,6 @@ public class ResolutionPart extends ExpandingPathPart {
     }
     
     public Object getUnversionedKey() {
-        return include.getArtifact().getKey().subList(0, 2);
+        return include.getArtifact().getUnversionedKey();
     }
 }

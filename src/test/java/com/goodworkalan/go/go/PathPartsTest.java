@@ -22,8 +22,8 @@ public class PathPartsTest {
     @Test
     public void files() {
         List<PathPart> parts = new ArrayList<PathPart>();
-        parts.add(new DirectoryPart(new File("classes")));
+        parts.add(new DirectoryPart(new File("classes").getAbsoluteFile()));
         File[] files = PathParts.files(parts);
-        assertEquals(files[0], new File("classes"));
+        assertEquals(files[0], new File("classes").getAbsoluteFile());
     }
 }

@@ -36,4 +36,14 @@ public class ExecutorTest {
         String hello = executor.run(String.class, new InputOutput(), "snap", "watusi", "--repeat=Hello");
         assertEquals(hello, "Hello");
     }
+    
+    /** Test the invocation of load after command. */
+    @Test
+    public void loadAfterCommandable() {
+        Map<List<String>, Artifact> programs = new HashMap<List<String>, Artifact>();
+        Library library = new Library(getLibrary("a"), getLibrary("b"));
+        Executor executor = new Executor(new ReflectiveFactory(), library, programs);
+        String hello = executor.run(String.class, new InputOutput(), "snap", "--hidden", "watusi", "--repeat=Hello");
+        assertEquals(hello, "Hello");
+    }
 }

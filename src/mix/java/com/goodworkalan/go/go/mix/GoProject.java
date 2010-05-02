@@ -22,6 +22,7 @@ public class GoProject extends ProjectModule {
                     .end()
                 .test()
                     .depends()
+                        .artifact(new Artifact("com.goodworkalan/comfort-io/0.1.1"))
                         .artifact(new Artifact("org.slf4j/slf4j-log4j12/1.4.2"))
                         .artifact(new Artifact("org.testng/testng/5.10/jdk15"))
                         .artifact(new Artifact("org.mockito/mockito-core/1.6"))

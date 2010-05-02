@@ -20,6 +20,7 @@ import java.util.zip.ZipFile;
 import com.goodworkalan.go.go.library.Artifact;
 import com.goodworkalan.go.go.library.ArtifactPart;
 import com.goodworkalan.go.go.library.Library;
+import com.goodworkalan.go.go.library.ResolutionPart;
 import com.goodworkalan.reflective.ReflectiveFactory;
 
 @Command(parent = BootCommand.class)
@@ -33,7 +34,7 @@ public class InstallCommand implements Commandable {
     
     public void execute(Environment env) {
         Executor loader = new Executor(new ReflectiveFactory(), new Library(new File(System.getProperty("user.home") + File.separator + ".m2" + File.separator + "repository")), new HashMap<List<String>, Artifact>());
-        loader.addArtifacts(artifact);
+        loader.addArtifacts(new ResolutionPart(artifact));
         ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
         ArtifactPart found = env.library.getPathPart(artifact);
         List<String> commands = new ArrayList<String>();

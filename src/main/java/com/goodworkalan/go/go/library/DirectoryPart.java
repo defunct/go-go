@@ -5,6 +5,8 @@ import java.net.URL;
 import java.util.Collection;
 import java.util.Collections;
 
+import com.goodworkalan.go.go.GoException;
+
 
 /**
  * A path part that maps to a class directory on the file system. 
@@ -22,6 +24,9 @@ public class DirectoryPart implements PathPart {
      *            The directory.
      */
     public DirectoryPart(File dir) {
+        if (!dir.isAbsolute()) {
+            throw new GoException(0, dir);
+        }
         this.dir = dir;
     }
     
@@ -40,7 +45,7 @@ public class DirectoryPart implements PathPart {
      * @return The path part as a URL.
      */
     public URL getURL() {
-        return PathParts.toURL(dir.getAbsolutePath().toString());
+        return PathParts.toURL(dir.getAbsoluteFile().toURI().toString());
     }
 
     /**
