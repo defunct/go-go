@@ -146,7 +146,7 @@ public class Executor {
             for (Artifact artifact : unseen) {
                 subPath.add(new ResolutionPart(artifact));
             }
-            subPath = library.resolve(parts, seen);
+            subPath = library.resolve(subPath, seen);
             for (PathPart part : subPath) {
                 seen.add(part.getArtifact().getUnversionedKey());
             }
@@ -309,7 +309,7 @@ public class Executor {
                     String value = pair.length == 1 ? null : pair[1]; 
                     env = argument(env, responder, name, value);
                 } else {
-                    Artifact artifact = programs.get(env.commands);
+                    Artifact artifact = programs.get(flatten(env.commands, argument));
                     if (artifact != null) {
                         Collection<PathPart> unseen = addArtifacts(artifact);
                         if (!unseen.isEmpty()) {
@@ -413,7 +413,7 @@ public class Executor {
     Outcome start(InputOutput io, List<String> arguments, Class<?> outcomeClass) {
         readConfigurations();
         Environment env = new Environment(library, io, this);
-        Artifact artifact = programs.get(env.commands);
+        Artifact artifact = programs.get(flatten(arguments.get(0)));
         if (artifact != null) {
             Collection<PathPart> unseen = addArtifacts(artifact);
             if (!unseen.isEmpty()) {
