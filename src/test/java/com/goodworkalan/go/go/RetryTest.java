@@ -8,6 +8,12 @@ import org.testng.annotations.Test;
  * @author Alan Gutierrez
  */
 public class RetryTest {
+    /** Construct for the coverage. */
+    @Test
+    public void consructor() {
+        new Retry();
+    }
+
     /** Test retry. */
     @Test
     public void retry() throws InterruptedException {
@@ -18,7 +24,9 @@ public class RetryTest {
                     public void retry() throws InterruptedException {
                         if (count == 0) {
                             count++;
-                            wait();
+                            synchronized (this) {
+                                wait();
+                            }
                         }
                     }
                 });

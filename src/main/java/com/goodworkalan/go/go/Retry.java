@@ -13,13 +13,14 @@ public class Retry {
     }
  
     public static void retry(Procedure retry) {
-        do {
+        for (;;) {
             try {
                 retry.retry();
+                break;
             } catch (InterruptedException e) {
                 continue;
             }
-        } while (false);
+        }
     }
     
     public static <T> T retry(Function<T> retry) {
