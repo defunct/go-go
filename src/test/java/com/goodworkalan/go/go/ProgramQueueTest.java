@@ -1,6 +1,7 @@
 package com.goodworkalan.go.go;
 import java.io.File;
 import java.util.Collections;
+import java.util.List;
 
 import org.testng.annotations.Test;
 
@@ -16,5 +17,15 @@ public class ProgramQueueTest {
     @Test
     public void run() {
         assertEquals(new ProgramQueue(Collections.singletonList(new File(System.getProperty("user.home") + File.separator + ".m2" + File.separator + "repository")), "boot", "hello").start(), 0);
+    }
+
+    private List<File> getLibrary() {
+        return Collections.singletonList(new File(System.getProperty("user.home") + File.separator + ".m2" + File.separator + "repository"));
+    }
+
+    /** Call another command from the executor. */
+    @Test
+    public void runButton() {
+        assertEquals(new ProgramQueue(getLibrary(), "snap", "--mississippi", "--button:saratoga=Nippissing").start(), 0);
     }
 }

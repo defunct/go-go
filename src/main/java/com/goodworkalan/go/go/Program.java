@@ -87,7 +87,7 @@ public final class Program {
         Executor executor = new Executor(new ReflectiveFactory(), new Library(libraries.toArray(new File[libraries.size()])), programs);
         queue.verbose(io, "start", arguments);
         long start = System.currentTimeMillis();
-        int code = executor.start(io, arguments);
+        int code = executor.start(io, arguments, null).code;
         queue.verbose(io, "stop",
                 System.currentTimeMillis() - start,
                 (double) Runtime.getRuntime().totalMemory() / 1024 / 1024,

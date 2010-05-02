@@ -133,7 +133,7 @@ public class Executor {
      *             For any I/O error while reading the command interpreter
      *             definition files.
      */
-    public Collection<PathPart> addArtifacts(Artifact...artifacts) {
+    Collection<PathPart> addArtifacts(Artifact...artifacts) {
         List<Artifact> unseen = new ArrayList<Artifact>();
         for (Artifact artifact : artifacts) {
             List<String> key = artifact.getKey().subList(0, 2);
@@ -154,7 +154,7 @@ public class Executor {
         return subPath;
     }
 
-    public void readConfigurations() {
+    private void readConfigurations() {
         ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
         try {
             Enumeration<URL> resources = classLoader.getResources("META-INF/services/com.goodworkalan.go.go.Commandable");
@@ -211,7 +211,7 @@ public class Executor {
         }
     }
 
-    int resume(Environment env, Responder responder, List<String> arguments, int offset) {
+    private Outcome resume(Environment env, Responder responder, List<String> arguments, int offset, Class<?> outcomeClass) {
         if (offset == 0) {
             responder = commands.get(arguments.get(0));
             if (responder == null) {
@@ -220,10 +220,10 @@ public class Executor {
             env.addCommand(arguments.get(0));
             offset++;
         }
-        return extend(env, responder, arguments, offset);
+        return extend(env, responder, arguments, offset, outcomeClass);
     }
 
-    public Environment argument(Environment env, Responder responder, String name, String value) {
+    private Environment argument(Environment env, Responder responder, String name, String value) {
         String command = env.commands.getLast();
         if (name.indexOf(':') == -1) {
             name = command + ':' + name;
@@ -294,7 +294,7 @@ public class Executor {
         return env;
     }
     
-    int extend(Environment env, Responder responder, List<String> arguments, int offset) {
+    private Outcome extend(Environment env, Responder responder, List<String> arguments, int offset, Class<?> outcomeClass) {
         boolean remaining = false;
         for (int i = offset, stop = arguments.size(); i < stop; i++) {
             String argument = arguments.get(i);
@@ -313,7 +313,7 @@ public class Executor {
                     if (artifact != null) {
                         Collection<PathPart> unseen = addArtifacts(artifact);
                         if (!unseen.isEmpty()) {
-                            return load(unseen, env, responder, arguments, i);
+                            return load(unseen, env, responder, arguments, i, outcomeClass);
                         }
                     }
                     responder = responder.commands.get(argument);
@@ -326,10 +326,10 @@ public class Executor {
                 }
             }
         }
-        return execute(env);
+        return execute(env, outcomeClass);
     }
 
-    private int execute(Environment env) {
+    private Outcome execute(Environment env, Class<?> outcomeClass) {
         Map<String, Responder> byCommand = commands; 
         // Go through each command executing if it is not cached.
         for (int i = 0, stop = env.commands.size(); i < stop; i++) {
@@ -363,7 +363,7 @@ public class Executor {
             }
             
             // Create sub environment.
-            Environment subEnv = new Environment(env, commandable.getClass(), i);
+            Environment subEnv = new Environment(env, commandable.getClass(), i + 1);
             // Execute the command.
             commandable.execute(subEnv);
             
@@ -374,7 +374,15 @@ public class Executor {
             env.parentOutputs.add(subEnv.outputs);
         }
         
-        return 0;
+        if (outcomeClass != null) {
+            for (Object object : env.parentOutputs.get(env.parentOutputs.size() -1)) {
+                if (outcomeClass.equals(object.getClass())) {
+                    return new Outcome(0, object);
+                }
+            }
+        }
+        
+        return new Outcome(0, null);
     }
     
     @SuppressWarnings("unchecked")
@@ -382,11 +390,11 @@ public class Executor {
         return taskClass;
     }
     
-    int load(Collection<PathPart> unseen, final Environment env, final Responder responder, final List<String> arguments, final int offset) {
+    Outcome load(Collection<PathPart> unseen, final Environment env, final Responder responder, final List<String> arguments, final int offset, final Class<?> outcomeClass) {
         final Executor executor = new Executor(this);
-        FutureTask<Integer> future = new FutureTask<Integer>(new Callable<Integer>() {
-            public Integer call() {
-                return executor.resume(env, responder, arguments, offset);
+        FutureTask<Outcome> future = new FutureTask<Outcome>(new Callable<Outcome>() {
+            public Outcome call() {
+                return executor.resume(env, responder, arguments, offset, outcomeClass);
             }
         });
         Thread thread = new Thread(future);
@@ -396,29 +404,45 @@ public class Executor {
             return Retry.retry(future);
         } catch (ExecutionException e) {
             if (e instanceof Erroneous) {
-                return ((Erroneous) e).getCode();
+                return new Outcome(((Erroneous) e).getCode(), null);
             }
-            return 1;
+            return new Outcome(1, null);
         }
     }
 
-    int start(InputOutput io, List<String> arguments) {
+    Outcome start(InputOutput io, List<String> arguments, Class<?> outcomeClass) {
         readConfigurations();
         Environment env = new Environment(library, io, this);
         Artifact artifact = programs.get(env.commands);
         if (artifact != null) {
             Collection<PathPart> unseen = addArtifacts(artifact);
             if (!unseen.isEmpty()) {
-                return load(unseen, env, null, arguments, 0);
+                return load(unseen, env, null, arguments, 0, outcomeClass);
             }
         }
-        return resume(env, null, arguments, 0);
+        return resume(env, null, arguments, 0, outcomeClass);
     }
 
     public void run(InputOutput io, List<String> arguments) {
     }
 
     public void run(InputOutput io, Object...arguments) {
+        run(io, flatten(arguments));
+    }
+    
+    public <T> T run(Class<T> type, InputOutput io, Object...arguments) {
+        return run(type, io, flatten(arguments));
+    }
+    
+    public <T> T run(Class<T> type, InputOutput io, List<String> arguments) {
+        Outcome outcome = start(io, arguments, type);
+        if (outcome.object == null) {
+            return null;
+        }
+        return type.cast(outcome.object);
+    }
+
+    private List<String> flatten(Object... arguments) {
         List<String> flattened = new ArrayList<String>();
         for (Object object : arguments) {
             if (object instanceof List<?>) {
@@ -437,7 +461,7 @@ public class Executor {
                 flattened.add(object.toString());
             }
         }
-        run(io, flattened);
+        return flattened;
     }
 
     public void fork(InputOutput io, Object...arguments) {
