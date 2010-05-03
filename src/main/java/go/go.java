@@ -32,7 +32,7 @@ public class go {
         List<File> libraries = new ArrayList<File>();
         StringTokenizer tokenizer = new StringTokenizer(path, File.pathSeparator);
         while (tokenizer.hasMoreTokens()) {
-            File directory = new File(tokenizer.nextToken());
+            File directory = new File(tokenizer.nextToken()).getAbsoluteFile();
             if (directory.isDirectory()) {
                 libraries.add(directory);
             }
@@ -41,6 +41,14 @@ public class go {
         return libraries;
     }
 
+    /**
+     * Executes a Jav-a-Go-Go application using the given arguments.
+     * 
+     * @param arguments
+     *            The command line arguments.
+     * @throws Exception
+     *             For any exception.
+     */
     public static void main(String[] arguments) throws Exception {
         if (arguments.length == 0) {
             System.out.println("Try, try again.");
@@ -55,8 +63,14 @@ public class go {
 
         // Here's a list of the bootstrap dependencies for Jav-a-Go-Go.
         String[] dependencies = new String[] {
-            "com/goodworkalan/go-go/0.1.3/go-go-0.1.3.jar",
-            "com/goodworkalan/reflective/0.1/reflective-0.1.jar"
+            "com/github/bigeasy/go-go/go-go/0.1.4/go-go-0.1.4.jar",
+            "com/github/bigeasy/infuse/infuse/0.1/infuse-0.1.jar",
+            "com/github/bigeasy/retry/retry/0.1/retry-0.1.jar",
+            "com/github/bigeasy/danger/danger/0.1/danger-0.1.jar",
+            "com/github/bigeasy/verbiage/verbiage/0.1/verbiage-0.1.jar",
+            "com/github/bigeasy/class-association/class-association/0.1/class-association-0.1.jar",
+            "com/github/bigeasy/class-boxer/class-boxer/0.1/class-boxer-0.1.jar",
+            "com/github/bigeasy/reflective/reflective/0.1/reflective-0.1.jar"
         };
         
         List<URL> urls = new ArrayList<URL>();
@@ -89,10 +103,10 @@ public class go {
         Thread.currentThread().setContextClassLoader(classLoader);
 
         // From that class loader we fetch the next main method to call.
-        Class<?> ciClass = classLoader.loadClass("com.goodworkalan.go.go.CommandInterpreter");
+        Class<?> ciClass = classLoader.loadClass("com.goodworkalan.go.go.Go");
 
         // Execute that method and our work here is done.
-        ciClass.getMethod("main", List.class, new String[0].getClass()).invoke(null, new Object[] { libraries, arguments });
+        ciClass.getMethod("main", List.class, new String[0].getClass()).invoke(null, libraries, arguments);
     }
 }
 
