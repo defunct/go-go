@@ -41,7 +41,7 @@ public class GoException extends CodedDanger {
     public final static int INVALID_INCLUDE_LINE = 308;
 
     /** Invalid artifact exclude specification line. */
-    public final static int INVALID_EXCLUDE_LINE = 309;
+    public final static int INVALID_INCLUDE = 309;
 
     /** Artifact file not found. */
     public final static int ARTIFACT_FILE_NOT_FOUND = 310;

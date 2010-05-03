@@ -130,9 +130,9 @@ class ProgramQueue {
             }
         }
     
-        commands.put(Arrays.asList("boot"), new Artifact("com.goodworkalan/go-go"));
-        commands.put(Arrays.asList("boot", "hello"), new Artifact("com.goodworkalan/go-go"));
-        commands.put(Arrays.asList("boot", "install"), new Artifact("com.goodworkalan/go-go"));
+        commands.put(Arrays.asList("boot"), new Artifact("com.github.bigeasy.go-go/go-go/0.1.4"));
+        commands.put(Arrays.asList("boot", "hello"), new Artifact("com.github.bigeasy.go-go/go-go/0.1.4"));
+        commands.put(Arrays.asList("boot", "install"), new Artifact("com.github.bigeasy.go-go/go-go/0.1.4"));
     
         this.libraries = libraries;
         this.arguments = new ArrayList<String>(args);

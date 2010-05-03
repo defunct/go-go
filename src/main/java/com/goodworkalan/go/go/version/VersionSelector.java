@@ -1,5 +1,6 @@
 package com.goodworkalan.go.go.version;
 
+import java.util.Collection;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -98,5 +99,18 @@ public class VersionSelector {
      */
     public String select(String...versions) {
         return selector.select(versions);
+    }
+
+    /**
+     * Return the greatest version number from the list of version numbers that
+     * matches the version selection pattern or null if none of the version
+     * numbers match.
+     * 
+     * @param versions
+     *            The list of versions.
+     * @return The greatest version that matches or null.
+     */
+    public String select(Collection<String> versions) {
+        return selector.select(versions.toArray(new String[versions.size()]));
     }
 }

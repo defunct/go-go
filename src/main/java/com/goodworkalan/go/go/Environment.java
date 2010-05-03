@@ -82,11 +82,11 @@ public class Environment {
      * @param verbosityIncrement
      *            The value to add to the verbosity.
      */
-    private Environment(Environment env, Class<? extends Commandable> commandableClass, int offset, int verbosityIncrement) {
+    private Environment(Environment env, Class<? extends Commandable> commandableClass, int offset, int verbosityIncrement, Executor executor) {
         this.commandableClass = commandableClass;
         this.library = env.library;
         this.io = env.io;
-        this.executor = env.executor;
+        this.executor = executor;
         this.commands.addAll(env.commands.subList(0, offset));
         this.arguments.addAll(env.arguments.subList(0, offset));
         this.conversions.addAll(env.conversions.subList(0, offset));
@@ -99,11 +99,15 @@ public class Environment {
     }
     
     Environment(Environment env, int verbosityIncrement) {
-        this(env, env.commandableClass, env.commands.size(), verbosityIncrement);
+        this(env, env.commandableClass, env.commands.size(), verbosityIncrement, env.executor);
     }
     
     Environment(Environment env, Class<? extends Commandable> commandableClass, int offset) {
-        this(env, commandableClass, offset, 0);
+        this(env, commandableClass, offset, 0, env.executor);
+    }
+    
+    Environment(Environment env, Executor executor) {
+        this(env, env.commandableClass, env.commands.size(), 0, executor);
     }
     
     public void verbose(String message, Object...arguments) {
@@ -230,5 +234,9 @@ public class Environment {
         commands.add(command);
         arguments.add(new ArrayList<String>());
         conversions.add(new ArrayList<Conversion>());
+    }
+    
+    public MetaCommand getMetaCommand(Class<? extends Commandable> commandClass) {
+        return executor.responders.get(commandClass);
     }
 }

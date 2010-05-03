@@ -19,7 +19,7 @@ import com.goodworkalan.utility.Primitives;
  * 
  * @author Alan Gutierrez
  */
-class Responder {
+class Responder implements MetaCommand {
     /** The task class. */
     private final Class<? extends Commandable> taskClass;
 
@@ -102,7 +102,7 @@ class Responder {
      * 
      * @return The task class.
      */
-    public Class<? extends Commandable> getTaskClass() {
+    public Class<? extends Commandable> getCommandClass() {
         return taskClass;
     }
 
@@ -111,7 +111,7 @@ class Responder {
      * 
      * @return The parent task for null if none.
      */
-    public Class<? extends Commandable> getParentTaskClass() {
+    public Class<? extends Commandable> getParentCommandClass() {
         return parent;
     }
 

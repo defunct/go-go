@@ -47,9 +47,6 @@ public class Artifact {
 
     /** The artifact version. */
     private final String version;
-    
-    /** The stupid classifier. */
-    private final String classifier;
 
     /**
      * Create a dependency.
@@ -60,18 +57,11 @@ public class Artifact {
      *            The dependency name.
      * @param version
      *            The dependency version.
-     * @param version
-     *            The stupid classifier.
      */
-    public Artifact(String group, String name, String version, String classifier) {
-        assert group != null;
-        assert name != null;
-        assert version != null;
-        assert classifier != null;
+    public Artifact(String group, String name, String version) {
         this.group = group;
         this.name = name;
         this.version = version;
-        this.classifier = classifier;
     }
 
     /**
@@ -87,14 +77,14 @@ public class Artifact {
      * @param extension
      *            The file extension.
      */
-    public static Artifact parse(File file) {
+    public static Artifact _parse(File file) {
         LinkedList<File> parts = new LinkedList<File>();
         File directory = file.getParentFile();
         while (directory != null) {
             parts.addFirst(directory);
             directory = directory.getParentFile();
         }
-        if (parts.size() < 3) {
+        if (parts.size() != 3) {
             return null;
         }
         String version = parts.removeLast().getName();
@@ -105,7 +95,7 @@ public class Artifact {
             group.append(separator).append(part.getName());
             separator = ".";
         }
-        return new Artifact(group.toString(), name, version, "");
+        return new Artifact(group.toString(), name, version);
     }
 
     /**
@@ -125,16 +115,12 @@ public class Artifact {
         if (parts.size() == 2) {
             parts.add("");
         }
-        if (parts.size() == 3) {
-            parts.add("");
-        }
-        if (parts.size() != 4) {
+        if (parts.size() != 3) {
             throw new GoException(0);
         }
         this.group = parts.get(0);
         this.name = parts.get(1);
         this.version = parts.get(2);
-        this.classifier = parts.get(3);
     }
     
     /**
@@ -188,18 +174,6 @@ public class Artifact {
     }
 
     /**
-     * Prepend the classifier to the suffix if a classifier was provided and the
-     * suffix is simply "jar".
-     * 
-     * @param suffix
-     *            The suffix.
-     * @return The suffix converted to a file suffix.
-     */
-    private String classifier(String suffix) {
-        return "jar".equals(suffix) && !classifier.equals("") ? "-" + classifier + suffix(suffix) : suffix(suffix);
-    }
-
-    /**
      * Convert a suffix from slash delimited to dot delimited. Slash delimited
      * suffixes are a way to denote the file extension part from the extended
      * file name part. This means that you can specify
@@ -234,7 +208,7 @@ public class Artifact {
      */
     public String getFileName(String suffix) {
         StringBuilder file = new StringBuilder();
-        file.append(name).append("-").append(version).append(classifier(suffix));
+        file.append(name).append("-").append(version).append(suffix(suffix));
         return file.toString();
     }
 
@@ -257,7 +231,7 @@ public class Artifact {
                 .append("/").append(name)
                 .append("/").append(version)
                 .append("/")
-                    .append(name).append("-").append(version).append(classifier(suffix));
+                    .append(name).append("-").append(version).append(suffix(suffix));
         return file.toString();
     }
 
@@ -275,6 +249,20 @@ public class Artifact {
                 .append("/").append(version);
         return file.toString();
     }
+    
+    /**
+     * Create the relative path into a repository for the artifact directory without .
+     * The directory named takes for form of the following where the dots in the
+     * group are replaced with file part separators.
+     * 
+     * @return The relative path into a repository of the artifact directory.
+     */
+    public String getUnversionedDirectoryPath() {
+        StringBuilder file = new StringBuilder();
+        file.append(group.replace(".", "/"))
+                .append("/").append(name);
+        return file.toString();
+    }
 
     /**
      * This artifact is equal to the given object if it is also an artifact and
@@ -287,16 +275,9 @@ public class Artifact {
     public boolean equals(Object object) {
         if (object instanceof Artifact) {
             Artifact artifact = (Artifact) object;
-            if (group.equals(artifact.group)
-                    && name.equals(artifact.name)
-                    && version.equals(artifact.version)) {
-                if (classifier == null) {
-                    return artifact.classifier == null;
-                }
-                return classifier.equals(artifact.classifier);
-                
-            }
-            return false;
+            return group.equals(artifact.group)
+                   && name.equals(artifact.name)
+                   && version.equals(artifact.version);
         }
         return false;
     }
@@ -311,7 +292,6 @@ public class Artifact {
         hashCode = hashCode * 37 + group.hashCode();
         hashCode = hashCode * 37 + name.hashCode();
         hashCode = hashCode * 37 + version.hashCode();
-        hashCode = hashCode * 37 + (classifier == null ? 1 : classifier.hashCode());
         return hashCode;
     }
 
@@ -356,6 +336,6 @@ public class Artifact {
      */
     @Override
     public String toString() {
-        return group + "/" + name + "/" + version + (classifier.equals("") ? "" : "/" + classifier);
+        return group + "/" + name + "/" + version;
     }
 }

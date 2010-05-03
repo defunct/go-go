@@ -17,7 +17,7 @@ import com.goodworkalan.go.go.library.PathParts;
  * @author alan
  * 
  */
-public class ProgramThreadFactory implements ThreadFactory {
+class ProgramThreadFactory implements ThreadFactory {
     /**
      * A queue of path part collections used to build child class loaders that
      * search for classes in the path specified by the path part collection. An

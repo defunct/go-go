@@ -63,15 +63,6 @@ public class ArtifactsReaderTest {
     }
     
     @Test
-    public void excludeIncludeLine() {
-        new GoExceptionCatcher(GoException.INVALID_EXCLUDE_LINE, new Runnable() {
-            public void run() {
-                Artifacts.read(new StringReader("-"));
-            }
-        }).run();
-    }
-    
-    @Test
     public void ioException() {
         new GoExceptionCatcher(GoException.ARTIFACT_FILE_IO_EXCEPTION, new Runnable() {
             public void run() {
@@ -82,15 +73,6 @@ public class ArtifactsReaderTest {
                         throw new IOException();
                     }
                 });
-            }
-        }).run();
-    }
-    
-    @Test
-    public void excludesOnly() {
-        new GoExceptionCatcher(GoException.ARTIFACT_FILE_MISPLACED_EXCLUDE, new Runnable() {
-            public void run() {
-                Artifacts.read(new StringReader("- com.goodworkalan/go-go/1.2.8"));
             }
         }).run();
     }

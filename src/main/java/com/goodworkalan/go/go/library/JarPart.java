@@ -3,7 +3,6 @@ package com.goodworkalan.go.go.library;
 import java.io.File;
 import java.net.URL;
 import java.util.Collection;
-import java.util.Collections;
 
 
 /**
@@ -58,8 +57,8 @@ public class JarPart implements PathPart {
      * 
      * @return A collection containing this jar path part.
      */
-    public Collection<PathPart> expand(Library library, Collection<PathPart> expand) {
-        return Collections.<PathPart>singletonList(this);
+    public void expand(Library library, Collection<PathPart> expanded, Collection<PathPart> expand) {
+        expanded.add(this);
     }
 
     /**

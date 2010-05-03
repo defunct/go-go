@@ -8,7 +8,7 @@ package com.goodworkalan.go.go;
  * 
  * @author Alan Gutierrez
  */
-public class GoError extends GoException {
+public class GoError extends GoException implements Erroneous {
     /** Serial version id. */
     private static final long serialVersionUID = 1L;
     
@@ -27,6 +27,9 @@ public class GoError extends GoException {
     /** Invalid system property definition parameter. */
     public static int INVALID_DEFINE_PARAMETER = 1004;
     
+    /** Unable to find the specified commandable class. */
+    public static int CANNOT_FIND_COMMANDABLE = 1006;
+    
     /** Invalid argument to bootstrap. */
     public static int INVALID_ARGUMENT = 1005;
 
@@ -38,7 +41,7 @@ public class GoError extends GoException {
      * @param arguments
      *            The format arguments.
      */
-    public GoError(char ch, int code, Object...arguments) {
+    public GoError(int code, Object...arguments) {
         super(code, arguments);
     }
 
@@ -52,7 +55,11 @@ public class GoError extends GoException {
      * @param arguments
      *            The format arguments.
      */
-    public GoError(char ch, int code, Throwable cause, Object...arguments) {
+    public GoError(int code, Throwable cause, Object...arguments) {
         super(code, cause, arguments);
+    }
+    
+    public int getExitCode() {
+        return 1;
     }
 }

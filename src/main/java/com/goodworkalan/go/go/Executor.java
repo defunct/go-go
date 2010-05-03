@@ -218,12 +218,12 @@ public class Executor {
                     }
                     List<String> classNames = new ArrayList<String>();
                     for (Class<? extends Commandable> taskClass : tasks) {
+                        classNames.add(taskClass.getCanonicalName());
                         if (!responders.containsKey(taskClass)) {
-                            classNames.add(taskClass.getCanonicalName());
                             Responder responder = new Responder(taskClass);
                             responders.put(taskClass, responder);
                             Class<? extends Commandable> parentTaskClass = null;
-                            while ((parentTaskClass = responder.getParentTaskClass()) != null) {
+                            while ((parentTaskClass = responder.getParentCommandClass()) != null) {
                                 Responder parent = responders.get(parentTaskClass);
                                 if (parent == null) {
                                     parent = new Responder(parentTaskClass);
@@ -267,7 +267,7 @@ public class Executor {
             throw new GoException(0);
         }
 
-        Class<? extends Commandable> parent = responder.getParentTaskClass();
+        Class<? extends Commandable> parent = responder.getParentCommandClass();
         Responder actualResponder; 
         if (parent == null) {
             actualResponder = commands.get(qualified[0]);
@@ -363,14 +363,20 @@ public class Executor {
         return execute(env, commands, outcomeClass, 0);
     }
 
-    private Outcome loadAfterCommandable(Collection<PathPart> parts, final Environment env, final Map<String, Responder> commands, final Class<?> outcomeClass, final int offset) {
-        final Executor executor = new Executor(this);
+    private Outcome loadAfterCommandable(Collection<PathPart> parts, Environment env, final Map<String, Responder> commands, final Class<?> outcomeClass, final int offset) {
+        final Executor childExecutor = new Executor(this);
+        final Environment childEnv = new Environment(env, childExecutor);
         FutureTask<Outcome> future = new FutureTask<Outcome>(new Callable<Outcome>() {
             public Outcome call() {
-                return executor.execute(env, commands, outcomeClass, offset);
+                return childExecutor.resumeExecute(childEnv, commands, outcomeClass, offset);
             }
         });
         return waitForOutcome(parts, future);
+    }
+    
+    private Outcome resumeExecute(Environment env, Map<String, Responder> commands, Class<?> outcomeClass, int offset) {
+        readConfigurations(env.io);
+        return execute(env, commands, outcomeClass, offset);
     }
 
     private Outcome execute(Environment env, Map<String, Responder> commands, Class<?> outcomeClass, int offset) {
@@ -408,9 +414,9 @@ public class Executor {
             // Create an instance of the commandable.
             Commandable commandable;
             try {
-                commandable = reflective.newInstance(responder.getTaskClass());
+                commandable = reflective.newInstance(responder.getCommandClass());
             } catch (ReflectiveException e) {
-                throw new GoException(CANNOT_CREATE_TASK, e, responder.getTaskClass().getCanonicalName());
+                throw new GoException(CANNOT_CREATE_TASK, e, responder.getCommandClass().getCanonicalName());
             }
             
             // Set the arguments for the command.
@@ -442,7 +448,7 @@ public class Executor {
             if (!subEnv.pathParts.isEmpty()) {
                 Collection<PathPart> unseen = addArtifacts(subEnv.pathParts);
                 if (!unseen.isEmpty()) {
-                    return loadAfterCommandable(subEnv.pathParts, env, commands, outcomeClass, i + 1);
+                    return loadAfterCommandable(unseen, env, commands, outcomeClass, i + 1);
                 }
             }
             if (!env.hiddenCommands.isEmpty()) {
@@ -466,11 +472,12 @@ public class Executor {
         return taskClass;
     }
     
-    private Outcome load(Collection<PathPart> unseen, final Environment env, final Responder responder, final List<String> arguments, final int offset, final Class<?> outcomeClass) {
-        final Executor executor = new Executor(this);
+    private Outcome load(Collection<PathPart> unseen, Environment env, final Responder responder, final List<String> arguments, final int offset, final Class<?> outcomeClass) {
+        final Executor childExecutor = new Executor(this);
+        final Environment childEnv = new Environment(env, childExecutor);
         FutureTask<Outcome> future = new FutureTask<Outcome>(new Callable<Outcome>() {
             public Outcome call() {
-                return executor.resume(env, responder, arguments, offset, outcomeClass);
+                return childExecutor.resume(childEnv, responder, arguments, offset, outcomeClass);
             }
         });
         return waitForOutcome(unseen, future);

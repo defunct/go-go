@@ -1,4 +1,4 @@
-package com.goodworkalan.go.go;
+package com.goodworkalan.go.go.commands;
 
 import static com.goodworkalan.go.go.GoError.CANNOT_CREATE_BOOT_CONFIGURATION_DIRECTORY;
 import static com.goodworkalan.go.go.GoError.CANNOT_WRITE_BOOT_CONFIGURATION;
@@ -11,35 +11,37 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Writer;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
+import com.goodworkalan.go.go.Commandable;
+import com.goodworkalan.go.go.Environment;
+import com.goodworkalan.go.go.GoError;
+import com.goodworkalan.go.go.GoException;
+import com.goodworkalan.go.go.MetaCommand;
 import com.goodworkalan.go.go.library.Artifact;
 import com.goodworkalan.go.go.library.ArtifactPart;
-import com.goodworkalan.go.go.library.Library;
-import com.goodworkalan.go.go.library.ResolutionPart;
-import com.goodworkalan.reflective.ReflectiveFactory;
 
-@Command(parent = BootCommand.class)
-public class InstallCommand implements Commandable {
-    private Artifact artifact;
+public class WriteInstallCommand implements Commandable {
+    private final Artifact artifact;
     
-    @Argument
-    public void addArtifact(Artifact artifact) {
+    public WriteInstallCommand(Artifact artifact) {
         this.artifact = artifact;
     }
     
+    @SuppressWarnings("unchecked")
+    public static <T> Class<? extends T> extendsClassCast(Class<T> targetClass, Class<?> unknownClass) { 
+        if (!targetClass.isAssignableFrom(unknownClass)) {
+            throw new ClassCastException();
+        }
+        return (Class<? extends T>) unknownClass;
+    }
+
     public void execute(Environment env) {
-        ProgramThreadFactory factory = new ProgramThreadFactory();
-        ThreadPoolExecutor executor = ProgramQueue.getThreadPoolExecutor(factory);
-        Executor loader = new Executor(new ReflectiveFactory(), new Library(new File(System.getProperty("user.home") + File.separator + ".m2" + File.separator + "repository")), new HashMap<List<String>, Artifact>(), factory, executor, 0);
-        loader.addArtifacts(new ResolutionPart(artifact));
         ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-        ArtifactPart found = env.library.getPathPart(artifact);
+        ArtifactPart found = env.library.getArtifactPart(artifact);
         List<String> commands = new ArrayList<String>();
         try {
             ZipFile zip = new ZipFile(new File(found.getLibraryDirectory(), found.getArtifact().getPath("jar")));
@@ -50,26 +52,28 @@ public class InstallCommand implements Commandable {
                 while ((line = in.readLine()) != null) {
                     line = line.trim();
                     if (line.length() != 0) {
-                        Class<?> taskClass;
+                        Class<? extends Commandable> commandableClass;
                         try {
-                            taskClass = classLoader.loadClass(line);
+                            commandableClass = extendsClassCast(Commandable.class, classLoader.loadClass(line));
                         } catch (ClassNotFoundException e) {
                             throw new GoException(0, e);
+                        } catch (ClassCastException e) {
+                            throw new GoException(0, e);
                         }
-                        Responder responder = loader.responders.get(taskClass);
+                        MetaCommand responder = env.getMetaCommand(commandableClass);
                         if (responder == null) {
-                            throw new GoException(CANNOT_FIND_RESPONDER, taskClass);
+                            throw new GoException(CANNOT_FIND_RESPONDER, commandableClass.getCanonicalName());
                         }
                         LinkedList<String> path = new LinkedList<String>();
                         for (;;) {
                             path.addFirst(responder.getName());
-                            taskClass = responder.getParentTaskClass();
-                            if (taskClass == null) {
+                            commandableClass = responder.getParentCommandClass();
+                            if (commandableClass == null) {
                                 break; 
                             }
-                            responder = loader.responders.get(taskClass);
+                            responder = env.getMetaCommand(commandableClass);
                             if (responder == null) {
-                                throw new GoException(CANNOT_FIND_RESPONDER, taskClass);
+                                throw new GoException(CANNOT_FIND_RESPONDER, commandableClass.getCanonicalName());
                             }
                         }
                         StringBuilder command = new StringBuilder();

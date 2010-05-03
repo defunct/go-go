@@ -1,10 +1,9 @@
 package com.goodworkalan.go.go.library;
 
 import static com.goodworkalan.go.go.GoException.ARTIFACT_FILE_IO_EXCEPTION;
-import static com.goodworkalan.go.go.GoException.ARTIFACT_FILE_MISPLACED_EXCLUDE;
 import static com.goodworkalan.go.go.GoException.ARTIFACT_FILE_NOT_FOUND;
 import static com.goodworkalan.go.go.GoException.INVALID_ARTIFACTS_LINE_START;
-import static com.goodworkalan.go.go.GoException.INVALID_EXCLUDE_LINE;
+import static com.goodworkalan.go.go.GoException.INVALID_INCLUDE;
 import static com.goodworkalan.go.go.GoException.INVALID_INCLUDE_LINE;
 
 import java.io.BufferedReader;
@@ -39,9 +38,6 @@ public class Artifacts {
     
     private static List<Include> read(String context, Reader reader) {
         try {
-            Artifact include = null;
-            boolean optional = false;
-            List<List<String>> excludes = new ArrayList<List<String>>();
             List<Include> includes = new ArrayList<Include>();
             
             BufferedReader lines = new BufferedReader(reader);
@@ -57,38 +53,31 @@ public class Artifacts {
                         throw new GoException(INVALID_ARTIFACTS_LINE_START, split[0], lineNumber, context);
                     }
                     
-                    char flag = split[0].charAt(0);
                     switch (split[0].charAt(0)) {
                     case '~':
+                    case '!':
                     case '+':
-                        if (include != null) {
-                            includes.add(new Include(optional, include, excludes));
-                            excludes.clear();
-                        }
-                        optional = flag == '~';
-                        if (split.length != 2) {
+                        if (split.length < 2) {
                             throw new GoException(INVALID_INCLUDE_LINE, lineNumber, context);
                         }
-                        include = new Artifact(split[1]);
-                        break;
-                    case '-':
-                        if (split.length != 2) {
-                            throw new GoException(INVALID_EXCLUDE_LINE, lineNumber, context);
+                        Artifact artifact;
+                        try {
+                            artifact = new Artifact(split[1]);
+                        } catch (GoException e) {
+                            throw new GoException(INVALID_INCLUDE, lineNumber, context);
                         }
-                        if (include == null) {
-                            throw new GoException(ARTIFACT_FILE_MISPLACED_EXCLUDE, lineNumber, context);
+                        List<List<String>> excludes = new ArrayList<List<String>>();
+                        for (int i = 2; i < split.length; i++) {
+                            excludes.add(Include.exclude(split[i]));
                         }
-                        excludes.add(Include.exclude(split[1]));
+                        includes.add(new Include(artifact, excludes));
                         break;
                     default:
                         throw new GoException(INVALID_ARTIFACTS_LINE_START, split[0], lineNumber, context);
                     }
                 }
             }
-            if (include != null) {
-                includes.add(new Include(optional, include, excludes));
-            }
-            return includes;
+           return includes;
         } catch (IOException e) {
             throw new GoException(ARTIFACT_FILE_IO_EXCEPTION, e, context);
         }

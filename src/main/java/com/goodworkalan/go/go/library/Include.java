@@ -2,14 +2,15 @@ package com.goodworkalan.go.go.library;
 
 import static com.goodworkalan.go.go.GoException.INVALID_EXCLUDE;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 import com.goodworkalan.go.go.GoException;
+import com.goodworkalan.go.go.version.VersionSelector;
 
 /**
  * An artifact include structure that groups the artifact, its excluded
@@ -18,15 +19,15 @@ import com.goodworkalan.go.go.GoException;
  * @author Alan Gutierrez
  */
 public class Include {
-    /** The artifact to include. */
+    /** The artifact name. */
     private final Artifact artifact;
+    
+    /** The version matcher. */
+    private final VersionSelector versionSelector;
     
     /** The artifact dependencies to exclude. */
     private final Set<List<String>> excludes;
     
-    /** Whether or not the include is optional. */
-    private final boolean optional;
-
     /**
      * Create a new exclude by splitting the group and project out of the slash
      * delimited exclude token string.
@@ -40,51 +41,9 @@ public class Include {
         }
         return Arrays.asList(split[0], split[1]);
     }
-    
-    /**
-     * Create an include structure.
-     * 
-     * @param optional
-     *            Whether or not the include is optional.
-     * @param artifact
-     *            The artifact to include.
-     * @param excludes
-     *            The artifact dependencies to exclude.
-     */
-    public Include(boolean optional, Artifact artifact, List<String>...excludes) {
-        this(optional, artifact, Arrays.asList(excludes));
-    }
 
     /**
      * Create an include structure.
-     * 
-     * @param optional
-     *            Whether or not the include is optional.
-     * @param artifact
-     *            The artifact to include.
-     * @param excludes
-     *            The artifact dependencies to exclude.
-     */
-    public Include(boolean optional, Artifact artifact, Collection<List<String>> excludes) {
-        this.optional = optional;
-        this.artifact = artifact;
-        this.excludes = new HashSet<List<String>>(excludes);
-    }
-    
-    /**
-     * Create an include structure that is not optional.
-     * 
-     * @param artifact
-     *            The artifact to include.
-     * @param excludes
-     *            The artifact dependencies to exclude.
-     */
-    public Include(Artifact artifact, List<String>...excludes) {
-        this(false, artifact, excludes);
-    }
-
-    /**
-     * Create an include structure that is not optional.
      * 
      * @param artifact
      *            The artifact to include.
@@ -92,37 +51,41 @@ public class Include {
      *            The artifact dependencies to exclude.
      */
     public Include(Artifact artifact, Collection<List<String>> excludes) {
-        this(false, artifact, excludes);
+        this.artifact = artifact;
+        this.versionSelector = new VersionSelector(artifact.getVersion());
+        this.excludes = new HashSet<List<String>>(excludes);
+    }
+    
+    /**
+     * Create an include structure.
+     * 
+     * @param artifact
+     *            The artifact to include.
+     * @param excludes
+     *            The artifact dependencies to exclude.
+     */
+    public Include(Artifact artifact) {
+        this.artifact = artifact;
+        this.versionSelector = new VersionSelector(artifact.getVersion());
+        this.excludes = Collections.emptySet();
     }
 
     /**
      * Create an include structure from the given artifact string excluding
      * artifacts that match the given exclude strings.
      * 
-     * @param optional
-     *            Whether or not the include is optional.
      * @param artifact
      *            The artifact to include.
      * @param excludes
      *            The artifact dependencies to exclude.
      */
-    public Include(boolean optional, String artifact, String...excludes) {
-        this.optional = optional;
+    public Include(String artifact, String...excludes) {
         this.artifact = new Artifact(artifact);
+        this.versionSelector = new VersionSelector(this.artifact.getVersion());
         this.excludes = new HashSet<List<String>>();
-
         for (String exclude : excludes) {
             this.excludes.add(exclude(exclude));
         }
-    }
-
-    /**
-     * Get whether or not the include is optional.
-     * 
-     * @return True if the include is optional.
-     */
-    public boolean isOptional() {
-        return optional;
     }
     
     /**
@@ -132,6 +95,15 @@ public class Include {
      */
     public Artifact getArtifact() {
         return artifact;
+    }
+    
+    /**
+     * Get the version selector for this include.
+     * 
+     * @return The version selector;
+     */
+    public VersionSelector getVersionSelector() {
+        return versionSelector;
     }
 
     /**
@@ -147,14 +119,14 @@ public class Include {
      * Return a list of the lines that represent this include in an artifacts
      * file.
      * 
-     * @return A list of artifact file lines.
+     * @return The artifact file line.
      */
-    public List<String> getArtifactFileLines() {
-        List<String> lines = new ArrayList<String>();
-        lines.add((optional ? "~" : "+") + " " + artifact);
+    public String getArtifactFileLine() {
+        StringBuilder line = new StringBuilder();
+        line.append("~ ").append(artifact);
         for (List<String> exclude : excludes) {
-            lines.add("- " + exclude.get(0) + "/" + exclude.get(1));
+            line.append(" ").append(exclude.get(0)).append("/").append(exclude.get(1));
         }
-        return lines;
+        return line.toString();
     }
 }
