@@ -82,7 +82,7 @@ public class Artifact {
     public Artifact(String artifact) {
         List<String> parts = new ArrayList<String>(Arrays.asList(artifact.split("/")));
         if (parts.size() == 2) {
-            parts.add("");
+            parts.add("+0");
         }
         if (parts.size() != 3) {
             throw new GoException(0);

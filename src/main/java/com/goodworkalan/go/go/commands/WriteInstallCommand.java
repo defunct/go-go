@@ -110,5 +110,6 @@ public class WriteInstallCommand implements Commandable {
         } catch (IOException e) {
             throw new GoError('a', CANNOT_WRITE_BOOT_CONFIGURATION, e, configuration);
         }
+        env.io.out.println(line);
     }
 }
