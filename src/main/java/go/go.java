@@ -1,6 +1,8 @@
 package go;
 
 import java.io.File;
+import java.lang.Thread.UncaughtExceptionHandler;
+import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -8,8 +10,18 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
 
+public class go implements Runnable, UncaughtExceptionHandler {
+    public final List<File> libraries;
 
-public class go {
+    public final String[] arguments;
+    
+    public int exit;
+    
+    public go(List<File> libraries, String[] arguments) {
+        this.libraries = libraries;
+        this.arguments = arguments;
+    }
+    
     public static List<File> getLibraries() {
         // We want to go quick and do nothing fancy. Find the those important
         // jars in a managed repository, then hand it off to the full monty.
@@ -62,22 +74,23 @@ public class go {
         }
 
         // Here's a list of the bootstrap dependencies for Jav-a-Go-Go.
-        String[] dependencies = new String[] {
-            "com/github/bigeasy/go-go/go-go/0.1.4/go-go-0.1.4.jar",
-            "com/github/bigeasy/infuse/infuse/0.1/infuse-0.1.jar",
-            "com/github/bigeasy/retry/retry/0.1/retry-0.1.jar",
-            "com/github/bigeasy/danger/danger/0.1/danger-0.1.jar",
-            "com/github/bigeasy/verbiage/verbiage/0.1/verbiage-0.1.jar",
-            "com/github/bigeasy/class-association/class-association/0.1/class-association-0.1.jar",
-            "com/github/bigeasy/class-boxer/class-boxer/0.1/class-boxer-0.1.jar",
-            "com/github/bigeasy/reflective/reflective/0.1/reflective-0.1.jar"
+        String[][] artifacts = new String[][] {
+                new String[] { "go-go", "0.1.4.5" },
+                new String[] { "danger", "0.1" },
+                new String[] { "verbiage", "0.1" },
+                new String[] { "infuse", "0.1" },
+                new String[] { "retry", "0.1" },
+                new String[] { "class-boxer", "0.1" },
+                new String[] { "class-association", "0.1" },
+                new String[] { "reflective", "0.1" }
         };
         
         List<URL> urls = new ArrayList<URL>();
         List<String> missing = new ArrayList<String>();
 
         // Locate them and create a list of URIs.
-        DEPENDENCY: for (String dep : dependencies) {
+        DEPENDENCY: for (String[] artifact : artifacts) {
+            String dep = "com/github/bigeasy/" + artifact[0] + "/" + artifact[0] + "/" + artifact[1] + "/" + artifact[0] + "-" + artifact[1] + ".jar";
             for (File directory : libraries) {
                 File jar = new File(directory, dep);
                 if (jar.exists() && jar.canRead()) {
@@ -97,16 +110,54 @@ public class go {
             throw new RuntimeException(missing.toString());
         }
 
+        go goGo = new go(libraries, arguments);
+        
+        Thread thread = new Thread(goGo, "Jav-a-Go-Go-Boot");
+        
         // Now we can build a new class loader and assign it to the current
         // thread.
         URLClassLoader classLoader = new URLClassLoader(urls.toArray(new URL[urls.size()]), Thread.currentThread().getContextClassLoader());
-        Thread.currentThread().setContextClassLoader(classLoader);
+        thread.setUncaughtExceptionHandler(goGo);
+        thread.setContextClassLoader(classLoader);
+        thread.start();
+        for (;;) {
+            try {
+                thread.join();
+                break;
+            } catch (InterruptedException e) {
+                continue;
+            }
+        }
+        if (goGo.exit != 0) {
+            System.exit(goGo.exit);
+        }
+    }
+    
+    public void uncaughtException(Thread t, Throwable e) {
+        e.printStackTrace();
+    }
 
+    public void run() {
+        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+        
         // From that class loader we fetch the next main method to call.
-        Class<?> ciClass = classLoader.loadClass("com.goodworkalan.go.go.Go");
-
+        Class<?> ciClass;
+        try {
+            ciClass = classLoader.loadClass("com.goodworkalan.go.go.Go");
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+        
         // Execute that method and our work here is done.
-        ciClass.getMethod("main", List.class, new String[0].getClass()).invoke(null, libraries, arguments);
+        try {
+            exit = (Integer) ciClass.getMethod("execute", List.class, new String[0].getClass()).invoke(null, libraries, arguments);
+        } catch (IllegalAccessException e) {
+            throw new RuntimeException(e);
+        } catch (InvocationTargetException e) {
+            throw new RuntimeException(e);
+        } catch (NoSuchMethodException e) {
+            throw new RuntimeException(e);
+        }
     }
 }
 
