@@ -9,7 +9,7 @@ public class GoProject extends ProjectModule {
     public void build(Builder builder) {
         builder
             .cookbook(JavaProject.class)
-                .produces("com.github.bigeasy.go-go/go-go/0.1.4.4")
+                .produces("com.github.bigeasy.go-go/go-go/0.1.4.5")
                 .main()
                     .depends()
                         .include("com.github.bigeasy.reflective/reflective/0.1")
