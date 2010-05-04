@@ -8,7 +8,7 @@ import com.goodworkalan.go.go.Environment;
 @Command(parent = Snap.class)
 public class WatusiCommand implements Commandable {
     private String repeat;
-
+    
     @Argument
     public void addRepeat(String repeat) {
         this.repeat = repeat;

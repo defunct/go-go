@@ -20,7 +20,14 @@ public class GoException extends CodedDanger {
     private static final long serialVersionUID = 1L;
 
     /** A Task has multiple Task type attributes indicating multiple parents. */
+    // FIXME REname.
     public final static int MULTIPLE_TASK_PARENTS = 102;
+
+    /** Unable to enumerate the available command resource files. */
+    public final static int COMMANDABLE_RESOURCES_IO = 104;
+
+    /** Unable to read the command definition resource file. */
+    public final static int COMMANDABLE_RESOURCE_IO = 105;
 
     /**
      * A property value ends with a backslash character, does not actually

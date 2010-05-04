@@ -12,7 +12,7 @@ public class AssignmentTest {
     @Test
     public void getType() throws ReflectiveException {
         Assignment assignment = new Assignment(new MethodSetter(new ReflectiveFactory().getMethod(Dubious.class, "setSomething", String.class)), StringInfuser.INSTNACE);
-        assertEquals(assignment.getType(), String.class);
+        assertEquals(assignment.setter.getType(), String.class);
     }
     
 //    @Test

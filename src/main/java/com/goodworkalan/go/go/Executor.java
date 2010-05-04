@@ -3,12 +3,15 @@ package com.goodworkalan.go.go;
 import static com.goodworkalan.go.go.GoException.ASSIGNMENT_EXCEPTION_THROWN;
 import static com.goodworkalan.go.go.GoException.ASSIGNMENT_FAILED;
 import static com.goodworkalan.go.go.GoException.CANNOT_CREATE_TASK;
+import static com.goodworkalan.go.go.GoException.COMMANDABLE_RESOURCES_IO;
+import static com.goodworkalan.go.go.GoException.COMMANDABLE_RESOURCE_IO;
 import static com.goodworkalan.go.go.GoException.COMMAND_CLASS_MISSING;
 import static com.goodworkalan.go.go.GoException.EXIT;
 import static com.goodworkalan.go.go.GoException.FUTURE_EXECUTION;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.util.ArrayList;
@@ -71,11 +74,11 @@ public class Executor {
     /** The Java-a-Go-Go library. */
     private final Library library;
     
-    /** The root map of command names to command responders. */
-    private final Map<String, Responder> commands = new TreeMap<String, Responder>();
+    /** The root map of command names to command nodes. */
+    private final Map<String, CommandNode> commands = new TreeMap<String, CommandNode>();
 
-    /** The map of tasks to responders. */
-    final Map<Class<? extends Commandable>, Responder> responders = new HashMap<Class<? extends Commandable>, Responder>();
+    /** The map of tasks to command nodes. */
+    final Map<Class<? extends Commandable>, CommandNode> commandNodes = new HashMap<Class<? extends Commandable>, CommandNode>();
 
     /** The path for the command loader. */
     private final Collection<PathPart> parts = new ArrayList<PathPart>();
@@ -139,7 +142,7 @@ public class Executor {
         this.parent = parent;
         this.library = parent.library;
         this.commands.putAll(parent.commands);
-        this.responders.putAll(parent.responders);
+        this.commandNodes.putAll(parent.commandNodes);
         this.parts.addAll(parent.parts);
         this.threadFactory = parent.threadFactory;
         this.threadPool = parent.threadPool;
@@ -186,79 +189,90 @@ public class Executor {
     }
 
     private void readConfigurations(InputOutput io) {
-        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+        readConfigurations(Thread.currentThread().getContextClassLoader(), io);
+    }
+
+    void readConfigurations(ClassLoader classLoader, InputOutput io) {
+        Enumeration<URL> resources;
         try {
-            Enumeration<URL> resources = classLoader.getResources("META-INF/services/com.goodworkalan.go.go.Commandable");
-            while (resources.hasMoreElements()) {
-                URL url = resources.nextElement();
-                if (!urls.contains(url)) {
-                    Set<Class<? extends Commandable>> tasks = new HashSet<Class<? extends Commandable>>();
-                    
-                    urls.add(url);
-                    BufferedReader lines = new BufferedReader(new InputStreamReader(url.openStream()));
-                    String className;
-                    try {
-                        while ((className = lines.readLine()) != null) {
-                            if (className.trim().equals("")) {
-                                continue;
-                            }
-                            Class<?> foundClass;
-                            try {
-                                foundClass = classLoader.loadClass(className);
-                            } catch (ClassNotFoundException e) {
-                                throw new GoException(0, e);
-                            }
-                            if (Commandable.class.isAssignableFrom(foundClass)) {
-                                tasks.add(taskClass(foundClass));
-                            } else {
-                                throw new GoException(0);
-                            }
-                        }
-                    } catch (IOException e) {
-                        throw new GoException(0, e);
-                    }
-                    List<String> classNames = new ArrayList<String>();
-                    for (Class<? extends Commandable> taskClass : tasks) {
-                        classNames.add(taskClass.getCanonicalName());
-                        if (!responders.containsKey(taskClass)) {
-                            Responder responder = new Responder(taskClass);
-                            responders.put(taskClass, responder);
-                            Class<? extends Commandable> parentTaskClass = null;
-                            while ((parentTaskClass = responder.getParentCommandClass()) != null) {
-                                Responder parent = responders.get(parentTaskClass);
-                                if (parent == null) {
-                                    parent = new Responder(parentTaskClass);
-                                    responders.put(parentTaskClass, parent);
-                                }
-                                parent.addCommand(responder);
-                                responder = parent;
-                            }
-                            // Will reassign sometimes, but that's okay.
-                            commands.put(responder.getName(), responder);
-                        }
-                    }
-                    debug(io, "readConfiguration", url, classNames);
-                }
-            }
+            resources = classLoader.getResources("META-INF/services/com.goodworkalan.go.go.Commandable");
         } catch (IOException e) {
-            throw new GoException(0, e);
+            throw new GoException(COMMANDABLE_RESOURCES_IO, e);
+        }
+        while (resources.hasMoreElements()) {
+            URL url = resources.nextElement();
+            if (!urls.contains(url)) {
+                urls.add(url);
+                Set<Class<? extends Commandable>> tasks;
+                try {
+                    tasks = readCommandables(classLoader, url.openStream());
+                } catch (IOException e) {
+                    throw new GoException(COMMANDABLE_RESOURCE_IO, e, url);
+                }
+
+                List<String> classNames = new ArrayList<String>();
+                for (Class<? extends Commandable> taskClass : tasks) {
+                    classNames.add(taskClass.getCanonicalName());
+                    if (!commandNodes.containsKey(taskClass)) {
+                        CommandNode CommandNode = new CommandNode(taskClass);
+                        commandNodes.put(taskClass, CommandNode);
+                        Class<? extends Commandable> parentTaskClass = null;
+                        while ((parentTaskClass = CommandNode.getParentCommandClass()) != null) {
+                            CommandNode parent = commandNodes.get(parentTaskClass);
+                            if (parent == null) {
+                                parent = new CommandNode(parentTaskClass);
+                                commandNodes.put(parentTaskClass, parent);
+                            }
+                            parent.addCommand(CommandNode);
+                            CommandNode = parent;
+                        }
+                        // Will reassign sometimes, but that's okay.
+                        commands.put(CommandNode.getName(), CommandNode);
+                    }
+                }
+                debug(io, "readConfiguration", url, classNames);
+            }
         }
     }
 
-    private Outcome resume(Environment env, Responder responder, List<String> arguments, int offset, Class<?> outcomeClass) {
+    Set<Class<? extends Commandable>> readCommandables(ClassLoader classLoader, InputStream in)
+    throws IOException {
+        BufferedReader lines = new BufferedReader(new InputStreamReader(in));
+        Set<Class<? extends Commandable>> commandables = new HashSet<Class<? extends Commandable>>();
+        String className;
+        while ((className = lines.readLine()) != null) {
+            if (className.trim().equals("")) {
+                continue;
+            }
+            Class<?> foundClass;
+            try {
+                foundClass = classLoader.loadClass(className);
+            } catch (ClassNotFoundException e) {
+                throw new GoException(0, e);
+            }
+            if (Commandable.class.isAssignableFrom(foundClass)) {
+                commandables.add(taskClass(foundClass));
+            } else {
+                throw new GoException(0);
+            }
+        }
+        return commandables;
+    }
+
+    private Outcome resume(Environment env, CommandNode CommandNode, List<String> arguments, int offset, Class<?> outcomeClass) {
         readConfigurations(env.io);
         if (offset == 0) {
-            responder = commands.get(arguments.get(0));
-            if (responder == null) {
+            CommandNode = commands.get(arguments.get(0));
+            if (CommandNode == null) {
                 throw new GoException(COMMAND_CLASS_MISSING, arguments.get(offset));
             }
             env.addCommand(arguments.get(0));
             offset++;
         }
-        return extend(env, responder, arguments, offset, outcomeClass);
+        return extend(env, CommandNode, arguments, offset, outcomeClass);
     }
 
-    private Environment argument(Environment env, Responder responder, String name, String value) {
+    private Environment argument(Environment env, CommandNode CommandNode, String name, String value) {
         String command = env.commands.getLast();
         if (name.indexOf(':') == -1) {
             name = command + ':' + name;
@@ -268,15 +282,15 @@ public class Executor {
             throw new GoException(0);
         }
 
-        Class<? extends Commandable> parent = responder.getParentCommandClass();
-        Responder actualResponder; 
+        Class<? extends Commandable> parent = CommandNode.getParentCommandClass();
+        CommandNode actualCommandNode; 
         if (parent == null) {
-            actualResponder = commands.get(qualified[0]);
+            actualCommandNode = commands.get(qualified[0]);
         } else {
-            actualResponder = responders.get(parent).commands.get(qualified[0]);
+            actualCommandNode = commandNodes.get(parent).commands.get(qualified[0]);
         }
         
-        if (actualResponder == null) {
+        if (actualCommandNode == null) {
             throw new GoException(0);
         }
 
@@ -295,10 +309,10 @@ public class Executor {
             // FIXME Ensure that there are no arguments beginning with no.
             if (qualified[1].startsWith("no-")) {
                 String negate = qualified[1].substring(3);
-                    assignment = actualResponder.getAssignments().get(negate); 
+                    assignment = actualCommandNode.getAssignments().get(negate); 
                     if (assignment != null) {
-                        if (Primitives.box(assignment.getType()).equals(Boolean.class)) {
-                            name = actualResponder.getName() + ':' + negate;
+                        if (Primitives.box(assignment.setter.getType()).equals(Boolean.class)) {
+                            name = actualCommandNode.getName() + ':' + negate;
                             value = "false";
                         } else {
                             assignment = null;
@@ -310,11 +324,11 @@ public class Executor {
         // If the value is not specified, but the type is boolean, then
         // the presence of the argument means true. 
         if (assignment == null) {
-            assignment = actualResponder.getAssignments().get(qualified[1]); 
+            assignment = actualCommandNode.getAssignments().get(qualified[1]); 
             if (assignment == null) {
                 throw new GoException(0);
             }
-            if (value == null && Primitives.box(assignment.getType()).equals(Boolean.class)) {
+            if (value == null && Primitives.box(assignment.setter.getType()).equals(Boolean.class)) {
                 value = "true";
             }
         }
@@ -329,7 +343,7 @@ public class Executor {
         return env;
     }
     
-    private Outcome extend(Environment env, Responder responder, List<String> arguments, int offset, Class<?> outcomeClass) {
+    private Outcome extend(Environment env, CommandNode CommandNode, List<String> arguments, int offset, Class<?> outcomeClass) {
         boolean remaining = false;
         for (int i = offset, stop = arguments.size(); i < stop; i++) {
             String argument = arguments.get(i);
@@ -342,17 +356,17 @@ public class Executor {
                     String[] pair = argument.substring(2).split("=", 2);
                     String name = pair[0];
                     String value = pair.length == 1 ? null : pair[1]; 
-                    env = argument(env, responder, name, value);
+                    env = argument(env, CommandNode, name, value);
                 } else {
                     Artifact artifact = programs.get(flatten(env.commands, argument));
                     if (artifact != null) {
                         Collection<PathPart> unseen = addArtifacts(new ResolutionPart(artifact));
                         if (!unseen.isEmpty()) {
-                            return load(unseen, env, responder, arguments, i, outcomeClass);
+                            return load(unseen, env, CommandNode, arguments, i, outcomeClass);
                         }
                     }
-                    responder = responder.commands.get(argument);
-                    if (responder == null) {
+                    CommandNode = CommandNode.commands.get(argument);
+                    if (CommandNode == null) {
                         env.remaining.add(argument);
                         remaining = true;
                     } else {
@@ -364,7 +378,7 @@ public class Executor {
         return execute(env, commands, outcomeClass, 0);
     }
 
-    private Outcome loadAfterCommandable(Collection<PathPart> parts, Environment env, final Map<String, Responder> commands, final Class<?> outcomeClass, final int offset) {
+    private Outcome loadAfterCommandable(Collection<PathPart> parts, Environment env, final Map<String, CommandNode> commands, final Class<?> outcomeClass, final int offset) {
         final Executor childExecutor = new Executor(this);
         final Environment childEnv = new Environment(env, childExecutor);
         FutureTask<Outcome> future = new FutureTask<Outcome>(new Callable<Outcome>() {
@@ -375,12 +389,12 @@ public class Executor {
         return waitForOutcome(parts, future);
     }
     
-    private Outcome resumeExecute(Environment env, Map<String, Responder> commands, Class<?> outcomeClass, int offset) {
+    private Outcome resumeExecute(Environment env, Map<String, CommandNode> commands, Class<?> outcomeClass, int offset) {
         readConfigurations(env.io);
         return execute(env, commands, outcomeClass, offset);
     }
 
-    private Outcome execute(Environment env, Map<String, Responder> commands, Class<?> outcomeClass, int offset) {
+    private Outcome execute(Environment env, Map<String, CommandNode> commands, Class<?> outcomeClass, int offset) {
         // Run any hidden commands.
         while (!env.hiddenCommands.isEmpty()) {
             Commandable commandable = env.hiddenCommands.removeFirst();
@@ -406,24 +420,24 @@ public class Executor {
         }
         // Go through each command executing if it is not cached.
         for (int i = offset, stop = env.commands.size(); i < stop; i++) {
-            // Find the responder.
-            Responder responder = commands.get(env.commands.get(i));
+            // Find the CommandNode.
+            CommandNode CommandNode = commands.get(env.commands.get(i));
             
-            // Set up the lookup of a child responder.
-            commands = responder.commands;
+            // Set up the lookup of a child CommandNode.
+            commands = CommandNode.commands;
             
             // Create an instance of the commandable.
             Commandable commandable;
             try {
-                commandable = reflective.newInstance(responder.getCommandClass());
+                commandable = reflective.newInstance(CommandNode.getCommandClass());
             } catch (ReflectiveException e) {
-                throw new GoException(CANNOT_CREATE_TASK, e, responder.getCommandClass().getCanonicalName());
+                throw new GoException(CANNOT_CREATE_TASK, e, CommandNode.getCommandClass().getCanonicalName());
             }
             
             // Set the arguments for the command.
             for (Conversion conversion : env.conversions.get(i)) {
-                if (conversion.command.equals(responder.getName())) {
-                    Assignment assignment = responder.getAssignments().get(conversion.name);
+                if (conversion.command.equals(CommandNode.getName())) {
+                    Assignment assignment = CommandNode.getAssignments().get(conversion.name);
                     try {
                         assignment.setter.set(commandable, conversion.value);
                     } catch (ReflectiveException e) {
@@ -473,12 +487,12 @@ public class Executor {
         return taskClass;
     }
     
-    private Outcome load(Collection<PathPart> unseen, Environment env, final Responder responder, final List<String> arguments, final int offset, final Class<?> outcomeClass) {
+    private Outcome load(Collection<PathPart> unseen, Environment env, final CommandNode CommandNode, final List<String> arguments, final int offset, final Class<?> outcomeClass) {
         final Executor childExecutor = new Executor(this);
         final Environment childEnv = new Environment(env, childExecutor);
         FutureTask<Outcome> future = new FutureTask<Outcome>(new Callable<Outcome>() {
             public Outcome call() {
-                return childExecutor.resume(childEnv, responder, arguments, offset, outcomeClass);
+                return childExecutor.resume(childEnv, CommandNode, arguments, offset, outcomeClass);
             }
         });
         return waitForOutcome(unseen, future);

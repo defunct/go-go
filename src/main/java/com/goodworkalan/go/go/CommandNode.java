@@ -13,13 +13,29 @@ import com.goodworkalan.reflective.Method;
 import com.goodworkalan.utility.Primitives;
 
 /**
- * A wrapper around a task that maps task properties to assignment and parameter
- * conversion strategies for those properties, and collects the sub commands of
- * the task.
+ * A wrapper around a commandable that collects the sub commands of the
+ * commandable and maps commandable properties to assignment and parameter
+ * conversion strategies for those properties.
+ * <p>
+ * Not the most exciting name for a class. Basically, I ran out of names. A
+ * command is a command. I needed to use Command for the annotation so it would
+ * look nice above a class with command in its name. It was a hard choice to use
+ * it there, because I wanted to use it for the public interface MetaCommand,
+ * but the command is the command (unless I wanted to say the whole shebang is a
+ * command then the user implementations become command implementations, but I
+ * prefer to give the user the best names.) Commandable was a clever way to to
+ * describe the behavior so I used that for the interface. I've taken to
+ * prefixing collections of reflected data Meta. This would be MetaCommand but I
+ * needed to expose that to the user. This class was called Repsonder for a
+ * while. Not sure where I got that from. I'm calling this a CommandNode since
+ * it is in fact, a participant in a tree representing the command structure. If
+ * it where not part of a tree, I'd probably have to call it CommandElement,
+ * which will become my standard suffix for the internal bundle of meta data
+ * associated with a user facing class or interface.
  * 
  * @author Alan Gutierrez
  */
-class Responder implements MetaCommand {
+class CommandNode implements MetaCommand {
     /** The task class. */
     private final Class<? extends Commandable> taskClass;
 
@@ -33,8 +49,9 @@ class Responder implements MetaCommand {
     private final Map<String, Assignment> assignments;
 
     /** A map of sub command names to sub command responders. */ 
-    public final Map<String, Responder> commands;
+    public final Map<String, CommandNode> commands;
     
+    /** The map of arguments accepted by the command to their types. */
     private final Map<String, Class<?>> arguments;
 
     /**
@@ -44,7 +61,7 @@ class Responder implements MetaCommand {
      * @param taskClass
      *            The task class.
      */
-    public Responder(Class<? extends Commandable> taskClass) {
+    public CommandNode(Class<? extends Commandable> taskClass) {
         this.assignments = new TreeMap<String, Assignment>();
         
         Command command = taskClass.getAnnotation(Command.class);
@@ -66,14 +83,14 @@ class Responder implements MetaCommand {
 
         Map<String, Class<?>> arguments = new HashMap<String, Class<?>>();
         for (Map.Entry<String, Assignment> entry : assignments.entrySet()) {
-            arguments.put(entry.getKey(), entry.getValue().getType());
+            arguments.put(entry.getKey(), entry.getValue().setter.getType());
         }
 
         this.arguments = Collections.unmodifiableMap(arguments);
         this.taskClass = taskClass;
         this.name = name;
         this.parent = parent;
-        this.commands = new TreeMap<String, Responder>();
+        this.commands = new TreeMap<String, CommandNode>();
     }
 
     /**
@@ -84,7 +101,7 @@ class Responder implements MetaCommand {
      * @param responder
      *            The sub command to add.
      */
-    public void addCommand(Responder responder) {
+    public void addCommand(CommandNode responder) {
         commands.put(responder.getName(), responder);
     }
 

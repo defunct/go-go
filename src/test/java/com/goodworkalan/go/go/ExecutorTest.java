@@ -1,12 +1,20 @@
 package com.goodworkalan.go.go;
 
+import static com.goodworkalan.go.go.GoException.COMMANDABLE_RESOURCES_IO;
+import static com.goodworkalan.go.go.GoException.COMMANDABLE_RESOURCE_IO;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 
 import java.io.File;
+import java.io.IOException;
+import java.net.URL;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Vector;
 import java.util.concurrent.ThreadPoolExecutor;
 
 import org.testng.annotations.Test;
@@ -43,12 +51,52 @@ public class ExecutorTest {
     /** Test the invocation of load after command. */
     @Test
     public void loadAfterCommandable() {
+        Executor executor = getExecutor();
+        String hello = executor.run(String.class, new InputOutput(), "snap", "--hidden", "watusi", "--repeat=Hello");
+        assertEquals(hello, "Hello");
+    }
+    
+    /** Test unable to enumerate command line resources. */
+    @Test
+    public void cannotEnumerateCommandables() {
+        new GoExceptionCatcher(COMMANDABLE_RESOURCES_IO, new Runnable() {
+            public void run() {
+                try {
+                    Executor executor = getExecutor();
+                    ClassLoader classLoader = mock(ClassLoader.class);
+                    when(classLoader.getResources(anyString())).thenThrow(new IOException());
+                    executor.readConfigurations(classLoader, new InputOutput());
+                } catch (IOException e) {
+                }
+            }
+        }).run();
+    }
+    
+    /** Test unable to enumerate command line resources. */
+    @Test
+    public void cannotReadCommandles() {
+        new GoExceptionCatcher(COMMANDABLE_RESOURCE_IO, new Runnable() {
+            public void run() {
+                try {
+                    Executor executor = getExecutor();
+                    ClassLoader classLoader = mock(ClassLoader.class);
+                    URL url = new URL("file:///u:n\\;li<k>e!ly");
+                    Vector<URL> vector = new Vector<URL>();
+                    vector.add(url);
+                    when(classLoader.getResources(anyString())).thenReturn(vector.elements());
+                    executor.readConfigurations(classLoader, new InputOutput());
+                } catch (IOException e) {
+                }
+            }
+        }).run();
+    }
+
+    private Executor getExecutor() {
         Map<List<String>, Artifact> programs = new HashMap<List<String>, Artifact>();
         Library library = new Library(getLibrary("a"), getLibrary("b"));
         ProgramThreadFactory threadFactory = new ProgramThreadFactory();
         ThreadPoolExecutor threadPool = ProgramQueue.getThreadPoolExecutor(threadFactory);
         Executor executor = new Executor(new ReflectiveFactory(), library, programs, threadFactory, threadPool, 0);
-        String hello = executor.run(String.class, new InputOutput(), "snap", "--hidden", "watusi", "--repeat=Hello");
-        assertEquals(hello, "Hello");
+        return executor;
     }
 }

@@ -29,13 +29,4 @@ class Assignment {
         this.setter = setter;
         this.infuser = infuser;
     }
-
-    /**
-     * Get the assignment type.
-     * 
-     * @return The assignment type.
-     */
-    public Class<?> getType() {
-        return setter.getType();
-    }
 }

@@ -1,6 +1,7 @@
 com.goodworkalan.go.go.commands.Welcome
 com.goodworkalan.go.go.commands.JUnit
 com.goodworkalan.go.go.commands.Snap
+
 com.goodworkalan.go.go.commands.Compile
 com.goodworkalan.go.go.commands.ButtonCommand
 com.goodworkalan.go.go.commands.WatusiCommand
