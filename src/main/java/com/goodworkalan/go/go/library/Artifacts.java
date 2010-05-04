@@ -66,9 +66,9 @@ public class Artifacts {
                         } catch (GoException e) {
                             throw new GoException(INVALID_INCLUDE, lineNumber, context);
                         }
-                        List<List<String>> excludes = new ArrayList<List<String>>();
+                        List<Exclude> excludes = new ArrayList<Exclude>();
                         for (int i = 2; i < split.length; i++) {
-                            excludes.add(Include.exclude(split[i]));
+                            excludes.add(new Exclude(split[i]));
                         }
                         includes.add(new Include(artifact, excludes));
                         break;

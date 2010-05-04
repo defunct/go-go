@@ -5,7 +5,6 @@ import static com.goodworkalan.go.go.GoException.UNRESOLVED_ARTIFACT;
 import java.io.File;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import com.goodworkalan.go.go.GoException;
@@ -21,7 +20,7 @@ public class ResolutionPart extends ExpandingPathPart {
         this(new Include(artifact));
     }
 
-    public ResolutionPart(Artifact artifact, Set<List<String>> excludes) {
+    public ResolutionPart(Artifact artifact, Set<Exclude> excludes) {
         this(new Include(artifact, excludes));
     }
     
@@ -30,14 +29,14 @@ public class ResolutionPart extends ExpandingPathPart {
     }
     
     public void expand(Library library, Collection<PathPart> expanded, Collection<PathPart> expand) {
-        ArtifactPart artifactPart = library.getArtifactPart(include);
+        ArtifactPart artifactPart = library.getArtifactPart(include, "jar", "dep");
         if (artifactPart == null) {
             throw new GoException(UNRESOLVED_ARTIFACT, include.getArtifact());
         }
-        expanded.add(new ArtifactPart(artifactPart.getLibraryDirectory(), artifactPart.getArtifact()));
+        expanded.add(artifactPart);
         for (Include subInclude : Artifacts.read(new File(artifactPart.getLibraryDirectory(), artifactPart.getArtifact().getPath("dep")))) {
             if (!include.getExcludes().contains(subInclude.getArtifact().getUnversionedKey())) {
-                Set<List<String>> subExcludes = new HashSet<List<String>>();
+                Set<Exclude> subExcludes = new HashSet<Exclude>();
                 subExcludes.addAll(include.getExcludes());
                 subExcludes.addAll(subInclude.getExcludes());
                 expand.add(new ResolutionPart(subInclude.getArtifact(), subExcludes));
@@ -47,5 +46,9 @@ public class ResolutionPart extends ExpandingPathPart {
     
     public Object getUnversionedKey() {
         return include.getArtifact().getUnversionedKey();
+    }
+    
+    public Set<Exclude> getExcludes() {
+        return include.getExcludes();
     }
 }

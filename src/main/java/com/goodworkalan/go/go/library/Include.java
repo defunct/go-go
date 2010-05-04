@@ -1,15 +1,10 @@
 package com.goodworkalan.go.go.library;
 
-import static com.goodworkalan.go.go.GoException.INVALID_EXCLUDE;
-
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
-import com.goodworkalan.go.go.GoException;
 import com.goodworkalan.go.go.version.VersionSelector;
 
 /**
@@ -26,21 +21,7 @@ public class Include {
     private final VersionSelector versionSelector;
     
     /** The artifact dependencies to exclude. */
-    private final Set<List<String>> excludes;
-    
-    /**
-     * Create a new exclude by splitting the group and project out of the slash
-     * delimited exclude token string.
-     * 
-     * @param exclude The exclude token string.
-     */
-    public static List<String> exclude(String exclude) {
-        String[] split = exclude.split("/");
-        if (split.length != 2) {
-            throw new GoException(INVALID_EXCLUDE, exclude);
-        }
-        return Arrays.asList(split[0], split[1]);
-    }
+    private final Set<Exclude> excludes;
 
     /**
      * Create an include structure.
@@ -50,10 +31,10 @@ public class Include {
      * @param excludes
      *            The artifact dependencies to exclude.
      */
-    public Include(Artifact artifact, Collection<List<String>> excludes) {
+    public Include(Artifact artifact, Collection<Exclude> excludes) {
         this.artifact = artifact;
         this.versionSelector = new VersionSelector(artifact.getVersion());
-        this.excludes = new HashSet<List<String>>(excludes);
+        this.excludes = new LinkedHashSet<Exclude>(excludes);
     }
     
     /**
@@ -80,12 +61,7 @@ public class Include {
      *            The artifact dependencies to exclude.
      */
     public Include(String artifact, String...excludes) {
-        this.artifact = new Artifact(artifact);
-        this.versionSelector = new VersionSelector(this.artifact.getVersion());
-        this.excludes = new HashSet<List<String>>();
-        for (String exclude : excludes) {
-            this.excludes.add(exclude(exclude));
-        }
+        this(new Artifact(artifact), Exclude.excludes(excludes));
     }
     
     /**
@@ -111,7 +87,7 @@ public class Include {
      * 
      * @return The artifact dependencies to exclude.
      */
-    public Set<List<String>> getExcludes() {
+    public Set<Exclude> getExcludes() {
         return excludes;
     }
 
@@ -124,8 +100,8 @@ public class Include {
     public String getArtifactFileLine() {
         StringBuilder line = new StringBuilder();
         line.append("~ ").append(artifact);
-        for (List<String> exclude : excludes) {
-            line.append(" ").append(exclude.get(0)).append("/").append(exclude.get(1));
+        for (Exclude exclude : excludes) {
+            line.append(" ").append(exclude);
         }
         return line.toString();
     }

@@ -3,6 +3,8 @@ package com.goodworkalan.go.go.library;
 import java.io.File;
 import java.net.URL;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Set;
 
 
 /**
@@ -69,5 +71,14 @@ public class JarPart implements PathPart {
      */
     public Object getUnversionedKey() {
         return file;
+    }
+    
+    /**
+     * Excludes do not effect jar path parts so the returned set is always empty.
+     * 
+     * @return The empty set.
+     */
+    public Set<Exclude> getExcludes() {
+        return Collections.<Exclude> emptySet();
     }
 }

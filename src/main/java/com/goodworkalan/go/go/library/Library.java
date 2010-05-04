@@ -1,15 +1,15 @@
 package com.goodworkalan.go.go.library;
 
+import static java.util.Arrays.asList;
+
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
-
 
 /**
  * A Jav-a-Go-Go format library.
@@ -32,10 +32,10 @@ public class Library {
      * @param dir
      *            The library directory.
      */
-    public Library(File...dirs) {
+    public Library(File... dirs) {
         this.dirs = dirs;
     }
-    
+
     /**
      * Get the directories in the library search path.
      * 
@@ -52,8 +52,9 @@ public class Library {
      *            The collection of path parts.
      * @return An expanded collection of path parts.
      */
+    // FIXME Rename expand.
     public Collection<PathPart> resolve(Collection<PathPart> parts) {
-        return resolve(parts, Collections.<Object>emptySet());
+        return resolve(parts, Collections.<Object> emptySet());
     }
 
     /**
@@ -69,7 +70,8 @@ public class Library {
      * @return An expanded collection of path parts.
      * @see PathPart#expand(Library, Collection, Collection)
      */
-    public Collection<PathPart> resolve(Collection<PathPart> parts, Set<?> exclude) {
+    public Collection<PathPart> resolve(Collection<PathPart> parts,
+            Set<?> exclude) {
         Map<Object, PathPart> expanded = new LinkedHashMap<Object, PathPart>();
         Collection<PathPart> current = parts;
         Collection<PathPart> next = new ArrayList<PathPart>();
@@ -102,18 +104,14 @@ public class Library {
      */
     public ArtifactPart getArtifactPart(Artifact artifact) {
         for (File dir : dirs) {
-            File deps = new  File(dir, artifact.getPath("dep"));
+            File deps = new File(dir, artifact.getPath("dep"));
             if (deps.exists()) {
-                return new ArtifactPart(dir, artifact);
+                return new ArtifactPart(dir, artifact, Collections.<Exclude>emptySet());
             }
         }
         return null;
     }
-    
-    private static <T> T[] in(T...objects) {
-        return objects;
-    }
-    
+
     /**
      * Get an artifact part for the given artifact or null if the given artifact
      * cannot be found in the library search path. Each library in the search
@@ -124,19 +122,19 @@ public class Library {
      *            An artifact.
      * @return An artifact part or null.
      */
-    public ArtifactPart getArtifactPart(Include include) {
+    public ArtifactPart getArtifactPart(Include include, String...suffixes) {
         Artifact artifact = include.getArtifact();
         Map<String, File> versions = new HashMap<String, File>();
         for (int i = dirs.length - 1, stop = -1; i != stop; i--) {
             File dir = dirs[i];
             File unversioned = new File(dir, artifact.getUnversionedDirectoryPath());
             if (unversioned.isDirectory()) {
-                for (String fileName : unversioned.list()) {
-                    Artifact candidate = new Artifact(artifact.getGroup(), artifact.getName(), fileName);
-                    for (String suffix : in("dep", "jar")) {
+                FILES: for (String fileName : unversioned.list()) {
+                    Artifact candidate = new Artifact(artifact.getGroup(),  artifact.getName(), fileName);
+                    for (String suffix : suffixes) {
                         File file = new File(dir, candidate.getPath(suffix));
                         if (!file.exists()) {
-                            continue;
+                            continue FILES;
                         }
                     }
                     versions.put(fileName, dir);
@@ -148,7 +146,7 @@ public class Library {
             return null;
         }
         Artifact selected = new Artifact(artifact.getGroup(), artifact.getName(), version);
-        return new ArtifactPart(versions.get(version), selected);
+        return new ArtifactPart(versions.get(version), selected, include.getExcludes());
     }
 
     /**
@@ -164,14 +162,14 @@ public class Library {
      */
     public File getArtifactDirectory(Artifact artifact, String suffix) {
         for (File dir : dirs) {
-            File deps = new  File(dir, artifact.getPath(suffix));
+            File deps = new File(dir, artifact.getPath(suffix));
             if (deps.exists()) {
                 return dir;
             }
         }
         return null;
     }
-    
+
     /**
      * This library is equal to the given object if it is also a library and the
      * library directories are equals.
@@ -183,11 +181,11 @@ public class Library {
     @Override
     public boolean equals(Object object) {
         if (object instanceof Library) {
-            return Arrays.asList(dirs).equals(Arrays.asList(((Library) object).dirs));
+            return asList(dirs).equals(asList(((Library) object).dirs));
         }
         return false;
     }
-    
+
     /**
      * The hash code of the library is the hash code of the library directory.
      * 
@@ -195,6 +193,6 @@ public class Library {
      */
     @Override
     public int hashCode() {
-        return Arrays.asList(dirs).hashCode();
+        return asList(dirs).hashCode();
     }
 }

@@ -1,6 +1,8 @@
 package com.goodworkalan.go.go.version;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -62,6 +64,41 @@ public class VersionSelector {
     private final SelectionStrategy selector;
 
     /**
+     * Parse a valid relative dot separated integer values version number.
+     * 
+     * @param version
+     *            The version to parse.
+     * @param parts
+     *            The number of parts expected.
+     * @return An integer with the
+     */
+    public static List<Integer> parse(String version) {
+        Matcher matcher = VERSION_PART.matcher(version.trim());
+        int signs = countSigns(version, matcher);
+        if (signs == 0 && matcher.hitEnd()) {
+            String[] parts = version.split("\\.");
+            List<Integer> numbers = new ArrayList<Integer>(parts.length);
+            int i = 0;
+            for (int stop = parts.length; i < stop; i++) {
+                numbers.add(Integer.parseInt(parts[i]));
+            }
+            return numbers;
+        }
+        throw new NumberFormatException();
+    }
+
+    private static int countSigns(String pattern, Matcher matcher) { 
+        int signs = 0;
+        while (matcher.regionStart() < pattern.length() && matcher.lookingAt()) {
+            if (matcher.group(1).length() == 1) {
+                signs++;
+            }
+            matcher.region(matcher.end(), pattern.length());
+        }
+        return signs;
+
+    }
+    /**
      * Create a version selector with the given version selection
      * <code>pattern</code>. See the documentation of this class for examples of
      * valid version selection patterns.
@@ -71,14 +108,8 @@ public class VersionSelector {
      */
     public VersionSelector(String pattern) {
         Matcher matcher = VERSION_PART.matcher(pattern.trim());
+        int signs = countSigns(pattern, matcher);
         SelectionStrategy choose = null;
-        int signs = 0;
-        while (matcher.regionStart() < pattern.length() && matcher.lookingAt()) {
-            if (matcher.group(1).length() == 1) {
-                signs++;
-            }
-            matcher.region(matcher.end(), pattern.length());
-        }
         if (matcher.hitEnd() && signs == 1) {
             choose = new RelativeSelector(pattern);
         }

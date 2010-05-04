@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 import com.goodworkalan.go.go.GoException;
 
@@ -47,7 +48,7 @@ public class Artifact {
 
     /** The artifact version. */
     private final String version;
-
+    
     /**
      * Create a dependency.
      * 
@@ -57,45 +58,13 @@ public class Artifact {
      *            The dependency name.
      * @param version
      *            The dependency version.
+     * @param excludes
+     *            The list of excludes.
      */
     public Artifact(String group, String name, String version) {
         this.group = group;
         this.name = name;
         this.version = version;
-    }
-
-    /**
-     * Create an artifact by parsing the given file name assuming the given
-     * suffix and extension.
-     * <p>
-     * FIXME Why isn't this simply a constructor?
-     * 
-     * @param file
-     *            An artifact file.
-     * @param suffix
-     *            A file name suffix.
-     * @param extension
-     *            The file extension.
-     */
-    public static Artifact _parse(File file) {
-        LinkedList<File> parts = new LinkedList<File>();
-        File directory = file.getParentFile();
-        while (directory != null) {
-            parts.addFirst(directory);
-            directory = directory.getParentFile();
-        }
-        if (parts.size() != 3) {
-            return null;
-        }
-        String version = parts.removeLast().getName();
-        String name = parts.removeLast().getName();
-        StringBuilder group = new StringBuilder();
-        String separator = "";
-        for (File part : parts) {
-            group.append(separator).append(part.getName());
-            separator = ".";
-        }
-        return new Artifact(group.toString(), name, version);
     }
 
     /**
@@ -122,7 +91,40 @@ public class Artifact {
         this.name = parts.get(1);
         this.version = parts.get(2);
     }
-    
+
+    /**
+     * Create an artifact by parsing the given file name assuming the given
+     * suffix and extension.
+     * 
+     * @param file
+     *            An artifact file.
+     * @param suffix
+     *            A file name suffix.
+     * @param extension
+     *            The file extension.
+     */
+    public Artifact(File file) {
+        LinkedList<File> parts = new LinkedList<File>();
+        File directory = file.getParentFile();
+        while (directory != null) {
+            parts.addFirst(directory);
+            directory = directory.getParentFile();
+        }
+        if (parts.size() < 3) {
+            throw new GoException(0);
+        }
+        String version = parts.removeLast().getName();
+        String name = parts.removeLast().getName();
+        StringBuilder group = new StringBuilder();
+        String separator = "";
+        for (File part : parts) {
+            group.append(separator).append(part.getName());
+            separator = ".";
+        }
+        this.group = group.toString();
+        this.name = name;
+        this.version =  version;
+    }
     /**
      * Get a key that is a list that uniquely defines the artifact.
      * 
@@ -184,7 +186,7 @@ public class Artifact {
      * @return The file suffix converted to a file name ending and file
      *         extension suffix for appending to a file name.
      */
-    private String suffix(String suffix) {
+    public static String suffix(String suffix) {
         String[] split = suffix.split("/");
         switch (split.length) {
         case 1:
@@ -296,37 +298,12 @@ public class Artifact {
     }
 
     /**
-     * Generate a dependency file line with the given line type character.
-     * 
-     * @param prefix
-     *            The line type character.
-     * @return A dependency file line,
-     */
-    private String line(String prefix) {
-        StringBuilder line = new StringBuilder();
-        line.append(prefix);
-        line.append(" ");
-        line.append(toString());
-        line.append("\n");
-        return line.toString();
-    }
-
-    /**
      * Generate a dependency file line that will include this artifact.
      * 
      * @return A dependency file line,
      */
-    public String includeLine() {
-        return line("+");
-    }
-
-    /**
-     * Generate a dependency file line that will exclude this artifact.
-     * 
-     * @return A dependency file line,
-     */
-    public String excludeLine() {
-        return line("-");
+    public String getArtifactsFileLine(Set<Exclude> excludes) {
+        return new Include(this, excludes).getArtifactFileLine();
     }
     
     /**

@@ -4,6 +4,7 @@ import static com.goodworkalan.go.go.GoException.INVALID_EXCLUDE;
 
 import org.testng.annotations.Test;
 
+import com.goodworkalan.go.go.library.Exclude;
 import com.goodworkalan.go.go.library.Include;
 
 /**
@@ -11,13 +12,13 @@ import com.goodworkalan.go.go.library.Include;
  *
  * @author Alan Gutierrez
  */
-public class IncludeTest {
+public class ExcludeTest {
     /** Test a bad exclude string. */
     @Test
     public void badExclude() {
         new GoExceptionCatcher(INVALID_EXCLUDE, new Runnable() {
             public void run() {
-                Include.exclude("ant/ant/6.1");
+                new Exclude("ant/ant/6.1");
             }
         }).run();
     }

@@ -3,6 +3,7 @@ package com.goodworkalan.go.go.library;
 import java.io.File;
 import java.net.URL;
 import java.util.Collection;
+import java.util.Set;
 
 
 /**
@@ -142,4 +143,12 @@ public interface PathPart {
      * @return A unique, unversioned key for the <code>PathPart</code>.
      */
     public Object getUnversionedKey();
+
+    /**
+     * Return the set of excludes that were in effect when this path part was
+     * expanded.
+     * 
+     * @return The set of excludes in effect when this path part was expanded.
+     */
+    public Set<Exclude> getExcludes();
 }

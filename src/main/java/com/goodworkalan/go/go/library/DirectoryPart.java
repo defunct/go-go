@@ -3,6 +3,8 @@ package com.goodworkalan.go.go.library;
 import java.io.File;
 import java.net.URL;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Set;
 
 import com.goodworkalan.go.go.GoException;
 
@@ -76,5 +78,15 @@ public class DirectoryPart implements PathPart {
      */
     public Object getUnversionedKey() {
         return dir;
+    }
+
+    /**
+     * Excludes do not effect directory path parts so the returned set is always
+     * empty.
+     * 
+     * @return The empty set.
+     */
+    public Set<Exclude> getExcludes() {
+        return Collections.<Exclude>emptySet();
     }
 }

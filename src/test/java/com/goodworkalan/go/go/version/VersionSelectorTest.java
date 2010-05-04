@@ -33,6 +33,7 @@ public class VersionSelectorTest {
         assertNull(new VersionSelector("3.3.-4").select(versions));
         assertEquals(new VersionSelector("3.+2.4").select("3.2.5"), "3.2.5");
         assertEquals(new VersionSelector("3.+2.4").select("3.2.5", "3.2.4"), "3.2.5");
+        assertEquals(new VersionSelector("0.+1").select("0.1.3", "0.1.3.1"), "0.1.3.1");
     }
 
     /**

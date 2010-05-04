@@ -11,7 +11,7 @@ import java.util.List;
 public class Go {
     /** The command verbosity. */
     static int verbosity = 1;
-
+    
     /**
      * Run a Jav-a-Go-Go program specified by the given arguments that will draw
      * dependences from the given library path.
@@ -21,7 +21,7 @@ public class Go {
      * @param arguments
      *            The command line arguments.
      */
-    public static void main(List<File> libraries, String...arguments) {
-        System.exit(new ProgramQueue(libraries, arguments).run(new InputOutput()));
+    public static int execute(List<File> libraries, String...arguments) {
+        return new ProgramQueue(libraries, arguments).run(new InputOutput());
     }
 }

@@ -3,7 +3,7 @@ package com.goodworkalan.go.go.version;
 import java.util.regex.Pattern;
 
 /**
- * Selects the greatest version relative to a specific version optoinally
+ * Selects the greatest version relative to a specific version optionally
  * constrained by significant version parts.
  * 
  * @author Alan Gutierrez
@@ -136,14 +136,14 @@ class RelativeSelector implements SelectionStrategy {
     public boolean compare(int[] best, int[] version) {
         for (int i = 0; i < parts.length; i++) {
             int compare = get(version, i, 0) - parts[i];
-            if ( matched(compare, i)) {
+            if (matched(compare, i)) {
                 boolean variable = comparisons[i] != 0;
                 if (variable) {
                     int better = get(version, i, 0) - get(best, i, 0);
                     if (better >= 0) {
                         if (compare == 0) {
                             for (int j = i + 1; j < version.length; j++) {
-                                if (!matched(version[j] - get(parts, j, 0), i) || version[j] <= get(best, j, 0)) {
+                                if (!matched(version[j] - get(parts, j, 0), i) || version[j] < get(best, j, 0)) {
                                     return false;
                                 }
                             }

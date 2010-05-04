@@ -3,8 +3,9 @@ package com.goodworkalan.go.go;
 import static com.goodworkalan.go.go.GoException.ASSIGNMENT_EXCEPTION_THROWN;
 import static com.goodworkalan.go.go.GoException.ASSIGNMENT_FAILED;
 import static com.goodworkalan.go.go.GoException.CANNOT_CREATE_TASK;
-import static com.goodworkalan.go.go.GoException.*;
+import static com.goodworkalan.go.go.GoException.COMMAND_CLASS_MISSING;
 import static com.goodworkalan.go.go.GoException.EXIT;
+import static com.goodworkalan.go.go.GoException.FUTURE_EXECUTION;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -26,7 +27,7 @@ import java.util.concurrent.FutureTask;
 import java.util.concurrent.ThreadPoolExecutor;
 
 import com.goodworkalan.go.go.library.Artifact;
-import com.goodworkalan.go.go.library.Include;
+import com.goodworkalan.go.go.library.Exclude;
 import com.goodworkalan.go.go.library.Library;
 import com.goodworkalan.go.go.library.PathPart;
 import com.goodworkalan.go.go.library.ResolutionPart;
@@ -108,14 +109,14 @@ public class Executor {
      *            The artifact file.
      */
     Executor(ReflectiveFactory reflective, Library library, Map<List<String>, Artifact> programs, ProgramThreadFactory threadFactory, ThreadPoolExecutor threadPool, int systemVerbosity) {
-        seen.add(Include.exclude("com.github.bigeasy.danger/danger"));
-        seen.add(Include.exclude("com.github.bigeasy.verbiage/verbiage"));
-        seen.add(Include.exclude("com.github.bigeasy.go-go/go-go"));
-        seen.add(Include.exclude("com.github.bigeasy.infuse/infuse"));
-        seen.add(Include.exclude("com.github.bigeasy.retry/retry"));
-        seen.add(Include.exclude("com.github.bigeasy.class-boxer/class-boxer"));
-        seen.add(Include.exclude("com.github.bigeasy.class-association/class-association"));
-        seen.add(Include.exclude("com.github.bigeasy.reflective/reflective"));
+        seen.add(new Exclude("com.github.bigeasy.danger/danger"));
+        seen.add(new Exclude("com.github.bigeasy.verbiage/verbiage"));
+        seen.add(new Exclude("com.github.bigeasy.go-go/go-go"));
+        seen.add(new Exclude("com.github.bigeasy.infuse/infuse"));
+        seen.add(new Exclude("com.github.bigeasy.retry/retry"));
+        seen.add(new Exclude("com.github.bigeasy.class-boxer/class-boxer"));
+        seen.add(new Exclude("com.github.bigeasy.class-association/class-association"));
+        seen.add(new Exclude("com.github.bigeasy.reflective/reflective"));
         this.programs = programs;
         this.reflective = reflective;
         this.library = library;
