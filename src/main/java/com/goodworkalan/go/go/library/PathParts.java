@@ -6,8 +6,10 @@ import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 
 import com.goodworkalan.go.go.GoException;
@@ -133,5 +135,15 @@ public class PathParts {
         } catch (MalformedURLException e) {
             throw new GoException(MALFORMED_URL, url);
         }
+    }
+    
+    public static List<Artifact> artifactsList(Collection<PathPart> parts) {
+        List<Artifact> artifacts = new ArrayList<Artifact>();
+        for (PathPart part : parts) {
+            if (part.getArtifact() != null) {
+                artifacts.add(part.getArtifact());
+            }
+        }
+        return artifacts;
     }
 }
