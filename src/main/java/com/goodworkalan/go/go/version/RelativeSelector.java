@@ -140,10 +140,12 @@ class RelativeSelector implements SelectionStrategy {
                 boolean variable = comparisons[i] != 0;
                 if (variable) {
                     int better = get(version, i, 0) - get(best, i, 0);
-                    if (better >= 0) {
+                    if (better > 0) {
+                        return true;
+                    } else if (better == 0) {
                         if (compare == 0) {
-                            for (int j = i + 1; j < version.length; j++) {
-                                if (!matched(version[j] - get(parts, j, 0), i) || version[j] < get(best, j, 0)) {
+                            for (int j = i + 1; j < Math.max(best.length, version.length); j++) {
+                                if (!matched(get(version, j, 0) - get(parts, j, 0), i) || get(version, j, 0) < get(best, j, 0)) {
                                     return false;
                                 }
                             }
