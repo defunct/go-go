@@ -1,13 +1,11 @@
 package com.goodworkalan.go.go;
 
-import java.lang.reflect.Modifier;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
 
-import com.goodworkalan.infuse.StringConstructorInfuser;
-import com.goodworkalan.infuse.StringInfuser;
+import com.goodworkalan.infuse.Infuser;
 import com.goodworkalan.reflective.Field;
 import com.goodworkalan.reflective.Method;
 import com.goodworkalan.utility.Primitives;
@@ -37,6 +35,8 @@ import com.goodworkalan.utility.Primitives;
  * @author Alan Gutierrez
  */
 class CommandNode implements MetaCommand {
+    private final static Infuser INFUSER = new Infuser();
+    
     /** The task class. */
     private final Class<? extends Commandable> taskClass;
 
@@ -62,7 +62,7 @@ class CommandNode implements MetaCommand {
      * @param commandableClass
      *            The task class.
      */
-    public CommandNode(Class<? extends Commandable> commandableClass) {
+    public CommandNode(InputOutput io, Class<? extends Commandable> commandableClass) {
         this.assignments = new TreeMap<String, Assignment>();
         
         Command command = commandableClass.getAnnotation(Command.class);
@@ -80,7 +80,7 @@ class CommandNode implements MetaCommand {
             parent = command.parent();
         }
 
-        gatherAssignments(commandableClass, assignments);
+        gatherAssignments(io, commandableClass, assignments);
 
         Map<String, Class<?>> arguments = new HashMap<String, Class<?>>();
         for (Map.Entry<String, Assignment> entry : assignments.entrySet()) {
@@ -183,11 +183,10 @@ class CommandNode implements MetaCommand {
      * @param assignment
      *            The map of argument names to meta information objects.
      */
-    private static void gatherAssignments(Class<?> arguableClass, Map<String, Assignment> assignment) {
+    private static void gatherAssignments(InputOutput io, Class<?> arguableClass, Map<String, Assignment> assignment) {
         for (java.lang.reflect.Method method : arguableClass.getMethods()) {
             if (method.getName().startsWith("add")
                 && method.getName().length() != 3
-                && Modifier.isPublic(method.getModifiers())
                 && method.getParameterTypes().length == 1) {
                 Argument argument = method.getAnnotation(Argument.class);
                 if (argument != null) {
@@ -198,15 +197,9 @@ class CommandNode implements MetaCommand {
                         name = name.substring(0, 1).toLowerCase() + name.substring(1);
                         verbose = hyphenate(name);
                     }
-                    if (assignment.containsKey(verbose)) {
-                        throw new GoException(0);
-                    }
+                    checkForDuplicates(io, arguableClass, assignment, verbose);
                     Class<?> type =  Primitives.box(method.getParameterTypes()[0]);
-                    if (type.equals(String.class)) {
-                        assignment.put(verbose, new Assignment(new MethodSetter(new Method(method)), StringInfuser.INSTNACE));
-                    } else {
-                        assignment.put(verbose, new Assignment(new MethodSetter(new Method(method)), new StringConstructorInfuser(type)));
-                    }
+                    assignment.put(verbose, new Assignment(new MethodSetter(new Method(method)), INFUSER.getInfuser(type)));
                 }
             }
         }
@@ -217,20 +210,31 @@ class CommandNode implements MetaCommand {
                 if (verbose.equals("")) {
                     verbose = hyphenate(field.getName());
                 }
-                if (assignment.containsKey(verbose)) {
-                    throw new GoException(0);
-                }
+                checkForDuplicates(io, arguableClass, assignment, verbose);
                 Class<?> type =  Primitives.box(field.getType());
-                if (type.equals(String.class)) {
-                    assignment.put(verbose, new Assignment(new FieldSetter(new Field(field)), StringInfuser.INSTNACE));
-                } else {
-                    assignment.put(verbose, new Assignment(new FieldSetter(new Field(field)), new StringConstructorInfuser(type)));
-                }
+                assignment.put(verbose, new Assignment(new FieldSetter(new Field(field)), INFUSER.getInfuser(type)));
             }
         }
-        Class<?> superclass = arguableClass.getSuperclass();
-        if (Commandable.class.isAssignableFrom(superclass)) {
-            gatherAssignments(superclass, assignment);
+        // No superclass inspection. The above methods return all public methods
+        // and fields.
+    }
+
+    /**
+     * Check for duplicates. This method extracted to reduce branches and ease
+     * testing.
+     * 
+     * @param io
+     *            The I/O bouquet.
+     * @param arguableClass
+     *            The commandable class being inspected.
+     * @param assignment
+     *            The map of argument names to assignment meta information.
+     * @param name
+     *            The argument name.
+     */
+    private static void checkForDuplicates(InputOutput io, Class<?> arguableClass, Map<String, Assignment> assignment, String name) {
+        if (assignment.containsKey(name)) {
+            Environment.error(io, CommandNode.class, "duplicateArgument", arguableClass, "name");
         }
     }
 }

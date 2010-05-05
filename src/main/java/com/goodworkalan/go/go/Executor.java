@@ -232,17 +232,17 @@ public class Executor {
                 }
 
                 List<String> classNames = new ArrayList<String>();
-                for (Class<? extends Commandable> taskClass : tasks) {
-                    classNames.add(taskClass.getCanonicalName());
-                    if (!commandNodes.containsKey(taskClass)) {
-                        CommandNode CommandNode = new CommandNode(taskClass);
-                        commandNodes.put(taskClass, CommandNode);
-                        Class<? extends Commandable> parentTaskClass = null;
-                        while ((parentTaskClass = CommandNode.getParentCommandClass()) != null) {
-                            CommandNode parent = commandNodes.get(parentTaskClass);
+                for (Class<? extends Commandable> commandableClass : tasks) {
+                    classNames.add(commandableClass.getCanonicalName());
+                    if (!commandNodes.containsKey(commandableClass)) {
+                        CommandNode CommandNode = new CommandNode(io, commandableClass);
+                        commandNodes.put(commandableClass, CommandNode);
+                        Class<? extends Commandable> parentCommandableClass = null;
+                        while ((parentCommandableClass = CommandNode.getParentCommandClass()) != null) {
+                            CommandNode parent = commandNodes.get(parentCommandableClass);
                             if (parent == null) {
-                                parent = new CommandNode(parentTaskClass);
-                                commandNodes.put(parentTaskClass, parent);
+                                parent = new CommandNode(io, parentCommandableClass);
+                                commandNodes.put(parentCommandableClass, parent);
                             }
                             parent.addCommand(CommandNode);
                             CommandNode = parent;
