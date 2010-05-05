@@ -250,7 +250,7 @@ class ProgramQueue {
                 iterator = iterator.getCause().getCause();
             }
             if ((iterator instanceof GoException) && ((GoException) iterator).getCode() == EXIT) {
-                return ((Exit) iterator.getCause()).code;
+                return (Integer) ((GoException) iterator).getData().get("exit");
             }
             if (iterator instanceof Erroneous) {
                 return erroneous(io, iterator);

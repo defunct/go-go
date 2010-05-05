@@ -62,7 +62,10 @@ public class Executor {
     private final ThreadPoolExecutor threadPool;
     
     /** A map of commands and their arguments to a list of their outputs. */ 
-    private final Map<List<List<String>>, List<Object>> cache = new HashMap<List<List<String>>, List<Object>>();
+    private final Map<List<String>, List<Object>> outputCache = new HashMap<List<String>, List<Object>>();
+
+    /** A map of commands and their arguments to a list of their outputs. */ 
+    private final Map<List<String>, List<Class<? extends Commandable>>> commandableCache = new HashMap<List<String>, List<Class<? extends Commandable>>>();
 
     /** The parent executor in the thread that spawned this executor or null. */
     private final Executor parent;
@@ -98,11 +101,22 @@ public class Executor {
      *            The command key.
      * @return The output list for the command key.
      */
-    List<Object> getCache(List<List<String>> key) {
+    List<Object> getCache(List<String> key) {
         Executor iterator = this;
         while (iterator != null) {
-            if (iterator.cache.containsKey(key)) {
-                return iterator.cache.get(key);
+            if (iterator.outputCache.containsKey(key)) {
+                return iterator.outputCache.get(key);
+            }
+            iterator = iterator.parent;
+        }
+        return null;
+    }
+    
+    List<Class<? extends Commandable>> getCommandableCache(List<String> key) {
+        Executor iterator = this;
+        while (iterator != null) {
+            if (iterator.commandableCache.containsKey(key)) {
+                return iterator.commandableCache.get(key);
             }
             iterator = iterator.parent;
         }
@@ -148,6 +162,8 @@ public class Executor {
         this.commands.putAll(parent.commands);
         this.commandNodes.putAll(parent.commandNodes);
         this.parts.addAll(parent.parts);
+        this.outputCache.putAll(parent.outputCache);
+        this.commandableCache.putAll(parent.commandableCache);
         this.threadFactory = parent.threadFactory;
         this.threadPool = parent.threadPool;
         this.systemVerbosity = parent.systemVerbosity;
@@ -407,66 +423,99 @@ public class Executor {
         return execute(env, commands, outcomeClass, 0);
     }
 
-    private Outcome loadAfterCommandable(Collection<PathPart> parts, Environment env, final Map<String, CommandNode> commands, final Class<?> outcomeClass, final int offset) {
+    private Outcome loadAfterCommandable(Collection<PathPart> parts, Environment env, final Map<String, CommandNode> commands, final Class<?> outcomeClass, final int commandIndex) {
         final Executor childExecutor = new Executor(this);
         final Environment childEnv = new Environment(env, childExecutor);
         FutureTask<Outcome> future = new FutureTask<Outcome>(new Callable<Outcome>() {
             public Outcome call() {
-                return childExecutor.resumeExecute(childEnv, commands, outcomeClass, offset);
+                return childExecutor.resumeExecute(childEnv, commands, outcomeClass, commandIndex);
             }
         });
         return waitForOutcome(parts, future);
     }
     
-    private Outcome resumeExecute(Environment env, Map<String, CommandNode> commands, Class<?> outcomeClass, int offset) {
+    private Outcome resumeExecute(Environment env, Map<String, CommandNode> commands, Class<?> outcomeClass, int commandIndex) {
         readConfigurations(env.io);
-        return execute(env, commands, outcomeClass, offset);
+        return execute(env, commands, outcomeClass, commandIndex);
     }
 
-    private Outcome execute(Environment env, Map<String, CommandNode> commands, Class<?> outcomeClass, int offset) {
+    private Outcome execute(Environment env, Map<String, CommandNode> commands, List<String> commandKey, Commandable commandable, int commandIndex, Class<?> outcomeClass) {
+        CommandNode commandNode = commandNodes.get(commandable.getClass());
+        boolean cached = commandNode == null ? CommandNode.isCached(commandable.getClass()) : commandNode.isCached();
+        
+        // Create sub environment.
+        Environment subEnv = new Environment(env, commandable.getClass(), commandIndex + 1);
+        // Execute the command.
+        try {
+            commandable.execute(subEnv);
+        } catch (Exit exit) {
+            subEnv.exit(exit.code);
+        }
+        int exitCode = subEnv.exitCode == null ? 0 : subEnv.exitCode;
+        if (exitCode == 0) {
+            if (cached) {
+                outputCache.get(commandKey).add(subEnv.outputs);
+            } else {
+                commandableCache.get(commandKey).add(subEnv.commandableClass);
+            }
+        }
+        if (subEnv.exitCode != null) {
+            throw new GoException(EXIT).put("exit", exitCode);
+        }
+        env.parentOutputs.get(commandIndex).addAll(subEnv.outputs);
+        if (!subEnv.pathParts.isEmpty()) {
+            Collection<PathPart> unseen = extendClassPath(subEnv.pathParts);
+            if (!unseen.isEmpty()) {
+                return loadAfterCommandable(unseen, env, commands, outcomeClass, commandIndex + 1);
+            }
+        }
+        return null;
+    }
+    
+    private Commandable getCommandable(Class<? extends Commandable> commandableClass) {
+        try {
+            return reflective.newInstance(commandableClass);
+        } catch (ReflectiveException e) {
+            throw new GoException(CANNOT_CREATE_TASK, e, commandableClass);
+        }
+    }
+    
+    private Outcome execute(Environment env, Map<String, CommandNode> commands, Class<?> outcomeClass, int commandIndex) {
         // Run any hidden commands.
         while (!env.hiddenCommands.isEmpty()) {
             Commandable commandable = env.hiddenCommands.removeFirst();
-
-            // Create sub environment.
-            Environment subEnv = new Environment(env, commandable.getClass(), offset);
-
-            // Execute the command.
-            try {
-                commandable.execute(subEnv);
-            } catch (Exit exit) {
-                throw new GoException(EXIT, exit);
-            }
-            
-            env.parentOutputs.get(env.parentOutputs.size() - 1).addAll(subEnv.outputs);
-            
-            if (!subEnv.pathParts.isEmpty()) {
-                Collection<PathPart> unseen = extendClassPath(subEnv.pathParts);
-                if (!unseen.isEmpty()) {
-                    return loadAfterCommandable(unseen, env, commands, outcomeClass, offset);
-                }
+            Outcome outcome = execute(env, commands, env.getCommandKey(0, commandIndex), commandable, commandIndex - 1, outcomeClass);
+            if (outcome != null) {
+                return outcome;
             }
         }
+        
         // Go through each command executing if it is not cached.
-        for (int i = offset, stop = env.commands.size(); i < stop; i++) {
+        for (int stop = env.commands.size(); env.hiddenCommands.isEmpty() && commandIndex < stop; commandIndex++) {
+            List<String> commandKey = env.getCommandKey(0, commandIndex + 1);
+            List<Object> cachedOutputs = getCache(commandKey);
+
             // Find the CommandNode.
-            CommandNode CommandNode = commands.get(env.commands.get(i));
+            CommandNode commandNode = commands.get(env.commands.get(commandIndex));
             
-            // Set up the lookup of a child CommandNode.
-            commands = CommandNode.commands;
-            
-            // Create an instance of the commandable.
-            Commandable commandable;
-            try {
-                commandable = reflective.newInstance(CommandNode.getCommandClass());
-            } catch (ReflectiveException e) {
-                throw new GoException(CANNOT_CREATE_TASK, e, CommandNode.getCommandClass().getCanonicalName());
+            // Descend the command tree.
+            commands = commandNode.commands;
+
+            if (cachedOutputs != null) {
+                env.parentOutputs.add(new ArrayList<Object>(cachedOutputs));
+                List<Class<? extends Commandable>> cachedCommandables = getCommandableCache(commandKey);
+                for (Class<? extends Commandable> commandableClass : cachedCommandables) {
+                    env.hiddenCommands.add(getCommandable(commandableClass));
+                }
             }
+
+            
+            Commandable commandable = getCommandable(commandNode.getCommandClass());
             
             // Set the arguments for the command.
-            for (Conversion conversion : env.conversions.get(i)) {
-                if (conversion.command.equals(CommandNode.getName())) {
-                    Assignment assignment = CommandNode.getAssignments().get(conversion.name);
+            for (Conversion conversion : env.conversions.get(commandIndex)) {
+                if (conversion.command.equals(commandNode.getName())) {
+                    Assignment assignment = commandNode.getAssignments().get(conversion.name);
                     try {
                         assignment.setter.set(commandable, conversion.value);
                     } catch (ReflectiveException e) {
@@ -478,25 +527,16 @@ public class Executor {
                 }
             }
             
-            // Create sub environment.
-            Environment subEnv = new Environment(env, commandable.getClass(), i + 1);
+            outputCache.put(commandKey, new ArrayList<Object>());
+            commandableCache.put(commandKey, new ArrayList<Class<? extends Commandable>>());
+            env.parentOutputs.add(new ArrayList<Object>());
             
-            // Execute the command.
-            try {
-                commandable.execute(subEnv);
-            } catch (Exit exit) {
-                throw new GoException(EXIT, exit);
-            }
-            
-            env.parentOutputs.add(subEnv.outputs);
-            if (!subEnv.pathParts.isEmpty()) {
-                Collection<PathPart> unseen = extendClassPath(subEnv.pathParts);
-                if (!unseen.isEmpty()) {
-                    return loadAfterCommandable(unseen, env, commands, outcomeClass, i + 1);
-                }
+            Outcome outcome = execute(env, commands, commandKey, commandable, commandIndex, outcomeClass);
+            if (outcome != null) {
+                return outcome;
             }
             if (!env.hiddenCommands.isEmpty()) {
-                return execute(env, commands, outcomeClass, i + 1);
+                return execute(env, commands, outcomeClass, commandIndex);
             }
         }
         
