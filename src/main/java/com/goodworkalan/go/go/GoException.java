@@ -126,4 +126,27 @@ public class GoException extends CodedDanger {
     public GoException(int code, Throwable cause, Object...arguments) {
         super(BUNDLES, code, cause, arguments);
     }
+
+    public static int erroneous(InputOutput io, int verbosity, Throwable e) {
+        if (verbosity > 0) {
+            e.printStackTrace(io.err);
+        } else {
+            io.err.println(e.getMessage());
+        }
+        return ((Erroneous) e).getExitCode();
+    }
+
+    public static int unwrap(InputOutput io, int verbosity, GoException e) {
+        Throwable iterator = e;
+        while ((iterator instanceof GoException) && ((GoException) iterator).getCode() == FUTURE_EXECUTION) {
+            iterator = iterator.getCause().getCause();
+        }
+        if ((iterator instanceof GoException) && ((GoException) iterator).getCode() == EXIT) {
+            return ((Exit) iterator.getCause()).code;
+        }
+        if (iterator instanceof Erroneous) {
+            return erroneous(io, verbosity, iterator);
+        }
+        throw e;
+    }
 }

@@ -12,6 +12,7 @@ import java.util.Set;
 
 import com.goodworkalan.go.go.library.Library;
 import com.goodworkalan.go.go.library.PathPart;
+import com.goodworkalan.ilk.Ilk;
 
 /**
  * The environment in which a task is executed.
@@ -34,9 +35,9 @@ public class Environment {
     public final LinkedList<String> commands = new LinkedList<String>();
     
     /** The list of generated objects. */
-    final List<Object> outputs = new ArrayList<Object>();
+    final List<Ilk.Box> outputs = new ArrayList<Ilk.Box>();
     
-    final List<List<Object>> parentOutputs = new ArrayList<List<Object>>();
+    final List<List<Ilk.Box>> parentOutputs = new ArrayList<List<Ilk.Box>>();
 
     /** The list of converted arguments for the commands. */
     final LinkedList<List<Conversion>> conversions = new LinkedList<List<Conversion>>();
@@ -58,9 +59,6 @@ public class Environment {
      * completes.
      */
     final LinkedList<Commandable> hiddenCommands;
-    
-    /** The exit code assigned by the commandable. */
-    Integer exitCode;
 
     /** The verbosity at each level of the stack. */
     final List<Integer> verbosity = new ArrayList<Integer>();
@@ -317,9 +315,13 @@ public class Environment {
      * @return The output object or null if none exists.
      */
     public <T> T get(Class<T> type, int index) {
-        for (Object object : parentOutputs.get(index)) {
-            if (object.getClass().equals(type)) {
-                return type.cast(object);
+        return get(new Ilk<T>(type), 0);
+    }
+    
+    public <T> T get(Ilk<T> ilk, int index) {
+        for (Ilk.Box box : parentOutputs.get(index)) {
+            if (ilk.key.isAssignableFrom(box.getKey())) {
+                return box.cast(ilk);
             }
         }
         return null;
@@ -365,7 +367,11 @@ public class Environment {
      *            The output.
      */
     public void output(Object output) {
-        outputs.add(output);
+        outputs.add(new Ilk.Box(output));
+    }
+    
+    public <T> void output(Ilk<T> ilk, T output) {
+        outputs.add(ilk.box(output));
     }
 
     /**
@@ -395,18 +401,8 @@ public class Environment {
     }
 
     /**
-     * Set the exit code for the execution. The exit code will be set after the
-     * {@link Commandable#execute(Environment) execute} method of the
-     * commandable completes and the current command will terminate.
-     * <p>
-     * No further commands will be executed in the command line. The error code
-     * will be returned to the caller, or if the caller is expecting an output
-     * object and the exit code is non-zero, an unchecked exception will be
-     * raised for the caller to catch.
-     * <p>
-     * To exit before the commandable completes, raise an {@link Exit}
-     * exception. The result for the caller will be the same as calling this
-     * method.
+     * Set the exit code for the execution and raise an exception terminiating
+     * the execution of the current {@link Commandable} immediately.
      * <p>
      * System exit is called only if this is the first command run and the the
      * caller who initiated the entire program uses the result of execution as
@@ -425,9 +421,12 @@ public class Environment {
      *            The exit code.
      */
     public void exit(int code) {
-        this.exitCode = code;
+        throw new Exit(code);
     }
     
+    public List<String> getCommandKey() {
+        return getCommandKey(0, commands.size());
+    }
     public List<String> getCommandKey(int fromIndex, int toIndex) {
         List<List<String>> components = new ArrayList<List<String>>();
         for (int i = 0, stop = commands.size(); i < stop; i++) {

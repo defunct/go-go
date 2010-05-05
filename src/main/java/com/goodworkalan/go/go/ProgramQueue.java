@@ -191,7 +191,12 @@ class ProgramQueue {
         Executor executor = new Executor(new ReflectiveFactory(), new Library(libraries.toArray(new File[libraries.size()])), programs, threadFactory, threadPool, verbosity);
         verbose(io, "start", arguments);
         long start = System.currentTimeMillis();
-        int code = executor.start(io, arguments, null).code;
+        int code = 0;
+        try {
+            executor.start(io, arguments, null);
+        } catch (GoException e) {
+            code = GoException.unwrap(io, verbosity, e);
+        }
         verbose(io, "stop",
                 System.currentTimeMillis() - start,
                 (double) Runtime.getRuntime().totalMemory() / 1024 / 1024,
@@ -232,31 +237,8 @@ class ProgramQueue {
         return code;
     }
 
-    public int erroneous(InputOutput io, Throwable e) {
-        if (verbosity > 0) {
-            e.printStackTrace(io.err);
-        } else {
-            io.err.println(e.getMessage());
-        }
-        return ((Erroneous) e).getExitCode();
-    }
-
     public int run(InputOutput io) {
-        try {
-            return start(io);
-        } catch (GoException e) {
-            Throwable iterator = e;
-            while ((iterator instanceof GoException) && ((GoException) iterator).getCode() == FUTURE_EXECUTION) {
-                iterator = iterator.getCause().getCause();
-            }
-            if ((iterator instanceof GoException) && ((GoException) iterator).getCode() == EXIT) {
-                return (Integer) ((GoException) iterator).getData().get("exit");
-            }
-            if (iterator instanceof Erroneous) {
-                return erroneous(io, iterator);
-            }
-            throw e;
-        }
+        return start(io);
     }
 
     private void loop() {

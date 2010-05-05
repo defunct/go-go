@@ -6,12 +6,12 @@ package com.goodworkalan.go.go;
  * 
  * @author Alan Gutierrez
  */
-public class Exit extends RuntimeException {
+class Exit extends RuntimeException {
     /** Serial version id. */
     private static final long serialVersionUID = 1L;
 
     /** The exit code. */
-    final int code;
+    public final int code;
 
     /**
      * Exit with the given exit code.

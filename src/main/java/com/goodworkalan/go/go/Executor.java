@@ -34,6 +34,7 @@ import com.goodworkalan.go.go.library.Exclude;
 import com.goodworkalan.go.go.library.Library;
 import com.goodworkalan.go.go.library.PathPart;
 import com.goodworkalan.go.go.library.ResolutionPart;
+import com.goodworkalan.ilk.Ilk;
 import com.goodworkalan.infuse.InfusionException;
 import com.goodworkalan.reflective.ReflectiveException;
 import com.goodworkalan.reflective.ReflectiveFactory;
@@ -62,7 +63,7 @@ public class Executor {
     private final ThreadPoolExecutor threadPool;
     
     /** A map of commands and their arguments to a list of their outputs. */ 
-    private final Map<List<String>, List<Object>> outputCache = new HashMap<List<String>, List<Object>>();
+    private final Map<List<String>, List<Ilk.Box>> outputCache = new HashMap<List<String>, List<Ilk.Box>>();
 
     /** A map of commands and their arguments to a list of their outputs. */ 
     private final Map<List<String>, List<Class<? extends Commandable>>> commandableCache = new HashMap<List<String>, List<Class<? extends Commandable>>>();
@@ -101,7 +102,7 @@ public class Executor {
      *            The command key.
      * @return The output list for the command key.
      */
-    List<Object> getCache(List<String> key) {
+    List<Ilk.Box> getCache(List<String> key) {
         Executor iterator = this;
         while (iterator != null) {
             if (iterator.outputCache.containsKey(key)) {
@@ -306,7 +307,7 @@ public class Executor {
         return commandables;
     }
 
-    private Outcome resume(Environment env, CommandNode CommandNode, List<String> arguments, int offset, Class<?> outcomeClass) {
+    private Ilk.Box resume(Environment env, CommandNode CommandNode, List<String> arguments, int offset, Ilk<?> outcomeType) {
         readConfigurations(env.io);
         if (offset == 0) {
             CommandNode = commands.get(arguments.get(0));
@@ -316,7 +317,7 @@ public class Executor {
             env.addCommand(arguments.get(0));
             offset++;
         }
-        return extend(env, CommandNode, arguments, offset, outcomeClass);
+        return extend(env, CommandNode, arguments, offset, outcomeType);
     }
 
     private void argument(Environment env, CommandNode CommandNode, String name, String value) {
@@ -388,7 +389,7 @@ public class Executor {
         }
     }
     
-    private Outcome extend(Environment env, CommandNode CommandNode, List<String> arguments, int offset, Class<?> outcomeClass) {
+    private Ilk.Box extend(Environment env, CommandNode CommandNode, List<String> arguments, int offset, Ilk<?> outcomeType) {
         boolean remaining = false;
         for (int i = offset, stop = arguments.size(); i < stop; i++) {
             String argument = arguments.get(i);
@@ -407,7 +408,7 @@ public class Executor {
                     if (artifact != null) {
                         Collection<PathPart> unseen = extendClassPath(new ResolutionPart(artifact));
                         if (!unseen.isEmpty()) {
-                            return load(unseen, env, CommandNode, arguments, i, outcomeClass);
+                            return load(unseen, env, CommandNode, arguments, i, outcomeType);
                         }
                     }
                     CommandNode = CommandNode.commands.get(argument);
@@ -420,53 +421,56 @@ public class Executor {
                 }
             }
         }
-        return execute(env, commands, outcomeClass, 0);
+        return execute(env, commands, outcomeType, 0);
     }
 
-    private Outcome loadAfterCommandable(Collection<PathPart> parts, Environment env, final Map<String, CommandNode> commands, final Class<?> outcomeClass, final int commandIndex) {
+    private Ilk.Box loadAfterCommandable(Collection<PathPart> parts, Environment env, final Map<String, CommandNode> commands, final Ilk<?> outcomeType, final int commandIndex) {
         final Executor childExecutor = new Executor(this);
         final Environment childEnv = new Environment(env, childExecutor);
-        FutureTask<Outcome> future = new FutureTask<Outcome>(new Callable<Outcome>() {
-            public Outcome call() {
-                return childExecutor.resumeExecute(childEnv, commands, outcomeClass, commandIndex);
+        FutureTask<Ilk.Box> future = new FutureTask<Ilk.Box>(new Callable<Ilk.Box>() {
+            public Ilk.Box call() {
+                return childExecutor.resumeExecute(childEnv, commands, outcomeType, commandIndex);
             }
         });
         return waitForOutcome(parts, future);
     }
     
-    private Outcome resumeExecute(Environment env, Map<String, CommandNode> commands, Class<?> outcomeClass, int commandIndex) {
+    private Ilk.Box resumeExecute(Environment env, Map<String, CommandNode> commands, Ilk<?> outcomeType, int commandIndex) {
         readConfigurations(env.io);
-        return execute(env, commands, outcomeClass, commandIndex);
+        return execute(env, commands, outcomeType, commandIndex);
     }
 
-    private Outcome execute(Environment env, Map<String, CommandNode> commands, List<String> commandKey, Commandable commandable, int commandIndex, Class<?> outcomeClass) {
+    private Ilk.Box execute(Environment env, Map<String, CommandNode> commands, List<String> commandKey, Commandable commandable, int commandIndex, Ilk<?> outcomeType) {
         CommandNode commandNode = commandNodes.get(commandable.getClass());
         boolean cached = commandNode == null ? CommandNode.isCached(commandable.getClass()) : commandNode.isCached();
         
         // Create sub environment.
         Environment subEnv = new Environment(env, commandable.getClass(), commandIndex + 1);
+        
+        boolean terminate = false;
+        
         // Execute the command.
         try {
             commandable.execute(subEnv);
         } catch (Exit exit) {
-            subEnv.exit(exit.code);
-        }
-        int exitCode = subEnv.exitCode == null ? 0 : subEnv.exitCode;
-        if (exitCode == 0) {
-            if (cached) {
-                outputCache.get(commandKey).add(subEnv.outputs);
-            } else {
-                commandableCache.get(commandKey).add(subEnv.commandableClass);
+            if (exit.code != 0) {
+                throw new GoException(EXIT, exit);
             }
-        }
-        if (subEnv.exitCode != null) {
-            throw new GoException(EXIT).put("exit", exitCode);
+            terminate = true;
         }
         env.parentOutputs.get(commandIndex).addAll(subEnv.outputs);
+        if (cached) {
+            outputCache.get(commandKey).addAll(subEnv.outputs);
+        } else {
+            commandableCache.get(commandKey).add(subEnv.commandableClass);
+        }
+        if (terminate) {
+            return chooseBox(env, outcomeType);
+        }
         if (!subEnv.pathParts.isEmpty()) {
             Collection<PathPart> unseen = extendClassPath(subEnv.pathParts);
             if (!unseen.isEmpty()) {
-                return loadAfterCommandable(unseen, env, commands, outcomeClass, commandIndex + 1);
+                return loadAfterCommandable(unseen, env, commands, outcomeType, commandIndex + 1);
             }
         }
         return null;
@@ -480,20 +484,20 @@ public class Executor {
         }
     }
     
-    private Outcome execute(Environment env, Map<String, CommandNode> commands, Class<?> outcomeClass, int commandIndex) {
+    private Ilk.Box execute(Environment env, Map<String, CommandNode> commands, Ilk<?> outcomeType, int commandIndex) {
         // Run any hidden commands.
         while (!env.hiddenCommands.isEmpty()) {
             Commandable commandable = env.hiddenCommands.removeFirst();
-            Outcome outcome = execute(env, commands, env.getCommandKey(0, commandIndex), commandable, commandIndex - 1, outcomeClass);
-            if (outcome != null) {
-                return outcome;
+            Ilk.Box box = execute(env, commands, env.getCommandKey(0, commandIndex), commandable, commandIndex - 1, outcomeType);
+            if (box != null) {
+                return box;
             }
         }
         
         // Go through each command executing if it is not cached.
         for (int stop = env.commands.size(); env.hiddenCommands.isEmpty() && commandIndex < stop; commandIndex++) {
             List<String> commandKey = env.getCommandKey(0, commandIndex + 1);
-            List<Object> cachedOutputs = getCache(commandKey);
+            List<Ilk.Box> cachedOutputs = getCache(commandKey);
 
             // Find the CommandNode.
             CommandNode commandNode = commands.get(env.commands.get(commandIndex));
@@ -502,14 +506,13 @@ public class Executor {
             commands = commandNode.commands;
 
             if (cachedOutputs != null) {
-                env.parentOutputs.add(new ArrayList<Object>(cachedOutputs));
+                env.parentOutputs.add(new ArrayList<Ilk.Box>(cachedOutputs));
                 List<Class<? extends Commandable>> cachedCommandables = getCommandableCache(commandKey);
                 for (Class<? extends Commandable> commandableClass : cachedCommandables) {
                     env.hiddenCommands.add(getCommandable(commandableClass));
                 }
             }
 
-            
             Commandable commandable = getCommandable(commandNode.getCommandClass());
             
             // Set the arguments for the command.
@@ -527,47 +530,50 @@ public class Executor {
                 }
             }
             
-            outputCache.put(commandKey, new ArrayList<Object>());
+            outputCache.put(commandKey, new ArrayList<Ilk.Box>());
             commandableCache.put(commandKey, new ArrayList<Class<? extends Commandable>>());
-            env.parentOutputs.add(new ArrayList<Object>());
+            env.parentOutputs.add(new ArrayList<Ilk.Box>());
             
-            Outcome outcome = execute(env, commands, commandKey, commandable, commandIndex, outcomeClass);
+            Ilk.Box outcome = execute(env, commands, commandKey, commandable, commandIndex, outcomeType);
             if (outcome != null) {
                 return outcome;
             }
             if (!env.hiddenCommands.isEmpty()) {
-                return execute(env, commands, outcomeClass, commandIndex);
+                return execute(env, commands, outcomeType, commandIndex);
             }
         }
         
-        if (outcomeClass != null) {
-            for (Object object : env.parentOutputs.get(env.parentOutputs.size() -1)) {
-                if (outcomeClass.equals(object.getClass())) {
-                    return new Outcome(0, object);
+        return chooseBox(env, outcomeType);
+     }
+    
+    public Ilk.Box chooseBox(Environment env, Ilk<?> outcomeType) {
+        if (outcomeType != null) {
+            for (Ilk.Box box : env.parentOutputs.get(env.parentOutputs.size() -1)) {
+                if (outcomeType.key.equals(box.getKey())) {
+                    return box;
                 }
             }
         }
-        
-        return new Outcome(0, null);
+        return null;
     }
-    
+
     @SuppressWarnings("unchecked")
     private Class<? extends Commandable> taskClass(Class taskClass) {
         return taskClass;
     }
     
-    private Outcome load(Collection<PathPart> unseen, Environment env, final CommandNode CommandNode, final List<String> arguments, final int offset, final Class<?> outcomeClass) {
+    private Ilk.Box load(Collection<PathPart> unseen, Environment env, final CommandNode CommandNode, final List<String> arguments, final int offset, final Ilk<?> outcomeType) {
         final Executor childExecutor = new Executor(this);
         final Environment childEnv = new Environment(env, childExecutor);
-        FutureTask<Outcome> future = new FutureTask<Outcome>(new Callable<Outcome>() {
-            public Outcome call() {
-                return childExecutor.resume(childEnv, CommandNode, arguments, offset, outcomeClass);
+        FutureTask<Ilk.Box> future = new FutureTask<Ilk.Box>(new Callable<Ilk.Box>() {
+            public Ilk.Box call() {
+                return childExecutor.resume(childEnv, CommandNode, arguments, offset, outcomeType);
             }
         });
         return waitForOutcome(unseen, future);
     }
 
-    private Outcome waitForOutcome(Collection<PathPart> parts, FutureTask<Outcome> future) {
+    private Ilk.Box waitForOutcome(Collection<PathPart> parts, FutureTask<Ilk.Box> future) {
         threadFactory.partsQueue.offer(parts);
         threadPool.execute(future);
         try {
@@ -577,37 +583,50 @@ public class Executor {
         }
     }
 
-    Outcome start(InputOutput io, List<String> arguments, Class<?> outcomeClass) {
+    Ilk.Box start(InputOutput io, List<String> arguments, Ilk<?> outcomeType) {
         Environment env = new Environment(library, io, this);
         readConfigurations(env.io);
         Artifact artifact = programs.get(flatten(arguments.get(0)));
         if (artifact != null) {
             Collection<PathPart> unseen = extendClassPath(new ResolutionPart(artifact));
             if (!unseen.isEmpty()) {
-                return load(unseen, env, null, arguments, 0, outcomeClass);
+                return load(unseen, env, null, arguments, 0, outcomeType);
             }
         }
-        return resume(env, null, arguments, 0, outcomeClass);
+        return resume(env, null, arguments, 0, outcomeType);
     }
 
     public int run(InputOutput io, List<String> arguments) {
-        return start(io, arguments, null).code;
+        try {
+            start(io, arguments, null);
+            return 0;
+        } catch (GoException e) {
+            return GoException.unwrap(io, systemVerbosity, e);
+        }
     }
 
     public int run(InputOutput io, Object...arguments) {
         return run(io, flatten(arguments));
     }
-    
-    public <T> T run(Class<T> type, InputOutput io, Object...arguments) {
-        return run(type, io, flatten(arguments));
+
+    public <T> T run(Class<T> outcomeType, InputOutput io, Object...arguments) {
+        return run(new Ilk<T>(outcomeType), io, flatten(arguments));
     }
     
-    public <T> T run(Class<T> type, InputOutput io, List<String> arguments) {
-        Outcome outcome = start(io, arguments, type);
-        if (outcome.object == null) {
+    public <T> T run(Ilk<T> outcomeType, InputOutput io, Object...arguments) {
+        return run(outcomeType, io, flatten(arguments));
+    }
+    
+    public <T> T run(Class<T> outcomeType, InputOutput io, List<String> arguments) {
+        return run(new Ilk<T>(outcomeType), io, flatten(arguments));
+    }
+
+    public <T> T run(Ilk<T> outcomeType, InputOutput io, List<String> arguments) {
+        Ilk.Box outcome = start(io, arguments, outcomeType);
+        if (outcome == null) {
             return null;
         }
-        return type.cast(outcome.object);
+        return outcome.cast(outcomeType);
     }
 
     private List<String> flatten(Object... arguments) {
