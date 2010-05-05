@@ -7,8 +7,11 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -89,6 +92,26 @@ public class ExecutorTest {
                 }
             }
         }).run();
+    }
+    
+    /** Command not found. */
+    @Test
+    public void commandNotFound() throws IOException {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        ByteArrayInputStream in = new ByteArrayInputStream(new String("com.missing.Commandable\n").getBytes("UTF-8"));
+        InputOutput io = new InputOutput(System.in, System.out, new PrintStream(out));
+        getExecutor().readCommandables(Thread.currentThread().getContextClassLoader(), in, io);
+        assertEquals(out.toString(), "WARNING: Cannot find command class com.missing.Commandable.\n");
+    }
+    
+    /** Command does not implement commandable. */
+    @Test
+    public void notCommandable() throws IOException {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        ByteArrayInputStream in = new ByteArrayInputStream(new String("java.lang.String\n").getBytes("UTF-8"));
+        InputOutput io = new InputOutput(System.in, System.out, new PrintStream(out));
+        getExecutor().readCommandables(Thread.currentThread().getContextClassLoader(), in, io);
+        assertEquals(out.toString(), "WARNING: Command class java.lang.String does not implement com.goodworkalan.go.go.Commandable.\n");
     }
 
     private Executor getExecutor() {

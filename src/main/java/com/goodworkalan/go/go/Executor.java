@@ -40,7 +40,13 @@ import com.goodworkalan.reflective.ReflectiveFactory;
 import com.goodworkalan.retry.Retry;
 import com.goodworkalan.utility.Primitives;
 
+/**
+ * Executes commands and maintains their environments.
+ *
+ * @author Alan Gutierrez
+ */
 public class Executor {
+    /** The system verbosity for system standard error messages. */
     private final int systemVerbosity;
     
     /** Used to construct commands. */
@@ -52,9 +58,7 @@ public class Executor {
      */
     private final ProgramThreadFactory threadFactory;
     
-    /**
-     * An executor service.
-     */
+    /** An executor service. */
     private final ThreadPoolExecutor threadPool;
     
     /** A map of commands and their arguments to a list of their outputs. */ 
@@ -148,29 +152,30 @@ public class Executor {
         this.threadPool = parent.threadPool;
         this.systemVerbosity = parent.systemVerbosity;
     }
-    
-    Collection<PathPart> addArtifacts(PathPart pathPart) {
-        return addArtifacts(Collections.singleton(pathPart));
+
+    /**
+     * Add a single path part to the class path if it is not already part of the
+     * class path. Returns a list containing the given path part if it was not
+     * in the class path.
+     * 
+     * @param pathPart
+     *            The path part to add to the class path.
+     * @return The collection of path parts not currently in the class path.
+     */
+    Collection<PathPart> extendClassPath(PathPart pathPart) {
+        return extendClassPath(Collections.singleton(pathPart));
     }
 
     /**
-     * Iterate through all of the command interpreter task and dependencies
-     * definition files that can be found using the given class loader if they
-     * definition files have not already been loaded. Any dependency classes
-     * that specify new artifacts will have those artifacts loaded with the
-     * given artifacts reader.
+     * Add each of the given path parts to the class path if the path part is
+     * not already part of the class path. Returns a list containing the path
+     * parts that wrere not already part of the class path.
      * 
-     * @param reader
-     *            The artifacts reader.
-     * @param classLoader
-     *            The parent class loader.
-     * @return A class loader the includes any newly specified artifacts or null
-     *         if no new artifacts were specified.
-     * @throws IOException
-     *             For any I/O error while reading the command interpreter
-     *             definition files.
+     * @param pathPart
+     *            The path part to add to the class path.
+     * @return The collection of path parts not currently in the class path.
      */
-    Collection<PathPart> addArtifacts(Collection<PathPart> artifacts) {
+    Collection<PathPart> extendClassPath(Collection<PathPart> artifacts) {
         List<PathPart> unseen = new ArrayList<PathPart>();
         for (PathPart artifact : artifacts) {
             Object key = artifact.getUnversionedKey();
@@ -188,10 +193,26 @@ public class Executor {
         return subPath;
     }
 
+    /**
+     * Read the commandables from the commandable list resources in the class
+     * path via the current thread context class loader writing an debugging
+     * information or errors to the given I/O bouquet.
+     * 
+     * @param io
+     *            The I/O bouquet.
+     */
     private void readConfigurations(InputOutput io) {
         readConfigurations(Thread.currentThread().getContextClassLoader(), io);
     }
 
+    /**
+     * Read the commandables from the commandable list resources in the class
+     * path via the given class loader writing an debugging information or
+     * errors to the given I/O bouquet.
+     * 
+     * @param io
+     *            The I/O bouquet.
+     */
     void readConfigurations(ClassLoader classLoader, InputOutput io) {
         Enumeration<URL> resources;
         try {
@@ -205,7 +226,7 @@ public class Executor {
                 urls.add(url);
                 Set<Class<? extends Commandable>> tasks;
                 try {
-                    tasks = readCommandables(classLoader, url.openStream());
+                    tasks = readCommandables(classLoader, url.openStream(), io);
                 } catch (IOException e) {
                     throw new GoException(COMMANDABLE_RESOURCE_IO, e, url);
                 }
@@ -235,7 +256,16 @@ public class Executor {
         }
     }
 
-    Set<Class<? extends Commandable>> readCommandables(ClassLoader classLoader, InputStream in)
+    /**
+     * Read the commandables from the commandable list read from the given input
+     * stream, loading them with the given class loader writing an debugging
+     * information or errors to the given I/O bouquet.
+     * 
+     * @param io
+     *            The I/O bouquet.
+     */
+
+    Set<Class<? extends Commandable>> readCommandables(ClassLoader classLoader, InputStream in, InputOutput io)
     throws IOException {
         BufferedReader lines = new BufferedReader(new InputStreamReader(in));
         Set<Class<? extends Commandable>> commandables = new HashSet<Class<? extends Commandable>>();
@@ -248,12 +278,13 @@ public class Executor {
             try {
                 foundClass = classLoader.loadClass(className);
             } catch (ClassNotFoundException e) {
-                throw new GoException(0, e);
+                Environment.error(io, Executor.class, "commandMissing", className);
+                continue;
             }
             if (Commandable.class.isAssignableFrom(foundClass)) {
                 commandables.add(taskClass(foundClass));
             } else {
-                throw new GoException(0);
+                Environment.error(io, Executor.class, "notCommandable", className, Commandable.class);
             }
         }
         return commandables;
@@ -358,7 +389,7 @@ public class Executor {
                 } else {
                     Artifact artifact = programs.get(flatten(env.commands, argument));
                     if (artifact != null) {
-                        Collection<PathPart> unseen = addArtifacts(new ResolutionPart(artifact));
+                        Collection<PathPart> unseen = extendClassPath(new ResolutionPart(artifact));
                         if (!unseen.isEmpty()) {
                             return load(unseen, env, CommandNode, arguments, i, outcomeClass);
                         }
@@ -410,7 +441,7 @@ public class Executor {
             env.parentOutputs.get(env.parentOutputs.size() - 1).addAll(subEnv.outputs);
             
             if (!subEnv.pathParts.isEmpty()) {
-                Collection<PathPart> unseen = addArtifacts(subEnv.pathParts);
+                Collection<PathPart> unseen = extendClassPath(subEnv.pathParts);
                 if (!unseen.isEmpty()) {
                     return loadAfterCommandable(unseen, env, commands, outcomeClass, offset);
                 }
@@ -459,7 +490,7 @@ public class Executor {
             
             env.parentOutputs.add(subEnv.outputs);
             if (!subEnv.pathParts.isEmpty()) {
-                Collection<PathPart> unseen = addArtifacts(subEnv.pathParts);
+                Collection<PathPart> unseen = extendClassPath(subEnv.pathParts);
                 if (!unseen.isEmpty()) {
                     return loadAfterCommandable(unseen, env, commands, outcomeClass, i + 1);
                 }
@@ -511,7 +542,7 @@ public class Executor {
         readConfigurations(env.io);
         Artifact artifact = programs.get(flatten(arguments.get(0)));
         if (artifact != null) {
-            Collection<PathPart> unseen = addArtifacts(new ResolutionPart(artifact));
+            Collection<PathPart> unseen = extendClassPath(new ResolutionPart(artifact));
             if (!unseen.isEmpty()) {
                 return load(unseen, env, null, arguments, 0, outcomeClass);
             }

@@ -285,6 +285,11 @@ public class Environment {
             bundle = ResourceBundle.getBundle(Environment.class.getPackage().getName() + ".stderr");
             key = "Environment/bundle.missing";
         }
+        for (int i = 0, stop = arguments.length; i < stop; i++) {
+            if (arguments[i] instanceof Class<?>) {
+                arguments[i] = ((Class<?>) arguments[i]).getCanonicalName();
+            }
+        }
         try {
             io.err.println(String.format(bundle.getString(key), arguments));
         } catch (MissingResourceException e) {

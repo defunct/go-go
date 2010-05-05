@@ -13,6 +13,7 @@ public class GoProject extends ProjectModule {
                 .main()
                     .depends()
                         .include("com.github.bigeasy.reflective/reflective/0.1")
+                        .include("com.github.bigeasy.ilk/ilk/0.1")
                         .include("com.github.bigeasy.danger/danger/0.1")
                         .include("com.github.bigeasy.retry/retry/0.1")
                         .include("com.github.bigeasy.class-boxer/class-boxer/0.1")
