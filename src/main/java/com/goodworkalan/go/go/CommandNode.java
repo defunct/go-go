@@ -23,15 +23,16 @@ import com.goodworkalan.utility.Primitives;
  * it there, because I wanted to use it for the public interface MetaCommand,
  * but the command is the command (unless I wanted to say the whole shebang is a
  * command then the user implementations become command implementations, but I
- * prefer to give the user the best names.) Commandable was a clever way to to
- * describe the behavior so I used that for the interface. I've taken to
+ * prefer to give the user the best names.) {@link Commandable} was a clever way
+ * to to describe the behavior so I used that for the interface. I've taken to
  * prefixing collections of reflected data Meta. This would be MetaCommand but I
- * needed to expose that to the user. This class was called Repsonder for a
- * while. Not sure where I got that from. I'm calling this a CommandNode since
- * it is in fact, a participant in a tree representing the command structure. If
- * it where not part of a tree, I'd probably have to call it CommandElement,
- * which will become my standard suffix for the internal bundle of meta data
- * associated with a user facing class or interface.
+ * needed to expose that to the user. This class was called
+ * <code>Repsonder</code> for a while. Not sure where I got that from. I'm
+ * calling this a CommandNode since it is in fact, a participant in a tree
+ * representing the command structure. If it where not part of a tree, I'd
+ * probably have to call it CommandElement, which will become my standard suffix
+ * for the internal bundle of meta data associated with a user facing class or
+ * interface.
  * 
  * @author Alan Gutierrez
  */
@@ -45,29 +46,29 @@ class CommandNode implements MetaCommand {
     /** The parent task if any. */
     private final Class<? extends Commandable> parent;
 
-    /** A map of verbose argument names to assignment strategies. */
+    /** The map of verbose argument names to assignment meta information. */
     private final Map<String, Assignment> assignments;
 
-    /** A map of sub command names to sub command responders. */ 
+    /** The map of sub command names to sub command responders. */ 
     public final Map<String, CommandNode> commands;
     
     /** The map of arguments accepted by the command to their types. */
     private final Map<String, Class<?>> arguments;
 
     /**
-     * Create wrapper around the given class that implements
-     * <code>Commandable</code>.
+     * Create a meta inforamtion node in the hierarchy of available commands
+     * that contains the given commandable class.
      * 
-     * @param taskClass
+     * @param commandableClass
      *            The task class.
      */
-    public CommandNode(Class<? extends Commandable> taskClass) {
+    public CommandNode(Class<? extends Commandable> commandableClass) {
         this.assignments = new TreeMap<String, Assignment>();
         
-        Command command = taskClass.getAnnotation(Command.class);
+        Command command = commandableClass.getAnnotation(Command.class);
         String name;
         if (command == null || command.name().equals("")) {
-            String className = taskClass.getCanonicalName();
+            String className = commandableClass.getCanonicalName();
             className = className.replaceFirst("^.*\\.", "");
             className = className.replaceFirst("Command$", "");
             name = hyphenate(className);
@@ -79,7 +80,7 @@ class CommandNode implements MetaCommand {
             parent = command.parent();
         }
 
-        gatherAssignments(taskClass, assignments);
+        gatherAssignments(commandableClass, assignments);
 
         Map<String, Class<?>> arguments = new HashMap<String, Class<?>>();
         for (Map.Entry<String, Assignment> entry : assignments.entrySet()) {
@@ -87,7 +88,7 @@ class CommandNode implements MetaCommand {
         }
 
         this.arguments = Collections.unmodifiableMap(arguments);
-        this.taskClass = taskClass;
+        this.taskClass = commandableClass;
         this.name = name;
         this.parent = parent;
         this.commands = new TreeMap<String, CommandNode>();
@@ -132,10 +133,20 @@ class CommandNode implements MetaCommand {
         return parent;
     }
 
+    /**
+     * Get the map of argument names to their assignment meta information.
+     * 
+     * @return The assignments.
+     */
     public Map<String, Assignment> getAssignments() {
         return assignments;
     }
-    
+
+    /**
+     * Get the map of arguments accepted by the command to their types.
+     * 
+     * @return The map of arguments accepted by the command to their types.
+     */
     public Map<String, Class<?>> getArguments() {
         return arguments;
     }
@@ -162,7 +173,7 @@ class CommandNode implements MetaCommand {
         return string.toString();
     }
 
-    public static void gatherAssignments(Class<?> arguableClass, Map<String, Assignment> assignment) {
+    private static void gatherAssignments(Class<?> arguableClass, Map<String, Assignment> assignment) {
         for (java.lang.reflect.Method method : arguableClass.getMethods()) {
             if (method.getName().startsWith("add")
                 && method.getName().length() != 3

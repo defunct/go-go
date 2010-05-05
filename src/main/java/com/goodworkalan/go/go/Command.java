@@ -16,11 +16,25 @@ import java.lang.annotation.Target;
 @Target({ ElementType.TYPE })
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Command {
+    /**
+     * The command line as exposed to the command line. This name can contain
+     * alphanumeric characters, hyphens and underlines.
+     */
     String name() default "";
-    
-    boolean hidden() default false;
-    
+
+    /**
+     * Whether or not to cache the output of command for a particular command
+     * line.
+     * 
+     * @return True if the command output should be cached.
+     */
     boolean cache() default true;
-    
+
+    /**
+     * The parent command in the command hierarchy or {@link Commandable} if
+     * this is a root command.
+     * 
+     * @return The parent command.
+     */
     Class<? extends Commandable> parent() default Commandable.class;
 }
