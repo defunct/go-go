@@ -56,7 +56,7 @@ class CommandNode implements MetaCommand {
     private final Map<String, Class<?>> arguments;
 
     /**
-     * Create a meta inforamtion node in the hierarchy of available commands
+     * Create a meta information node in the hierarchy of available commands
      * that contains the given commandable class.
      * 
      * @param commandableClass
@@ -173,6 +173,16 @@ class CommandNode implements MetaCommand {
         return string.toString();
     }
 
+    /**
+     * Gather the arguments in the given class, create a assignment meta
+     * information object, and add it to the given map of argument names to meta
+     * information assignments.
+     * 
+     * @param arguableClass
+     *            The class to harvest for arguments.
+     * @param assignment
+     *            The map of argument names to meta information objects.
+     */
     private static void gatherAssignments(Class<?> arguableClass, Map<String, Assignment> assignment) {
         for (java.lang.reflect.Method method : arguableClass.getMethods()) {
             if (method.getName().startsWith("add")

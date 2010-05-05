@@ -47,22 +47,31 @@ public class Environment {
     /** The list of arguments remaining. */
     public final List<String> remaining = new ArrayList<String>();
     
+    /**
+     * The set of path parts to add to the class path after the commandable
+     * completes.
+     */
     final Set<PathPart> pathParts = new LinkedHashSet<PathPart>();
 
+    /**
+     * The list of commandables to execute after the current commandable
+     * completes.
+     */
     final LinkedList<Commandable> hiddenCommands;
     
+    /** The exit code assigned by the commandable. */
     Integer exitCode;
 
-    /** The verbosity. */
-    public final int verbosity;
-    
+    /** The verbosity at each level of the stack. */
+    final List<Integer> verbosity = new ArrayList<Integer>();
+
     /**
      * Create a new environment.
      * 
+     * @param library
+     *            The library.
      * @param io
      *            The input/output streams.
-     * @param part
-     *            The command part for the current task.
      * @param execution
      *            The execution state.
      */
@@ -71,69 +80,176 @@ public class Environment {
         this.library = library;
         this.io = io;
         this.executor = executor;
-        this.verbosity = 0;
         this.hiddenCommands = new LinkedList<Commandable>();
     }
 
     /**
-     * Necessary to keep vebosity final, the only way to increment verbosity is
-     * to create a new object.
+     * Internal structure creates a copy of the given environment with some
+     * alterations. The given executor is used as the executor. The given
+     * commandable class is used as an error message context. Command stack
+     * based lists, lists that have an entry for each command in the command
+     * stack, are copied up to the given stack limit
      * 
      * @param env
      *            The environment to copy.
-     * @param verbosityIncrement
-     *            The value to add to the verbosity.
+     * @param executor
+     *            The executor.
+     * @param commandableClass
+     *            The commandable class used as the error message context.
+     * @param stackLimit
+     *            The length of elements to copy from command stack based lists.
      */
-    private Environment(Environment env, Class<? extends Commandable> commandableClass, int offset, int verbosityIncrement, Executor executor) {
+    private Environment(Environment env, Executor executor, Class<? extends Commandable> commandableClass, int stackLimit) {
         this.commandableClass = commandableClass;
         this.library = env.library;
         this.io = env.io;
         this.executor = executor;
-        this.commands.addAll(env.commands.subList(0, offset));
-        this.arguments.addAll(env.arguments.subList(0, offset));
-        this.conversions.addAll(env.conversions.subList(0, offset));
+        this.commands.addAll(env.commands.subList(0, stackLimit));
+        this.arguments.addAll(env.arguments.subList(0, stackLimit));
+        this.conversions.addAll(env.conversions.subList(0, stackLimit));
         this.parentOutputs.addAll(env.parentOutputs);
-        this.verbosity = env.verbosity + verbosityIncrement;
+        this.verbosity.addAll(env.verbosity);
         this.hiddenCommands = env.hiddenCommands;
-        if (offset == env.commands.size()) {
+        if (stackLimit == env.commands.size()) {
             this.remaining.addAll(env.remaining);
         }
     }
-    
-    Environment(Environment env, int verbosityIncrement) {
-        this(env, env.commandableClass, env.commands.size(), verbosityIncrement, env.executor);
-    }
-    
-    Environment(Environment env, Class<? extends Commandable> commandableClass, int offset) {
-        this(env, commandableClass, offset, 0, env.executor);
-    }
-    
-    Environment(Environment env, Executor executor) {
-        this(env, env.commandableClass, env.commands.size(), 0, executor);
-    }
-    
-    public void verbose(String message, Object...arguments) {
-        verbose(commandableClass, message, arguments);
+
+    /**
+     * Copy the given environment using the given commandable class as the error
+     * message context and copying the command stack based lists up to the given
+     * stack limit.
+     * 
+     * @param env
+     *            The environment to copy.
+     * @param commandableClass
+     *            The commandable class used as the error message context.
+     * @param stackLimit
+     *            The length of elements to copy from command stack based lists.
+     */
+    Environment(Environment env, Class<? extends Commandable> commandableClass, int stackLimit) {
+        this(env, env.executor, commandableClass, stackLimit);
     }
 
-    public void verbose(Class<?> context, String token, Object...arguments) {
+    /**
+     * Create a copy of the given environment with the given executor.
+     * 
+     * @param env
+     *            The environment to copy.
+     * @param executor
+     *            The executor.
+     */
+    Environment(Environment env, Executor executor) {
+        this(env, executor, env.commandableClass, env.commands.size());
+    }
+
+    /**
+     * Format the message format with the given key using the given arguments
+     * and write to standard error if the verbose argument has been specified at
+     * least once on the command line for this command or any parent commands.
+     * The message bundle message bundle found in the package of the commandable
+     * class. The message format is found in a using a key made by catenating
+     * the commandable class name, a slash, and the given message key.
+     * 
+     * @param messageKey
+     *            The message format key.
+     * @param arguments
+     *            The message format arguments.
+     */
+    public void verbose(String messageKey, Object...arguments) {
+        verbose(commandableClass, messageKey, arguments);
+    }
+
+    /**
+     * Format the message format in the message bundle found in the package of
+     * the given context class with the given key using the given arguments and
+     * write to standard error if the verbose argument has been specified at
+     * least once on the command line for this command or any parent commands.
+     * The message bundle message bundle found in the package of the given
+     * context class. The message format is found in a using a key made by
+     * catenating the context class name, a slash, and the given message key.
+     * 
+     * @param messageKey
+     *            The message format key.
+     * @param arguments
+     *            The message format arguments.
+     */
+    public void verbose(Class<?> context, String token, Object... arguments) {
         error(1, context, token, arguments);
     }
-    
+
+    /**
+     * Format the message format with the given key using the given arguments
+     * and write to standard error if the verbose argument has been specified at
+     * least twice on the command line for this command or any parent commands.
+     * The message bundle message bundle found in the package of the commandable
+     * class. The message format is found in a using a key made by catenating
+     * the commandable class name, a slash, and the given message key.
+     * 
+     * @param messageKey
+     *            The message format key.
+     * @param arguments
+     *            The message format arguments.
+      */
     public void debug(String message, Object...arguments) {
         debug(commandableClass, message, arguments);
     }
 
+    /**
+     * Format the message format in the message bundle found in the package of
+     * the given context class with the given key using the given arguments and
+     * write to standard error if the verbose argument has been specified at
+     * least twice on the command line for this command or any parent commands.
+     * The message bundle message bundle found in the package of the given
+     * context class. The message format is found in a using a key made by
+     * catenating the context class name, a slash, and the given message key.
+     * 
+     * @param messageKey
+     *            The message format key.
+     * @param arguments
+     *            The message format arguments.
+     */
     public void debug(Class<?> context, String token, Object...arguments) {
         error(2, context, token, arguments);
     }
 
+    /**
+     * Format the message format in the message bundle found in the package of
+     * the given context class with the given key using the given arguments and
+     * write to standard error if the verbose argument has been specified at
+     * least as many times as the given level on the command line for this
+     * command or any parent commands. The message bundle message bundle found
+     * in the package of the given context class. The message format is found in
+     * a using a key made by catenating the context class name, a slash, and the
+     * given message key.
+     * 
+     * @param messageKey
+     *            The message format key.
+     * @param arguments
+     *            The message format arguments.
+     */
     public void error(int level, Class<?> context, String token, Object...arguments) {
-        if (verbosity >= level) {
-            error(context, token, arguments);
+        for (int i = 0, stop = verbosity.size(); i < stop; i++) {
+            if (verbosity.get(i) >= level) {
+                error(context, token, arguments);
+                break;
+            }
         }
     }
 
+    /**
+     * Format the message format in the message bundle found in the package of
+     * the given context class with the given key using the given arguments and
+     * write to standard error. The message bundle message bundle found
+     * in the package of the given context class. The message format is found in
+     * a using a key made by catenating the context class name, a slash, and the
+     * given message key.
+     * 
+     * @param messageKey
+     *            The message format key.
+     * @param arguments
+     *            The message format arguments.
+     */
     public void error(Class<?> context, String token, Object...arguments) {
         error(io, context, token, arguments);
     }
@@ -225,28 +341,105 @@ public class Environment {
         return null;
     }
 
-    public void extendClassPath(PathPart part) {
-        pathParts.add(part);
+    /**
+     * Extend the current class path with the given part for all descendant
+     * commands in the command line. If any of the path parts are not in the
+     * current class path, a new class loader is created that will lookup
+     * classes in the missing path parts and a new thread is launched to execute
+     * the descendant commands in the command line. The extended class path will
+     * apply to any commands added by the {@link #invokeAfter(Commandable)
+     * invokeAfter} method.
+     * 
+     * @param pathPart
+     *            The path part to add to the class path.
+     */
+    public void extendClassPath(PathPart pathPart) {
+        pathParts.add(pathPart);
     }
 
+    /**
+     * Execute the given commandable after this commandable and before any
+     * commandables mapped to descendant commands in the command line. Multple
+     * commandables added with this method will be executed in the order in
+     * which they are added. Commandables added by this method can in turn add
+     * commandables using this method on their environments.
+     * 
+     * @param commandable
+     *            The commandable to insert into the command hierarchy.
+     */
     public void invokeAfter(Commandable commandable) {
         hiddenCommands.add(commandable);
     }
-    
+
+    /**
+     * Record the given output object. The output object is available to other
+     * commands as a return object requested by class, or through one of the get
+     * methods locatable by class and heirarchy index or class and command line
+     * arguments FIXME (hmm...shouldn't that be run?).
+     * 
+     * @param output
+     *            The output.
+     */
     public void output(Object output) {
         outputs.add(output);
     }
-    
+
+    /**
+     * Add a command to the list of command names creating a new element in each
+     * of the command stack based lists.
+     * 
+     * @param command
+     *            The name of the command to add.
+     */
     void addCommand(String command) {
         commands.add(command);
         arguments.add(new ArrayList<String>());
         conversions.add(new ArrayList<Conversion>());
+        verbosity.add(0);
     }
-    
-    public MetaCommand getMetaCommand(Class<? extends Commandable> commandClass) {
-        return executor.commandNodes.get(commandClass);
+
+    /**
+     * Get the meta information for the giveen commandable class.
+     * 
+     * @param commandableClass
+     *            The commandable class.
+     * @return The meta information for the given commandable class or null if
+     *         the given commandable class has not been loaded.
+     */
+    public MetaCommand getMetaCommand(Class<? extends Commandable> commandableClass) {
+        return executor.commandNodes.get(commandableClass);
     }
-    
+
+    /**
+     * Set the exit code for the execution. The exit code will be set after the
+     * {@link Commandable#execute(Environment) execute} method of the
+     * commandable completes and the current command will terminate.
+     * <p>
+     * No further commands will be executed in the command line. The error code
+     * will be returned to the caller, or if the caller is expecting an output
+     * object and the exit code is non-zero, an unchecked exception will be
+     * raised for the caller to catch.
+     * <p>
+     * To exit before the commandable completes, raise an {@link Exit}
+     * exception. The result for the caller will be the same as calling this
+     * method.
+     * <p>
+     * System exit is called only if this is the first command run and the the
+     * caller who initiated the entire program uses the result of execution as
+     * the system exit code. Calling the various <code>run</code> methods of the
+     * <code>Executor</code> will not cause the system to exit. They will
+     * instead return the exit code of the sub command or raise an exception if
+     * the caller is expecting an output object as a return value. The
+     * {@link Go#execute(List, String...) Go.execute} method returns the exit
+     * code of the first command executed. Whether or not that is used as a
+     * parameter to system exit is determined by the actions of the
+     * <code>Go.execute</code> caller.The Jav-a-Go-Go boot class invoked with
+     * the commnad <code>java go.go</code> does, in fact, use the result of
+     * <code>Go.execute</code> as the system exit.
+     * 
+     * @param code
+     *            The exit code.
+     */
     public void exit(int code) {
         this.exitCode = code;
     }

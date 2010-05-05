@@ -272,7 +272,7 @@ public class Executor {
         return extend(env, CommandNode, arguments, offset, outcomeClass);
     }
 
-    private Environment argument(Environment env, CommandNode CommandNode, String name, String value) {
+    private void argument(Environment env, CommandNode CommandNode, String name, String value) {
         String command = env.commands.getLast();
         if (name.indexOf(':') == -1) {
             name = command + ':' + name;
@@ -297,50 +297,48 @@ public class Executor {
         Assignment assignment = null;
         
         if(qualified[1].equals("verbose")) {
-            return new Environment(env, 1);
-        }
-
-        if (qualified[1].equals("no-verbose")) {
-            return new Environment(env, -1);
-        }
-
-        // Check for a negated boolean flag.
-        if (value == null) {
-            // FIXME Ensure that there are no arguments beginning with no.
-            if (qualified[1].startsWith("no-")) {
-                String negate = qualified[1].substring(3);
-                    assignment = actualCommandNode.getAssignments().get(negate); 
-                    if (assignment != null) {
-                        if (Primitives.box(assignment.setter.getType()).equals(Boolean.class)) {
-                            name = actualCommandNode.getName() + ':' + negate;
-                            value = "false";
-                        } else {
-                            assignment = null;
+            int index = env.verbosity.size() - 1;
+            env.verbosity.set(index, env.verbosity.get(index) + 1);
+        } else if (qualified[1].equals("no-verbose")) {
+            int index = env.verbosity.size() - 1;
+            env.verbosity.set(index, env.verbosity.get(index) - 1);
+        } else {
+            // Check for a negated boolean flag.
+            if (value == null) {
+                // FIXME Ensure that there are no arguments beginning with no.
+                if (qualified[1].startsWith("no-")) {
+                    String negate = qualified[1].substring(3);
+                        assignment = actualCommandNode.getAssignments().get(negate); 
+                        if (assignment != null) {
+                            if (Primitives.box(assignment.setter.getType()).equals(Boolean.class)) {
+                                name = actualCommandNode.getName() + ':' + negate;
+                                value = "false";
+                            } else {
+                                assignment = null;
+                            }
                         }
                     }
-                }
-        }
-        
-        // If the value is not specified, but the type is boolean, then
-        // the presence of the argument means true. 
-        if (assignment == null) {
-            assignment = actualCommandNode.getAssignments().get(qualified[1]); 
+            }
+            
+            // If the value is not specified, but the type is boolean, then
+            // the presence of the argument means true. 
             if (assignment == null) {
-                throw new GoException(0);
+                assignment = actualCommandNode.getAssignments().get(qualified[1]); 
+                if (assignment == null) {
+                    throw new GoException(0);
+                }
+                if (value == null && Primitives.box(assignment.setter.getType()).equals(Boolean.class)) {
+                    value = "true";
+                }
             }
-            if (value == null && Primitives.box(assignment.setter.getType()).equals(Boolean.class)) {
-                value = "true";
+            
+            try {
+                env.conversions.getLast().add(new Conversion(qualified[0], qualified[1], assignment.infuser.infuse(value)));
+            } catch (InfusionException e) {
+                throw new GoException(0, e);
             }
+            env.arguments.getLast().add("--" + qualified[0] + ':' + qualified[1] + '=' + value);
         }
-        
-        try {
-            env.conversions.getLast().add(new Conversion(qualified[0], qualified[1], assignment.infuser.infuse(value)));
-        } catch (InfusionException e) {
-            throw new GoException(0, e);
-        }
-        env.arguments.getLast().add("--" + qualified[0] + ':' + qualified[1] + '=' + value);
-
-        return env;
     }
     
     private Outcome extend(Environment env, CommandNode CommandNode, List<String> arguments, int offset, Class<?> outcomeClass) {
@@ -356,7 +354,7 @@ public class Executor {
                     String[] pair = argument.substring(2).split("=", 2);
                     String name = pair[0];
                     String value = pair.length == 1 ? null : pair[1]; 
-                    env = argument(env, CommandNode, name, value);
+                    argument(env, CommandNode, name, value);
                 } else {
                     Artifact artifact = programs.get(flatten(env.commands, argument));
                     if (artifact != null) {
