@@ -77,7 +77,7 @@ public class go implements Runnable, UncaughtExceptionHandler {
         String[][] artifacts = new String[][] {
                 new String[] { "go-go", "0.1.4.7" },
                 new String[] { "danger", "0.1" },
-                new String[] { "verbiage", "0.1.0.1" },
+                new String[] { "verbiage", "0.1.0.2" },
                 new String[] { "infuse", "0.1" },
                 new String[] { "retry", "0.1" },
                 new String[] { "class-boxer", "0.1" },
