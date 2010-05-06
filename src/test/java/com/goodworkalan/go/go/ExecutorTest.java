@@ -18,7 +18,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Vector;
-import java.util.concurrent.ThreadPoolExecutor;
 
 import org.testng.annotations.Test;
 
@@ -43,9 +42,7 @@ public class ExecutorTest {
         programs.put(Arrays.asList("snap"), new Artifact("com.goodworkalan/example/0.1"));
         programs.put(Arrays.asList("snap", "watusi"), new Artifact("com.goodworkalan/dummy/0.1"));
         Library library = new Library(getLibrary("a"), getLibrary("b"));
-        ProgramThreadFactory threadFactory = new ProgramThreadFactory();
-        ThreadPoolExecutor threadPool = ProgramQueue.getThreadPoolExecutor(threadFactory);
-        Executor executor = new Executor(new ReflectiveFactory(), library, programs, threadFactory, threadPool, 0);
+        Executor executor = new Executor(new ReflectiveFactory(), library, programs, 0);
         
         String hello = executor.run(String.class, new InputOutput(), "snap", "watusi", "--repeat=Hello");
         assertEquals(hello, "Hello");
@@ -117,9 +114,7 @@ public class ExecutorTest {
     private Executor getExecutor() {
         Map<List<String>, Artifact> programs = new HashMap<List<String>, Artifact>();
         Library library = new Library(getLibrary("a"), getLibrary("b"));
-        ProgramThreadFactory threadFactory = new ProgramThreadFactory();
-        ThreadPoolExecutor threadPool = ProgramQueue.getThreadPoolExecutor(threadFactory);
-        Executor executor = new Executor(new ReflectiveFactory(), library, programs, threadFactory, threadPool, 0);
+        Executor executor = new Executor(new ReflectiveFactory(), library, programs, 0);
         return executor;
     }
 }

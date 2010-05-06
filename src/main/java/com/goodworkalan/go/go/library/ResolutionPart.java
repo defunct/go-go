@@ -51,4 +51,8 @@ public class ResolutionPart extends ExpandingPathPart {
     public Set<Exclude> getExcludes() {
         return include.getExcludes();
     }
+    
+    public String toString() {
+        return include.getArtifact().toString();
+    }
 }

@@ -5,6 +5,7 @@ import static com.goodworkalan.go.go.GoException.INVALID_EXCLUDE;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 
 import com.goodworkalan.go.go.GoException;
@@ -25,6 +26,13 @@ public class Exclude extends ArrayList<String> {
             throw new GoException(INVALID_EXCLUDE, exclude);
         }
         addAll(Arrays.asList(split[0], split[1]));
+    }
+    
+    public Exclude(List<String> copy) {
+        super(copy);
+        if (copy.size() != 2) {
+            throw new IllegalArgumentException();
+        }
     }
     
     

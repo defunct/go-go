@@ -27,14 +27,15 @@ import java.util.TreeMap;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
-import java.util.concurrent.ThreadPoolExecutor;
 
 import com.goodworkalan.go.go.library.Artifact;
 import com.goodworkalan.go.go.library.Exclude;
 import com.goodworkalan.go.go.library.Library;
 import com.goodworkalan.go.go.library.PathPart;
+import com.goodworkalan.go.go.library.PathParts;
 import com.goodworkalan.go.go.library.ResolutionPart;
 import com.goodworkalan.ilk.Ilk;
+import com.goodworkalan.ilk.Ilk.Box;
 import com.goodworkalan.infuse.InfusionException;
 import com.goodworkalan.reflective.ReflectiveException;
 import com.goodworkalan.reflective.ReflectiveFactory;
@@ -52,15 +53,6 @@ public class Executor {
     
     /** Used to construct commands. */
     private final ReflectiveFactory reflective;
-    
-    /**
-     * The thread factory that extends the class path by setting the context
-     * class loader with a class loader built from a path part collection.
-     */
-    private final ProgramThreadFactory threadFactory;
-    
-    /** An executor service. */
-    private final ThreadPoolExecutor threadPool;
     
     /** A map of commands and their arguments to a list of their outputs. */ 
     private final Map<List<String>, List<Ilk.Box>> outputCache = new HashMap<List<String>, List<Ilk.Box>>();
@@ -130,7 +122,7 @@ public class Executor {
      * @param artifactFile
      *            The artifact file.
      */
-    Executor(ReflectiveFactory reflective, Library library, Map<List<String>, Artifact> programs, ProgramThreadFactory threadFactory, ThreadPoolExecutor threadPool, int systemVerbosity) {
+    Executor(ReflectiveFactory reflective, Library library, Map<List<String>, Artifact> programs, int systemVerbosity) {
         seen.add(new Exclude("com.github.bigeasy.danger/danger"));
         seen.add(new Exclude("com.github.bigeasy.verbiage/verbiage"));
         seen.add(new Exclude("com.github.bigeasy.go-go/go-go"));
@@ -143,8 +135,6 @@ public class Executor {
         this.reflective = reflective;
         this.library = library;
         this.parent = null;
-        this.threadFactory = threadFactory;
-        this.threadPool = threadPool;
         this.systemVerbosity = systemVerbosity;
     }
 
@@ -153,10 +143,11 @@ public class Executor {
      * 
      * @param parent The parent executor in the thread that spawned this executor or null. 
      */
-    private Executor(Executor parent) {
+    private Executor(Executor parent, Set<Object> seen) {
         this.programs = parent.programs;
         this.reflective = parent.reflective;
         this.seen.addAll(parent.seen);
+        this.seen.addAll(seen);
         this.urls.addAll(parent.urls);
         this.parent = parent;
         this.library = parent.library;
@@ -165,8 +156,6 @@ public class Executor {
         this.parts.addAll(parent.parts);
         this.outputCache.putAll(parent.outputCache);
         this.commandableCache.putAll(parent.commandableCache);
-        this.threadFactory = parent.threadFactory;
-        this.threadPool = parent.threadPool;
         this.systemVerbosity = parent.systemVerbosity;
     }
 
@@ -192,22 +181,15 @@ public class Executor {
      *            The path part to add to the class path.
      * @return The collection of path parts not currently in the class path.
      */
-    Collection<PathPart> extendClassPath(Collection<PathPart> artifacts) {
+    Collection<PathPart> extendClassPath(Collection<PathPart> pathPart) {
         List<PathPart> unseen = new ArrayList<PathPart>();
-        for (PathPart artifact : artifacts) {
+        for (PathPart artifact : pathPart) {
             Object key = artifact.getUnversionedKey();
             if (!seen.contains(key)) {
                 unseen.add(artifact);
             }
         }
-        Collection<PathPart> subPath = new ArrayList<PathPart>();
-        if (!unseen.isEmpty()) {
-            subPath = library.resolve(unseen, seen);
-            for (PathPart part : subPath) {
-                seen.add(part.getUnversionedKey());
-            }
-        }
-        return subPath;
+        return unseen;
     }
 
     /**
@@ -424,15 +406,12 @@ public class Executor {
         return execute(env, commands, outcomeType, 0);
     }
 
-    private Ilk.Box loadAfterCommandable(Collection<PathPart> parts, Environment env, final Map<String, CommandNode> commands, final Ilk<?> outcomeType, final int commandIndex) {
-        final Executor childExecutor = new Executor(this);
-        final Environment childEnv = new Environment(env, childExecutor);
-        FutureTask<Ilk.Box> future = new FutureTask<Ilk.Box>(new Callable<Ilk.Box>() {
-            public Ilk.Box call() {
-                return childExecutor.resumeExecute(childEnv, commands, outcomeType, commandIndex);
+    private Ilk.Box loadAfterCommandable(Collection<PathPart> unseen, Environment env, final Map<String, CommandNode> commands, final Ilk<?> outcomeType, final int commandIndex) {
+        return extendClassPath(unseen, env, new FutureBox() {
+            public Box call(Executor exuector, Environment env) {
+                return exuector.resumeExecute(env, commands, outcomeType, commandIndex);
             }
         });
-        return waitForOutcome(parts, future);
     }
     
     private Ilk.Box resumeExecute(Environment env, Map<String, CommandNode> commands, Ilk<?> outcomeType, int commandIndex) {
@@ -488,7 +467,8 @@ public class Executor {
         // Run any hidden commands.
         while (!env.hiddenCommands.isEmpty()) {
             Commandable commandable = env.hiddenCommands.removeFirst();
-            Ilk.Box box = execute(env, commands, env.getCommandKey(0, commandIndex), commandable, commandIndex - 1, outcomeType);
+            List<String> commandKey = env.getCommandKey(0, commandIndex);
+            Ilk.Box box = execute(env, commands, commandKey, commandable, commandIndex - 1, outcomeType);
             if (box != null) {
                 return box;
             }
@@ -511,6 +491,7 @@ public class Executor {
                 for (Class<? extends Commandable> commandableClass : cachedCommandables) {
                     env.hiddenCommands.add(getCommandable(commandableClass));
                 }
+                return execute(env, commands, outcomeType, commandIndex + 1);
             }
 
             Commandable commandable = getCommandable(commandNode.getCommandClass());
@@ -539,7 +520,7 @@ public class Executor {
                 return outcome;
             }
             if (!env.hiddenCommands.isEmpty()) {
-                return execute(env, commands, outcomeType, commandIndex);
+                return execute(env, commands, outcomeType, commandIndex + 1);
             }
         }
         
@@ -562,25 +543,45 @@ public class Executor {
         return taskClass;
     }
     
-    private Ilk.Box load(Collection<PathPart> unseen, Environment env, final CommandNode CommandNode, final List<String> arguments, final int offset, final Ilk<?> outcomeType) {
-        final Executor childExecutor = new Executor(this);
+    private Ilk.Box extendClassPath(Collection<PathPart> unseen, Environment env, final FutureBox box) {
+        Collection<PathPart> subPath = new ArrayList<PathPart>();
+        subPath = library.resolve(unseen, seen);
+        Set<Object> subSeen = new HashSet<Object>();
+        for (PathPart part : subPath) {
+            subSeen.add(part.getUnversionedKey());
+        }
+        final Executor childExecutor = new Executor(this, subSeen);
         final Environment childEnv = new Environment(env, childExecutor);
         FutureTask<Ilk.Box> future = new FutureTask<Ilk.Box>(new Callable<Ilk.Box>() {
             public Ilk.Box call() {
-                return childExecutor.resume(childEnv, CommandNode, arguments, offset, outcomeType);
+                return box.call(childExecutor, childEnv);
             }
         });
-        return waitForOutcome(unseen, future);
-    }
-
-    private Ilk.Box waitForOutcome(Collection<PathPart> parts, FutureTask<Ilk.Box> future) {
-        threadFactory.partsQueue.offer(parts);
-        threadPool.execute(future);
+        final Thread thread = new Thread(future);
+        thread.setContextClassLoader(PathParts.getClassLoader(subPath, Thread.currentThread().getContextClassLoader()));
+        thread.start();
+        Retry.retry(new Retry.Procedure() {
+            public void retry() throws InterruptedException {
+                thread.join();
+            }
+        });
         try {
             return Retry.retry(future);
         } catch (ExecutionException e) {
             throw new GoException(FUTURE_EXECUTION, e);
         }
+    }
+    
+    private interface FutureBox {
+        public Ilk.Box call(Executor exuector, Environment env);
+    }
+
+    private Ilk.Box load(Collection<PathPart> unseen, Environment env, final CommandNode CommandNode, final List<String> arguments, final int offset, final Ilk<?> outcomeType) {
+        return extendClassPath(unseen, env, new FutureBox() {
+            public Box call(Executor executor, Environment env) {
+                return executor.resume(env, CommandNode, arguments, offset, outcomeType);
+            }
+        });
     }
 
     Ilk.Box start(InputOutput io, List<String> arguments, Ilk<?> outcomeType) {

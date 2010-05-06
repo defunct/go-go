@@ -102,15 +102,13 @@ public class Environment {
         this.library = env.library;
         this.io = env.io;
         this.executor = executor;
-        this.commands.addAll(env.commands.subList(0, stackLimit));
-        this.arguments.addAll(env.arguments.subList(0, stackLimit));
-        this.conversions.addAll(env.conversions.subList(0, stackLimit));
+        this.commands.addAll(env.commands);
+        this.arguments.addAll(env.arguments);
+        this.conversions.addAll(env.conversions);
         this.parentOutputs.addAll(env.parentOutputs);
         this.verbosity.addAll(env.verbosity);
         this.hiddenCommands = env.hiddenCommands;
-        if (stackLimit == env.commands.size()) {
-            this.remaining.addAll(env.remaining);
-        }
+        this.remaining.addAll(env.remaining);
     }
 
     /**

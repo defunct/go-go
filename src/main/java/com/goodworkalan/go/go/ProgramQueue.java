@@ -3,7 +3,7 @@ package com.goodworkalan.go.go;
 import static com.goodworkalan.go.go.GoError.COMMAND_LINE_NO_ARGUMENTS;
 import static com.goodworkalan.go.go.GoError.INVALID_ARGUMENT;
 import static com.goodworkalan.go.go.GoError.INVALID_DEFINE_PARAMETER;
-import static com.goodworkalan.go.go.GoException.*;
+import static com.goodworkalan.go.go.GoException.FUTURE_EXECUTION;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -18,10 +18,6 @@ import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
-import java.util.concurrent.SynchronousQueue;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 import com.goodworkalan.go.go.library.Artifact;
 import com.goodworkalan.go.go.library.Library;
@@ -34,17 +30,6 @@ import com.goodworkalan.retry.Retry;
  * @author Alan Gutierrez
  */
 class ProgramQueue {
-    /**
-     * The thread factory that extends the class path by setting the context
-     * class loader with a class loader built from a path part collection.
-     */
-    private final ProgramThreadFactory threadFactory;
-    
-    /**
-     * An executor service.
-     */
-    private final ThreadPoolExecutor threadPool;
-
     private int verbosity = 0;
     
     /** The list of libraries. */
@@ -64,10 +49,6 @@ class ProgramQueue {
     
     /** The number of threads running. */
     private int threadCount;
-    
-    public static ThreadPoolExecutor getThreadPoolExecutor(ThreadFactory threadFactory) {
-        return new ThreadPoolExecutor(0, Integer.MAX_VALUE, 1L, TimeUnit.SECONDS, new SynchronousQueue<Runnable>(), threadFactory);
-    }
     
     public ProgramQueue(List<File> libraries, String...arguments) {
         LinkedList<String> args = new LinkedList<String>(Arrays.asList(arguments));
@@ -137,8 +118,6 @@ class ProgramQueue {
         this.libraries = libraries;
         this.arguments = new ArrayList<String>(args);
         this.programs = commands;
-        this.threadFactory = new ProgramThreadFactory();
-        this.threadPool = getThreadPoolExecutor(threadFactory);
     }
     
 
@@ -188,7 +167,7 @@ class ProgramQueue {
     }
     
     private int runProgram(InputOutput io, List<String> arguments) {
-        Executor executor = new Executor(new ReflectiveFactory(), new Library(libraries.toArray(new File[libraries.size()])), programs, threadFactory, threadPool, verbosity);
+        Executor executor = new Executor(new ReflectiveFactory(), new Library(libraries.toArray(new File[libraries.size()])), programs,  verbosity);
         verbose(io, "start", arguments);
         long start = System.currentTimeMillis();
         int code = 0;
@@ -233,7 +212,6 @@ class ProgramQueue {
             // FIXME Unpack here?
             throw new GoException(FUTURE_EXECUTION, e);
         }
-        threadPool.shutdown();
         return code;
     }
 
@@ -246,7 +224,7 @@ class ProgramQueue {
             while (threadCount > 0 || !executions.isEmpty()) {
                 if (!executions.isEmpty()) {
                     threadCount++;
-                    threadPool.execute(executions.removeFirst());
+                    new Thread(executions.removeFirst()).start();
                 }
                 Retry.retry(new Retry.Procedure() {
                     public void retry() throws InterruptedException {

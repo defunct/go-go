@@ -89,4 +89,8 @@ public class DirectoryPart implements PathPart {
     public Set<Exclude> getExcludes() {
         return Collections.<Exclude>emptySet();
     }
+    
+    public String toString() {
+        return dir.toString();
+    }
 }

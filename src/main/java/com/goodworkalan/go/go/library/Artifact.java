@@ -145,7 +145,7 @@ public class Artifact {
      * @return The unversioned key.
      */
     public List<String> getUnversionedKey() {
-        return getKey().subList(0, 2);
+        return new Exclude(getKey().subList(0, 2));
     }
 
     /**

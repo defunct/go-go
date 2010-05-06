@@ -97,4 +97,8 @@ public class ArtifactPart implements PathPart {
     public Set<Exclude> getExcludes() {
         return excludes;
     }
+    
+    public String toString() {
+        return artifact.toString();
+    }
 }
