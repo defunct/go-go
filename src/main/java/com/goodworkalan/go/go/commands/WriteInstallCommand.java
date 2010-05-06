@@ -23,12 +23,10 @@ import com.goodworkalan.go.go.GoException;
 import com.goodworkalan.go.go.MetaCommand;
 import com.goodworkalan.go.go.library.Artifact;
 import com.goodworkalan.go.go.library.ArtifactPart;
+import com.goodworkalan.go.go.library.Include;
 
 public class WriteInstallCommand implements Commandable {
-    private final Artifact artifact;
-    
-    public WriteInstallCommand(Artifact artifact) {
-        this.artifact = artifact;
+    public WriteInstallCommand() {
     }
     
     @SuppressWarnings("unchecked")
@@ -40,8 +38,14 @@ public class WriteInstallCommand implements Commandable {
     }
 
     public void execute(Environment env) {
+        for (String artifact : env.remaining) {
+            record(env, new Artifact(artifact));
+        }
+    }
+    
+    public void record(Environment env, Artifact artifact) {
         ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-        ArtifactPart found = env.library.getArtifactPart(artifact);
+        ArtifactPart found = env.library.getArtifactPart(new Include(artifact), "dep", "jar");
         List<String> commands = new ArrayList<String>();
         try {
             ZipFile zip = new ZipFile(new File(found.getLibraryDirectory(), found.getArtifact().getPath("jar")));

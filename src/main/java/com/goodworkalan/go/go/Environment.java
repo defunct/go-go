@@ -5,6 +5,7 @@ import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.MissingFormatArgumentException;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
@@ -58,7 +59,7 @@ public class Environment {
      * The list of commandables to execute after the current commandable
      * completes.
      */
-    final LinkedList<Commandable> hiddenCommands;
+    final LinkedList<Class<? extends Commandable>> commandables;
 
     /** The verbosity at each level of the stack. */
     final List<Integer> verbosity = new ArrayList<Integer>();
@@ -78,7 +79,7 @@ public class Environment {
         this.library = library;
         this.io = io;
         this.executor = executor;
-        this.hiddenCommands = new LinkedList<Commandable>();
+        this.commandables = new LinkedList<Class<? extends Commandable>>();
     }
 
     /**
@@ -107,7 +108,7 @@ public class Environment {
         this.conversions.addAll(env.conversions);
         this.parentOutputs.addAll(env.parentOutputs);
         this.verbosity.addAll(env.verbosity);
-        this.hiddenCommands = env.hiddenCommands;
+        this.commandables = env.commandables;
         this.remaining.addAll(env.remaining);
     }
 
@@ -313,12 +314,12 @@ public class Environment {
      * @return The output object or null if none exists.
      */
     public <T> T get(Class<T> type, int index) {
-        return get(new Ilk<T>(type), 0);
+        return get(new Ilk<T>(type), index);
     }
     
     public <T> T get(Ilk<T> ilk, int index) {
         for (Ilk.Box box : parentOutputs.get(index)) {
-            if (ilk.key.isAssignableFrom(box.getKey())) {
+            if (ilk.key.equals(box.getKey())) {
                 return box.cast(ilk);
             }
         }
@@ -351,8 +352,8 @@ public class Environment {
      * @param commandable
      *            The commandable to insert into the command hierarchy.
      */
-    public void invokeAfter(Commandable commandable) {
-        hiddenCommands.add(commandable);
+    public void invokeAfter(Class<? extends Commandable> commandable) {
+        commandables.add(commandable);
     }
 
     /**
@@ -441,5 +442,53 @@ public class Environment {
             key.addAll(remaining);
         }
         return key;
+    }
+    
+    public List<String> getCommandLine() {
+        return getCommandLine(0, commands.size());
+    }
+
+    public List<String> getCommandLine(int fromIndex) {
+        return getCommandLine(fromIndex, commands.size());
+    }
+    
+    public List<String> getCommandLine(int fromIndex, int toIndex) {
+        if (toIndex > commands.size()) {
+            throw new IndexOutOfBoundsException();
+        }
+        if (fromIndex < 0) {
+            throw new IndexOutOfBoundsException();
+        }
+        List<String> commandLine = new ArrayList<String>();
+        for (int i = fromIndex; i < toIndex; i++) {
+            commandLine.add(commands.get(i));
+            for (String argument : arguments.get(i)) {
+                commandLine.add(argument);
+            }
+        }
+        return commandLine;
+    }
+    
+
+    public static List<String> flatten(Object... arguments) {
+        List<String> flattened = new ArrayList<String>();
+        for (Object object : arguments) {
+            if (object instanceof List<?>) {
+                for (Object item : (List<?>) object) {
+                    flattened.add(item.toString());
+                }
+            } else if (object.getClass().isArray()) {
+                for (Object item : (Object[]) object) {
+                    flattened.add(item.toString());
+                }
+            } else if (object instanceof Map<?, ?>) {
+                for (Map.Entry<?, ?> e : ((Map<?, ?>) object).entrySet()) {
+                    flattened.add("--" + e.getKey() + "=" + e.getValue());
+                } 
+            } else {
+                flattened.add(object.toString());
+            }
+        }
+        return flattened;
     }
 }

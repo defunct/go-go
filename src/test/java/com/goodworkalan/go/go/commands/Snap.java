@@ -36,16 +36,7 @@ public class Snap implements Commandable {
         env.output("Snap was here!");
         if (hidden) {
             env.extendClassPath(new DirectoryPart(Files.file(new File("."), "src", "main", "java").getAbsoluteFile()));
-            env.invokeAfter(new Commandable() {
-                public void execute(Environment env) {
-                    env.extendClassPath(new DirectoryPart(Files.file(new File("."), "src", "main", "java").getAbsoluteFile()));
-                    env.invokeAfter(new Commandable() {
-                        public void execute(Environment env) {
-                            env.extendClassPath(new DirectoryPart(Files.file(new File("."), "src", "main", "resources").getAbsoluteFile()));
-                        }
-                    });
-                }
-            });
+            env.invokeAfter(ExtendInvokeCommand.class);
         }
     }
 }

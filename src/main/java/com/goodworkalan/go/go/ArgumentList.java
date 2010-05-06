@@ -64,6 +64,19 @@ public class ArgumentList extends ArrayList<String> {
         }
         return null;
     }
+    
+    public String replaceArgument(String name, String value) {
+        for (int i = 0, stop = size(); i < stop; i++) {
+            String argument = get(i);
+            String[] pair = argument.substring(2).split("=");
+            if (pair[0].equals(name)) {
+                set(i, "--" + name + "=" + value);
+                return pair[1];
+            }
+        }
+        addArgument(name, value);
+        return null;
+    }
 
     /**
      * Get the first argument with the given qualified name. Returns the value

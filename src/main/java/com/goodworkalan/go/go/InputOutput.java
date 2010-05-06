@@ -1,7 +1,9 @@
 package com.goodworkalan.go.go;
 
+import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.io.PrintStream;
+import java.io.UnsupportedEncodingException;
 
 /**
  * A structure to gather the input/output streams.
@@ -17,6 +19,23 @@ public class InputOutput {
 
     /** The error stream. */
     public final PrintStream err;
+
+    static final InputOutput nulls(String input, String encoding) {
+        PrintStream out = new PrintStream(new NullOutputStream());
+        try {
+            return new InputOutput(new ByteArrayInputStream(input.getBytes(encoding)), out, out);
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException(e);
+        }
+    }
+    
+    public static final InputOutput nulls(String input) {
+        return nulls(input, "UTF-8");
+    }
+    
+    public static final InputOutput nulls() {
+        return nulls("");
+    }
 
     /**
      * Construct an input/output structure using the system input, error, and

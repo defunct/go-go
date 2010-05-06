@@ -1,5 +1,6 @@
 package com.goodworkalan.go.go;
 
+import static com.goodworkalan.go.go.Environment.flatten;
 import static com.goodworkalan.go.go.GoException.ASSIGNMENT_EXCEPTION_THROWN;
 import static com.goodworkalan.go.go.GoException.ASSIGNMENT_FAILED;
 import static com.goodworkalan.go.go.GoException.CANNOT_CREATE_TASK;
@@ -55,10 +56,7 @@ public class Executor {
     private final ReflectiveFactory reflective;
     
     /** A map of commands and their arguments to a list of their outputs. */ 
-    private final Map<List<String>, List<Ilk.Box>> outputCache = new HashMap<List<String>, List<Ilk.Box>>();
-
-    /** A map of commands and their arguments to a list of their outputs. */ 
-    private final Map<List<String>, List<Class<? extends Commandable>>> commandableCache = new HashMap<List<String>, List<Class<? extends Commandable>>>();
+    private final Map<List<String>, CacheEntry> cache = new HashMap<List<String>, CacheEntry>();
 
     /** The parent executor in the thread that spawned this executor or null. */
     private final Executor parent;
@@ -94,27 +92,17 @@ public class Executor {
      *            The command key.
      * @return The output list for the command key.
      */
-    List<Ilk.Box> getCache(List<String> key) {
+    private CacheEntry getCacheEntry(List<String> key) {
         Executor iterator = this;
         while (iterator != null) {
-            if (iterator.outputCache.containsKey(key)) {
-                return iterator.outputCache.get(key);
+            if (iterator.cache.containsKey(key)) {
+                return iterator.cache.get(key);
             }
             iterator = iterator.parent;
         }
         return null;
     }
-    
-    List<Class<? extends Commandable>> getCommandableCache(List<String> key) {
-        Executor iterator = this;
-        while (iterator != null) {
-            if (iterator.commandableCache.containsKey(key)) {
-                return iterator.commandableCache.get(key);
-            }
-            iterator = iterator.parent;
-        }
-        return Collections.emptyList();
-    }
+
     /**
      * Load the tasks found in the libraries specified in the given artifact
      * file. The library dependencies are also loaded.
@@ -154,8 +142,7 @@ public class Executor {
         this.commands.putAll(parent.commands);
         this.commandNodes.putAll(parent.commandNodes);
         this.parts.addAll(parent.parts);
-        this.outputCache.putAll(parent.outputCache);
-        this.commandableCache.putAll(parent.commandableCache);
+        this.cache.putAll(parent.cache);
         this.systemVerbosity = parent.systemVerbosity;
     }
 
@@ -403,56 +390,20 @@ public class Executor {
                 }
             }
         }
-        return execute(env, commands, outcomeType, 0);
+        return execute(env, commands, new CacheEntry(), outcomeType, -1);
     }
 
-    private Ilk.Box loadAfterCommandable(Collection<PathPart> unseen, Environment env, final Map<String, CommandNode> commands, final Ilk<?> outcomeType, final int commandIndex) {
+    private Ilk.Box loadAfterCommandable(Collection<PathPart> unseen, Environment env, final Map<String, CommandNode> commands, final CacheEntry cacheEntry, final Ilk<?> outcomeType, final int commandIndex) {
         return extendClassPath(unseen, env, new FutureBox() {
             public Box call(Executor exuector, Environment env) {
-                return exuector.resumeExecute(env, commands, outcomeType, commandIndex);
+                return exuector.resumeExecute(env, commands, cacheEntry, outcomeType, commandIndex);
             }
         });
     }
     
-    private Ilk.Box resumeExecute(Environment env, Map<String, CommandNode> commands, Ilk<?> outcomeType, int commandIndex) {
+    private Ilk.Box resumeExecute(Environment env, Map<String, CommandNode> commands, CacheEntry cacheEntry, Ilk<?> outcomeType, int commandIndex) {
         readConfigurations(env.io);
-        return execute(env, commands, outcomeType, commandIndex);
-    }
-
-    private Ilk.Box execute(Environment env, Map<String, CommandNode> commands, List<String> commandKey, Commandable commandable, int commandIndex, Ilk<?> outcomeType) {
-        CommandNode commandNode = commandNodes.get(commandable.getClass());
-        boolean cached = commandNode == null ? CommandNode.isCached(commandable.getClass()) : commandNode.isCached();
-        
-        // Create sub environment.
-        Environment subEnv = new Environment(env, commandable.getClass(), commandIndex + 1);
-        
-        boolean terminate = false;
-        
-        // Execute the command.
-        try {
-            commandable.execute(subEnv);
-        } catch (Exit exit) {
-            if (exit.code != 0) {
-                throw new GoException(EXIT, exit);
-            }
-            terminate = true;
-        }
-        env.parentOutputs.get(commandIndex).addAll(subEnv.outputs);
-        if (cached) {
-            outputCache.get(commandKey).addAll(subEnv.outputs);
-        } else {
-            commandableCache.get(commandKey).add(subEnv.commandableClass);
-        }
-        if (terminate) {
-            return chooseBox(env, outcomeType);
-        }
-        if (!subEnv.pathParts.isEmpty()) {
-            Collection<PathPart> unseen = extendClassPath(subEnv.pathParts);
-            if (!unseen.isEmpty()) {
-                return loadAfterCommandable(unseen, env, commands, outcomeType, commandIndex + 1);
-            }
-        }
-        return null;
+        return execute(env, commands, cacheEntry, outcomeType, commandIndex);
     }
     
     private Commandable getCommandable(Class<? extends Commandable> commandableClass) {
@@ -463,21 +414,87 @@ public class Executor {
         }
     }
     
-    private Ilk.Box execute(Environment env, Map<String, CommandNode> commands, Ilk<?> outcomeType, int commandIndex) {
+    private Ilk.Box execute(Environment env, Map<String, CommandNode> commands, CacheEntry cacheEntry, Ilk<?> outcomeType, int commandIndex) {
         // Run any hidden commands.
-        while (!env.hiddenCommands.isEmpty()) {
-            Commandable commandable = env.hiddenCommands.removeFirst();
-            List<String> commandKey = env.getCommandKey(0, commandIndex);
-            Ilk.Box box = execute(env, commands, commandKey, commandable, commandIndex - 1, outcomeType);
-            if (box != null) {
-                return box;
+        for (;;) {
+            while (!env.commandables.isEmpty()) {
+                List<Class<? extends Commandable>> transients = new ArrayList<Class<? extends Commandable>>(env.commandables);
+
+                Class<? extends Commandable> commandableClass = env.commandables.removeFirst();
+
+                CommandNode commandNode = commandNodes.get(commandableClass);
+
+                Commandable commandable = getCommandable(commandableClass);
+                
+                if (commandNode != null) {
+                    // Set the arguments for the command.
+                    for (Conversion conversion : env.conversions.get(commandIndex)) {
+                        if (conversion.command.equals(commandNode.getName())) {
+                            Assignment assignment = commandNode.getAssignments().get(conversion.name);
+                            try {
+                                assignment.setter.set(commandable, conversion.value);
+                            } catch (ReflectiveException e) {
+                                if (e.getCode() == ReflectiveException.INVOCATION_TARGET) {
+                                    throw new GoException(ASSIGNMENT_EXCEPTION_THROWN, e, commandable.getClass().getCanonicalName(), assignment.setter.getNative().getName());
+                                }
+                                throw new GoException(ASSIGNMENT_FAILED, e, commandable.getClass().getCanonicalName(), assignment.setter.getNative().getName());
+                            }
+                        }
+                    }
+                }
+                
+                
+                // Create sub environment.
+                Environment subEnv = new Environment(env, commandable.getClass(), commandIndex + 1);
+                
+                boolean terminate = false;
+                
+                Command command = commandable.getClass().getAnnotation(Command.class);
+                boolean cached = command == null || command.cache();
+
+                // Execute the command.
+                try {
+                    commandable.execute(subEnv);
+                } catch (Exit exit) {
+                    if (exit.code != 0) {
+                        throw new GoException(EXIT, exit);
+                    }
+                    terminate = true;
+                }
+                env.parentOutputs.get(commandIndex).addAll(subEnv.outputs);
+                if (cached) {
+                    if (!cacheEntry.transients.isEmpty()) {
+                        throw new GoException(0, commandable.getClass());
+                    }
+                    cacheEntry.outputs.addAll(subEnv.outputs);
+                    if (cacheEntry.outputs.isEmpty()) {
+                        cacheEntry.outputs.add(new Ilk.Box(new IgnorableOutput()));
+                    }
+                } else if (cacheEntry.transients.isEmpty()) {
+                    cacheEntry.transients.addAll(transients);
+                }
+                if (terminate) {
+                    return chooseBox(env, outcomeType);
+                }
+                if (!subEnv.pathParts.isEmpty()) {
+                    Collection<PathPart> unseen = extendClassPath(subEnv.pathParts);
+                    if (!unseen.isEmpty()) {
+                        return loadAfterCommandable(unseen, env, commands, cacheEntry, outcomeType, commandIndex);
+                    }
+                }
             }
-        }
-        
-        // Go through each command executing if it is not cached.
-        for (int stop = env.commands.size(); env.hiddenCommands.isEmpty() && commandIndex < stop; commandIndex++) {
-            List<String> commandKey = env.getCommandKey(0, commandIndex + 1);
-            List<Ilk.Box> cachedOutputs = getCache(commandKey);
+            
+            if (!cacheEntry.outputs.isEmpty()) {
+                cache.put(env.getCommandKey(0, commandIndex + 1), cacheEntry);
+            }
+            
+            commandIndex++;
+            
+            if (commandIndex == env.commands.size()) {
+                break;
+            }
+            
+            CacheEntry cached = getCacheEntry(env.getCommandKey(0, commandIndex + 1));
 
             // Find the CommandNode.
             CommandNode commandNode = commands.get(env.commands.get(commandIndex));
@@ -485,42 +502,14 @@ public class Executor {
             // Descend the command tree.
             commands = commandNode.commands;
 
-            if (cachedOutputs != null) {
-                env.parentOutputs.add(new ArrayList<Ilk.Box>(cachedOutputs));
-                List<Class<? extends Commandable>> cachedCommandables = getCommandableCache(commandKey);
-                for (Class<? extends Commandable> commandableClass : cachedCommandables) {
-                    env.hiddenCommands.add(getCommandable(commandableClass));
-                }
-                return execute(env, commands, outcomeType, commandIndex + 1);
-            }
-
-            Commandable commandable = getCommandable(commandNode.getCommandClass());
-            
-            // Set the arguments for the command.
-            for (Conversion conversion : env.conversions.get(commandIndex)) {
-                if (conversion.command.equals(commandNode.getName())) {
-                    Assignment assignment = commandNode.getAssignments().get(conversion.name);
-                    try {
-                        assignment.setter.set(commandable, conversion.value);
-                    } catch (ReflectiveException e) {
-                        if (e.getCode() == ReflectiveException.INVOCATION_TARGET) {
-                            throw new GoException(ASSIGNMENT_EXCEPTION_THROWN, e, commandable.getClass().getCanonicalName(), assignment.setter.getNative().getName());
-                        }
-                        throw new GoException(ASSIGNMENT_FAILED, e, commandable.getClass().getCanonicalName(), assignment.setter.getNative().getName());
-                    }
-                }
-            }
-            
-            outputCache.put(commandKey, new ArrayList<Ilk.Box>());
-            commandableCache.put(commandKey, new ArrayList<Class<? extends Commandable>>());
             env.parentOutputs.add(new ArrayList<Ilk.Box>());
-            
-            Ilk.Box outcome = execute(env, commands, commandKey, commandable, commandIndex, outcomeType);
-            if (outcome != null) {
-                return outcome;
-            }
-            if (!env.hiddenCommands.isEmpty()) {
-                return execute(env, commands, outcomeType, commandIndex + 1);
+
+            if (cached != null) {
+                env.parentOutputs.get(commandIndex).addAll(cached.outputs);
+                env.commandables.addAll(cached.transients);
+            } else {
+                cacheEntry = new CacheEntry();
+                env.commandables.add(commandNode.getCommandClass());
             }
         }
         
@@ -630,27 +619,6 @@ public class Executor {
         return outcome.cast(outcomeType);
     }
 
-    private List<String> flatten(Object... arguments) {
-        List<String> flattened = new ArrayList<String>();
-        for (Object object : arguments) {
-            if (object instanceof List<?>) {
-                for (Object item : (List<?>) object) {
-                    flattened.add(item.toString());
-                }
-            } else if (object.getClass().isArray()) {
-                for (Object item : (Object[]) object) {
-                    flattened.add(item.toString());
-                }
-            } else if (object instanceof Map<?, ?>) {
-                for (Map.Entry<?, ?> e : ((Map<?, ?>) object).entrySet()) {
-                    flattened.add("--" + e.getKey() + "=" + e.getValue());
-                } 
-            } else {
-                flattened.add(object.toString());
-            }
-        }
-        return flattened;
-    }
 
     public void fork(InputOutput io, Object...arguments) {
     }

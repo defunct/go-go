@@ -29,6 +29,8 @@ public @interface Command {
      * @return True if the command output should be cached.
      */
     boolean cache() default true;
+    
+    boolean rerun() default false;
 
     /**
      * The parent command in the command hierarchy or {@link Commandable} if
