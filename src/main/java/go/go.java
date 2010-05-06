@@ -75,11 +75,12 @@ public class go implements Runnable, UncaughtExceptionHandler {
 
         // Here's a list of the bootstrap dependencies for Jav-a-Go-Go.
         String[][] artifacts = new String[][] {
-                new String[] { "go-go", "0.1.4.7" },
-                new String[] { "danger", "0.1" },
-                new String[] { "verbiage", "0.1.0.2" },
+                new String[] { "go-go", "0.1.4.11" },
+                new String[] { "danger", "0.1.0.1" },
+                new String[] { "verbiage", "0.1.0.4" },
                 new String[] { "infuse", "0.1" },
                 new String[] { "retry", "0.1" },
+                new String[] { "ilk", "0.1.0.1" },
                 new String[] { "class-boxer", "0.1" },
                 new String[] { "class-association", "0.1" },
                 new String[] { "reflective", "0.1" }
