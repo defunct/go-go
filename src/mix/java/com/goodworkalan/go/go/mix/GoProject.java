@@ -9,10 +9,10 @@ public class GoProject extends ProjectModule {
     public void build(Builder builder) {
         builder
             .cookbook(JavaProject.class)
-                .produces("com.github.bigeasy.go-go/go-go/0.1.4.11")
+                .produces("com.github.bigeasy.go-go/go-go/0.1.4.12")
                 .main()
                     .depends()
-                        .include("com.github.bigeasy.reflective/reflective/0.+1")
+                        .include("com.github.bigeasy.reflective/reflective-setter/0.+1")
                         .include("com.github.bigeasy.ilk/ilk/0.+1")
                         .include("com.github.bigeasy.danger/danger/0.+1")
                         .include("com.github.bigeasy.retry/retry/0.+1")
@@ -22,7 +22,7 @@ public class GoProject extends ProjectModule {
                     .end()
                 .test()
                     .depends()
-                        .include("com.github.bigeasy.comfort-io/comfort-io/0.1.1")
+                        .include("com.github.bigeasy.comfort-io/comfort-io/0.+1.1")
                         .include("org.slf4j/slf4j-log4j12/1.4.2")
                         .include("org.testng/testng-jdk15/5.10")
                         .include("org.mockito/mockito-core/1.6")

@@ -7,6 +7,7 @@ import org.testng.annotations.Test;
 import com.goodworkalan.infuse.StringInfuser;
 import com.goodworkalan.reflective.ReflectiveException;
 import com.goodworkalan.reflective.ReflectiveFactory;
+import com.goodworkalan.reflective.setter.MethodSetter;
 
 public class AssignmentTest {
     @Test

@@ -22,6 +22,10 @@ public class Go {
      *            The command line arguments.
      */
     public static int execute(List<File> libraries, String...arguments) {
-        return new ProgramQueue(libraries, arguments).run(new InputOutput());
+        return execute(libraries, new InputOutput(), arguments);
+    }
+    
+    public static int execute(List<File> libraries, InputOutput io, String...arguments) {
+        return new ProgramQueue(libraries, arguments).run(io);
     }
 }

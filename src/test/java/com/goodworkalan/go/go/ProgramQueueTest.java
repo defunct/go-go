@@ -17,7 +17,7 @@ public class ProgramQueueTest {
     /** Run a simple program queue. */
     @Test
     public void run() {
-        assertEquals(new ProgramQueue(Collections.singletonList(new File(System.getProperty("user.home") + File.separator + ".m2" + File.separator + "repository")), "boot", "hello").run(new InputOutput()), 0);
+        assertEquals(new ProgramQueue(Collections.singletonList(new File(System.getProperty("user.home") + File.separator + ".m2" + File.separator + "repository")), "--verbose", "boot", "hello").run(new InputOutput()), 0);
     }
 
     private List<File> getLibrary() {

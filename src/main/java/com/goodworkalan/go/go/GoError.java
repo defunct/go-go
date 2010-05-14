@@ -32,6 +32,9 @@ public class GoError extends GoException implements Erroneous {
     
     /** Invalid argument to bootstrap. */
     public static int INVALID_ARGUMENT = 1005;
+    
+    /** Cannot read a jar archive. */
+    public static int CANNOT_READ_JAR_ARCHIVE = 1007;
 
     /**
      * Create a go error with the given error code.

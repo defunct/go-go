@@ -53,6 +53,7 @@ class ProgramQueue {
     public ProgramQueue(List<File> libraries, String...arguments) {
         LinkedList<String> args = new LinkedList<String>(Arrays.asList(arguments));
         if (args.isEmpty()) {
+            // FIXME Should be an error.
             throw new GoException(COMMAND_LINE_NO_ARGUMENTS);
         }
         while (!args.isEmpty() && args.getFirst().startsWith("--")) {
@@ -65,11 +66,11 @@ class ProgramQueue {
                 String define = argument.substring(argument.indexOf('=') + 1);
                 String[] definition = define.split(":", 2);
                 if (definition.length != 2) {
-                    throw new GoError('a', INVALID_DEFINE_PARAMETER, define);
+                    throw new GoError(INVALID_DEFINE_PARAMETER, define);
                 }
                 System.setProperty(definition[0], definition[1]);
             } else {
-                throw new GoError('a', INVALID_ARGUMENT, argument);
+                throw new GoError(INVALID_ARGUMENT, argument);
             }
         }
         Map<List<String>, Artifact> commands = new HashMap<List<String>, Artifact>();
@@ -165,37 +166,46 @@ class ProgramQueue {
             throw new GoException(FUTURE_EXECUTION, e);
         }
     }
-    
+
+    /**
+     * Run the given program and return zero if the execution is successful.
+     * <p>
+     * Because method will only ever return zero, the program thread doesn't
+     * really need to be implemented as a future. We could create a
+     * <code>Runnable</code> that catches an exception and we can inspect that
+     * result to determine if we need to throw an exception. All this would be
+     * duplicating the exception propagation code of <code>FutureTask</code> and
+     * we'd have to add a count down latch, so here we're using
+     * <code>FutureTask</code> for its exception propagation code and as a count
+     * down latch, since it would be cumbersome to write our own.
+     * 
+     * @param io
+     * @param arguments
+     * @return
+     */
     private int runProgram(InputOutput io, List<String> arguments) {
         Executor executor = new Executor(new ReflectiveFactory(), new Library(libraries.toArray(new File[libraries.size()])), programs,  verbosity);
         verbose(io, "start", arguments);
         long start = System.currentTimeMillis();
-        int code = 0;
         try {
             executor.start(io, arguments, null);
-        } catch (GoException e) {
-            code = GoException.unwrap(io, verbosity, e);
+        } finally {
+            verbose(io, "stop",
+                    System.currentTimeMillis() - start,
+                    (double) Runtime.getRuntime().totalMemory() / 1024 / 1024,
+                    (double) Runtime.getRuntime().freeMemory() / 1024 / 1024);
+            synchronized (monitor) {
+                threadCount--;
+                monitor.notify();
+            }
         }
-        verbose(io, "stop",
-                System.currentTimeMillis() - start,
-                (double) Runtime.getRuntime().totalMemory() / 1024 / 1024,
-                (double) Runtime.getRuntime().freeMemory() / 1024 / 1024);
-        return code;
+        return 0;
     }
     
     private FutureTask<Integer> addProgram(final InputOutput io, final List<String> arguments) {
         FutureTask<Integer> future = new FutureTask<Integer>(new Callable<Integer>() {
             public Integer call() {
-                // Exit codes really don't belong here. Put them in GoError.
-                // Then return an exception or terminal status.
-                try {
-                    return runProgram(io, arguments);
-                }  finally {
-                    synchronized (monitor) {
-                        threadCount--;
-                        monitor.notify();
-                    }
-                }
+                return runProgram(io, arguments);
             }
         });
         executions.add(future);
@@ -216,7 +226,11 @@ class ProgramQueue {
     }
 
     public int run(InputOutput io) {
-        return start(io);
+        try {
+            return start(io);
+        } catch (GoException e) {
+            return e.unwrap(io, verbosity);
+        }
     }
 
     private void loop() {

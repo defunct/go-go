@@ -1,5 +1,6 @@
 package com.goodworkalan.go.go.version;
 
+import static java.util.Arrays.asList;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNull;
 
@@ -45,5 +46,23 @@ public class VersionSelectorTest {
     @Test
     public void exactRelative() {
         assertEquals(new RelativeSelector("3.2.4").select("3.2.4"), "3.2.4");
+    }
+    
+    /** Test version parse. */
+    @Test
+    public void parse() {
+        assertEquals(VersionSelector.parse("1.1"), asList(1, 1));
+    }
+ 
+    /** Test parsing a version that has a relative version character. */
+    @Test(expectedExceptions = NumberFormatException.class)
+    public void parseVersionWithSign() {
+        VersionSelector.parse("+1");
+    }
+    
+    /** Test parsing an invalid version number. */
+    @Test(expectedExceptions = NumberFormatException.class)
+    public void invalidVersion() {
+        VersionSelector.parse("a");
     }
 }

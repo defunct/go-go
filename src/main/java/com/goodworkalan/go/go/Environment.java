@@ -21,7 +21,11 @@ import com.goodworkalan.ilk.Ilk;
  * @author Alan Gutierrez
  */
 public class Environment {
-    final Class<? extends Commandable> commandableClass;
+    /** The currently executing commandable class. */
+    private final Class<? extends Commandable> commandableClass;
+    
+    /** The index of the command. */
+    private final int index;
     
     /** The input/output streams. */
     public final InputOutput io;
@@ -35,11 +39,9 @@ public class Environment {
     /** The list of commands. */
     public final LinkedList<String> commands = new LinkedList<String>();
     
-    /** The list of generated objects. */
-    final List<Ilk.Box> outputs = new ArrayList<Ilk.Box>();
+    /** The list of maps of generated objects by type. */
+    final List<Map<Ilk.Key, Ilk.Box>> outputs = new ArrayList<Map<Ilk.Key, Ilk.Box>>();
     
-    final List<List<Ilk.Box>> parentOutputs = new ArrayList<List<Ilk.Box>>();
-
     /** The list of converted arguments for the commands. */
     final LinkedList<List<Conversion>> conversions = new LinkedList<List<Conversion>>();
     
@@ -78,16 +80,14 @@ public class Environment {
         this.commandableClass = null;
         this.library = library;
         this.io = io;
+        this.index = 0;
         this.executor = executor;
         this.commandables = new LinkedList<Class<? extends Commandable>>();
     }
 
     /**
-     * Internal structure creates a copy of the given environment with some
-     * alterations. The given executor is used as the executor. The given
-     * commandable class is used as an error message context. Command stack
-     * based lists, lists that have an entry for each command in the command
-     * stack, are copied up to the given stack limit
+     * Creates a copy of the given environment but with a new executor, a new commandable class
+     * for the error message context and a new command index.
      * 
      * @param env
      *            The environment to copy.
@@ -95,37 +95,39 @@ public class Environment {
      *            The executor.
      * @param commandableClass
      *            The commandable class used as the error message context.
-     * @param stackLimit
-     *            The length of elements to copy from command stack based lists.
+     * @param commandIndex
+     *            The command index.
      */
-    private Environment(Environment env, Executor executor, Class<? extends Commandable> commandableClass, int stackLimit) {
+    private Environment(Environment env, Executor executor, Class<? extends Commandable> commandableClass, int commandIndex) {
         this.commandableClass = commandableClass;
         this.library = env.library;
         this.io = env.io;
+        this.index = commandIndex;
         this.executor = executor;
         this.commands.addAll(env.commands);
         this.arguments.addAll(env.arguments);
         this.conversions.addAll(env.conversions);
-        this.parentOutputs.addAll(env.parentOutputs);
         this.verbosity.addAll(env.verbosity);
+        this.outputs.addAll(env.outputs);
         this.commandables = env.commandables;
         this.remaining.addAll(env.remaining);
     }
 
     /**
-     * Copy the given environment using the given commandable class as the error
-     * message context and copying the command stack based lists up to the given
-     * stack limit.
+     * Creates a copy of the given environment but with a new commandable class
+     * for the error message context and a new command index.
      * 
      * @param env
      *            The environment to copy.
+     * @param executor
+     *            The executor.
      * @param commandableClass
      *            The commandable class used as the error message context.
-     * @param stackLimit
-     *            The length of elements to copy from command stack based lists.
+     * @param commandIndex
+     *            The command index.
      */
-    Environment(Environment env, Class<? extends Commandable> commandableClass, int stackLimit) {
-        this(env, env.executor, commandableClass, stackLimit);
+    Environment(Environment env,  Class<? extends Commandable> commandableClass, int commandIndex) {
+        this(env, env.executor, commandableClass, commandIndex);
     }
 
     /**
@@ -137,7 +139,7 @@ public class Environment {
      *            The executor.
      */
     Environment(Environment env, Executor executor) {
-        this(env, executor, env.commandableClass, env.commands.size());
+        this(env, executor, env.commandableClass, env.index);
     }
 
     /**
@@ -301,7 +303,7 @@ public class Environment {
      * the parent command at the given index.
      * <p>
      * This method means that a command can output only one instance of a
-     * particular class, since only the first output of a particular class will
+     * particular class, since only the last output of a particular class will
      * ever be returned. If two objects of the same class must be returned,
      * enclose them in another class.
      * 
@@ -316,11 +318,30 @@ public class Environment {
     public <T> T get(Class<T> type, int index) {
         return get(new Ilk<T>(type), index);
     }
-    
+
+    /**
+     * Get the output of the type given by the given super type token from the
+     * list of outputs generated by the parent command at the given index. The
+     * method will return the most derived type with the most derived type
+     * parameters that is assignable to the given type.
+     * <p>
+     * This method means that a command can output only one instance of a
+     * particular class, since only the last output of a particular class will
+     * ever be returned. If two objects of the same type must be returned,
+     * enclose them in another class.
+     * 
+     * @param <T>
+     *            The type of output.
+     * @param ilk
+     *            The super type token.
+     * @param index
+     *            The index of the parent command.
+     * @return The output object or null if none exists.
+     */
     public <T> T get(Ilk<T> ilk, int index) {
-        for (Ilk.Box box : parentOutputs.get(index)) {
-            if (ilk.key.equals(box.getKey())) {
-                return box.cast(ilk);
+        for (Map.Entry<Ilk.Key, Ilk.Box> entry : outputs.get(index).entrySet()) {
+            if (ilk.key.isAssignableFrom(entry.getKey())) {
+                return entry.getValue().cast(ilk);
             }
         }
         return null;
@@ -357,20 +378,34 @@ public class Environment {
     }
 
     /**
-     * Record the given output object. The output object is available to other
-     * commands as a return object requested by class, or through one of the get
-     * methods locatable by class and heirarchy index or class and command line
-     * arguments FIXME (hmm...shouldn't that be run?).
+     * Record the given output object and make it available to other commands as
+     * a return object or through the {@link #get(Class, int) get} method. Only
+     * one output object per type is allowed, so the last assignment of an
+     * object
      * 
+     * @param outputClass
+     *            The output class.
      * @param output
      *            The output.
      */
-    public void output(Object output) {
-        outputs.add(new Ilk.Box(output));
+    public <T> void output(Class<T> outputClass, T output) {
+        Ilk.Box box = new Ilk<T>(outputClass).box(output);
+        outputs.get(index).put(box.key, box);
     }
-    
+
+    /**
+     * Record the given output object with the type given by the given super
+     * type token and make it available to other commands as a return object or
+     * through the {@link #get(Class, int) get} method.
+     * 
+     * @param ilk
+     *            The super type token.
+     * @param output
+     *            The output.
+     */
     public <T> void output(Ilk<T> ilk, T output) {
-        outputs.add(ilk.box(output));
+        Ilk.Box box = ilk.box(output);
+        outputs.get(index).put(box.key, box);
     }
 
     /**

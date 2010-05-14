@@ -33,7 +33,7 @@ public class Snap implements Commandable {
         if (mississippi && button.saratoga != null) {
             env.io.out.println(button.saratoga);
         }
-        env.output("Snap was here!");
+        env.output(String.class, "Snap was here!");
         if (hidden) {
             env.extendClassPath(new DirectoryPart(Files.file(new File("."), "src", "main", "java").getAbsoluteFile()));
             env.invokeAfter(ExtendInvokeCommand.class);

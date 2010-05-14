@@ -15,6 +15,6 @@ public class WatusiCommand implements Commandable {
     }
 
     public void execute(Environment env) {
-        env.output(repeat);
+        env.output(String.class, repeat);
     }
 }

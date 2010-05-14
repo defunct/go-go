@@ -18,6 +18,6 @@ public class ButtonCommand implements Commandable {
      * Make myself my output.
      */
     public void execute(Environment env) {
-        env.output(this);
+        env.output(ButtonCommand.class, this);
     }
 }

@@ -2,7 +2,6 @@ package com.goodworkalan.go.go.commands;
 
 import static com.goodworkalan.go.go.GoError.CANNOT_CREATE_BOOT_CONFIGURATION_DIRECTORY;
 import static com.goodworkalan.go.go.GoError.CANNOT_WRITE_BOOT_CONFIGURATION;
-import static com.goodworkalan.go.go.GoException.CANNOT_FIND_RESPONDER;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -19,13 +18,13 @@ import java.util.zip.ZipFile;
 import com.goodworkalan.go.go.Commandable;
 import com.goodworkalan.go.go.Environment;
 import com.goodworkalan.go.go.GoError;
-import com.goodworkalan.go.go.GoException;
 import com.goodworkalan.go.go.MetaCommand;
 import com.goodworkalan.go.go.library.Artifact;
 import com.goodworkalan.go.go.library.ArtifactPart;
-import com.goodworkalan.go.go.library.Include;
+import com.goodworkalan.ilk.Ilk;
 
 public class WriteInstallCommand implements Commandable {
+    /** The default constructor. */
     public WriteInstallCommand() {
     }
     
@@ -38,18 +37,60 @@ public class WriteInstallCommand implements Commandable {
     }
 
     public void execute(Environment env) {
-        for (String artifact : env.remaining) {
-            record(env, new Artifact(artifact));
+        List<ArtifactPart> artifactParts = env.get(new Ilk<List<ArtifactPart>>() {}, 1);
+        for (ArtifactPart artifactPart : artifactParts) {
+            record(env, artifactPart);
         }
     }
     
-    public void record(Environment env, Artifact artifact) {
+    public void record(Environment env, ArtifactPart artifactPart) {
         ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-        ArtifactPart found = env.library.getArtifactPart(new Include(artifact), "dep", "jar");
-        artifact = found.getArtifact();
+        Artifact artifact = artifactPart.getArtifact();
+        List<String> commands = readCommands(env, classLoader, new File(artifactPart.getLibraryDirectory(), artifact.getPath("jar")));
+        File gogo = new File(env.library.getDirectories()[0], "go-go");
+        File group = new File(gogo, artifact.getGroup());
+        if (!group.isDirectory() && !group.mkdirs()) {
+            throw new GoError(CANNOT_CREATE_BOOT_CONFIGURATION_DIRECTORY, group);
+        }
+        StringBuilder line = new StringBuilder();
+        line.append(artifact).append(" ");
+        String separator = "";
+        for (String command : commands) {
+            line.append(separator).append(command);
+            separator = ", ";
+        }
+        File configuration = new File(group, artifact.getName() + ".go");
+        writeCommands(line.toString(), configuration);
+        env.io.out.println(line);
+    }
+
+    static void writeCommands(String line, File configuration) {
+        try {
+            Writer writer = new FileWriter(configuration);
+            writer.write(line);
+            writer.write("\n");
+            writer.close();
+        } catch (IOException e) {
+            throw new GoError(CANNOT_WRITE_BOOT_CONFIGURATION, e, configuration);
+        }
+    }
+
+    /**
+     * Read the commandable classes provided by the given jar file and use the
+     * meta command information to create a list of available command paths.
+     * 
+     * @param env
+     *            The I/O bouquet for debugging.
+     * @param classLoader
+     *            The class loader to use to load commandable classes.
+     * @param jar
+     *            The jar file to read.
+     * @return
+     */
+    static List<String> readCommands(Environment env, ClassLoader classLoader, File jar) {
         List<String> commands = new ArrayList<String>();
         try {
-            ZipFile zip = new ZipFile(new File(found.getLibraryDirectory(), found.getArtifact().getPath("jar")));
+            ZipFile zip = new ZipFile(jar);
             ZipEntry entry = zip.getEntry("META-INF/services/com.goodworkalan.go.go.Commandable");
             if (entry != null) {
                 BufferedReader in = new BufferedReader(new InputStreamReader(zip.getInputStream(entry)));
@@ -57,18 +98,8 @@ public class WriteInstallCommand implements Commandable {
                 while ((line = in.readLine()) != null) {
                     line = line.trim();
                     if (line.length() != 0) {
-                        Class<? extends Commandable> commandableClass;
-                        try {
-                            commandableClass = extendsClassCast(Commandable.class, classLoader.loadClass(line));
-                        } catch (ClassNotFoundException e) {
-                            throw new GoException(0, e);
-                        } catch (ClassCastException e) {
-                            throw new GoException(0, e);
-                        }
+                        Class<? extends Commandable> commandableClass = loadCommandable(classLoader, line);
                         MetaCommand responder = env.getMetaCommand(commandableClass);
-                        if (responder == null) {
-                            throw new GoException(CANNOT_FIND_RESPONDER, commandableClass.getCanonicalName());
-                        }
                         LinkedList<String> path = new LinkedList<String>();
                         for (;;) {
                             path.addFirst(responder.getName());
@@ -77,9 +108,6 @@ public class WriteInstallCommand implements Commandable {
                                 break; 
                             }
                             responder = env.getMetaCommand(commandableClass);
-                            if (responder == null) {
-                                throw new GoException(CANNOT_FIND_RESPONDER, commandableClass.getCanonicalName());
-                            }
                         }
                         StringBuilder command = new StringBuilder();
                         String separator = "";
@@ -92,29 +120,18 @@ public class WriteInstallCommand implements Commandable {
                 }
             }
         } catch (IOException e) {
-            throw new GoException(0, e);
+            throw new GoError(GoError.CANNOT_READ_JAR_ARCHIVE, e, jar);
         }
-        File gogo = new File(env.library.getDirectories()[0], "go-go");
-        File group = new File(gogo, artifact.getGroup());
-        if (!group.isDirectory() && !group.mkdirs()) {
-            throw new GoError('a', CANNOT_CREATE_BOOT_CONFIGURATION_DIRECTORY, group);
-        }
-        StringBuilder line = new StringBuilder();
-        line.append(artifact).append(" ");
-        String separator = "";
-        for (String command : commands) {
-            line.append(separator).append(command);
-            separator = ", ";
-        }
-        File configuration = new File(group, artifact.getName() + ".go");
+        return commands;
+    }
+
+    static Class<? extends Commandable> loadCommandable(ClassLoader classLoader, String line) {
         try {
-            Writer writer = new FileWriter(configuration);
-            writer.write(line.toString());
-            writer.write("\n");
-            writer.close();
-        } catch (IOException e) {
-            throw new GoError('a', CANNOT_WRITE_BOOT_CONFIGURATION, e, configuration);
+            return extendsClassCast(Commandable.class, classLoader.loadClass(line));
+        } catch (ClassNotFoundException e) {
+            // We know that the class has been loaded because
+            // the artifact has been added to the class path.
+            throw new RuntimeException(e);
         }
-        env.io.out.println(line);
     }
 }

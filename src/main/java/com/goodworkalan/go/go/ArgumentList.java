@@ -64,7 +64,21 @@ public class ArgumentList extends ArrayList<String> {
         }
         return null;
     }
-    
+
+    /**
+     * Replace the first argument with the given qualified name with the given
+     * value or add the value if no argument exists with the given qualified
+     * name. Returns the value of the replaced argument or null if the argument
+     * did not exist.
+     * 
+     * 
+     * @param name
+     *            The qualified argument name.
+     * @param value
+     *            The argument value
+     * @return The value of the replaced argument or null if the argument did
+     *         not exist.
+     */
     public String replaceArgument(String name, String value) {
         for (int i = 0, stop = size(); i < stop; i++) {
             String argument = get(i);

@@ -45,4 +45,14 @@ public class ArgumentListTest {
         assertEquals(arguments.getArgument("button:saratoga"), "foo");
         assertEquals(arguments.size(), 2);
     }
+    
+    /** Test replacing an argument. */
+    @Test
+    public void replaceArgument() {
+        ArgumentList arguments = new ArgumentList();
+        arguments.addArgument("snap:mississippi", "true");
+        assertNull(arguments.replaceArgument("foo:bar", "bar"));
+        assertEquals(arguments.replaceArgument("foo:bar", "foo"), "bar");
+        assertEquals(arguments.size(), 2);
+    }
 }

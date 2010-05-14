@@ -64,7 +64,10 @@ public class VersionSelector {
     private final SelectionStrategy selector;
 
     /**
-     * Parse a valid relative dot separated integer values version number.
+     * Parse a valid relative dot separated integer values version number. If
+     * the given version string is not a valid integer version string, if any of
+     * the dot separated parts contain anything other than integer, a
+     * {@link NumberFormatException}.
      * 
      * @param version
      *            The version to parse.
@@ -87,6 +90,16 @@ public class VersionSelector {
         throw new NumberFormatException();
     }
 
+    /**
+     * Apply the version part match user the given matcher and count the number
+     * of times it matches a positive or negative sign before a version part.
+     * 
+     * @param pattern
+     *            The version string.
+     * @param matcher
+     *            The version part matcher.
+     * @return The number of times a positive or negative sign was matched.
+     */
     private static int countSigns(String pattern, Matcher matcher) { 
         int signs = 0;
         while (matcher.regionStart() < pattern.length() && matcher.lookingAt()) {
@@ -98,6 +111,7 @@ public class VersionSelector {
         return signs;
 
     }
+
     /**
      * Create a version selector with the given version selection
      * <code>pattern</code>. See the documentation of this class for examples of

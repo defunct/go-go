@@ -1,5 +1,8 @@
 package com.goodworkalan.go.go.library;
 
+import static com.goodworkalan.go.go.GoException.MALFORMED_ARTIFACT;
+import static com.goodworkalan.go.go.GoException.MALFORMED_ARTIFACT_FILE;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -85,7 +88,10 @@ public class Artifact {
             parts.add("+0");
         }
         if (parts.size() != 3) {
-            throw new GoException(0);
+            // This is a go exception because it may have come from outside,
+            // but suffix is an IllegalArgumentException because it is most
+            // likely a programming error.
+            throw new GoException(MALFORMED_ARTIFACT, artifact);
         }
         this.group = parts.get(0);
         this.name = parts.get(1);
@@ -111,7 +117,7 @@ public class Artifact {
             directory = directory.getParentFile();
         }
         if (parts.size() < 3) {
-            throw new GoException(0);
+            throw new GoException(MALFORMED_ARTIFACT_FILE, file);
         }
         String version = parts.removeLast().getName();
         String name = parts.removeLast().getName();
@@ -125,6 +131,7 @@ public class Artifact {
         this.name = name;
         this.version =  version;
     }
+
     /**
      * Get a key that is a list that uniquely defines the artifact.
      * 

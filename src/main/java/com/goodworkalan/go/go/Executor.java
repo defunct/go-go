@@ -119,6 +119,7 @@ public class Executor {
         seen.add(new Exclude("com.github.bigeasy.class-boxer/class-boxer"));
         seen.add(new Exclude("com.github.bigeasy.class-association/class-association"));
         seen.add(new Exclude("com.github.bigeasy.reflective/reflective"));
+        seen.add(new Exclude("com.github.bigeasy.reflective/reflective-setter"));
         this.programs = programs;
         this.reflective = reflective;
         this.library = library;
@@ -342,6 +343,7 @@ public class Executor {
             if (assignment == null) {
                 assignment = actualCommandNode.getAssignments().get(qualified[1]); 
                 if (assignment == null) {
+                    // FIXME Need a much nicer message.
                     throw new GoException(0);
                 }
                 if (value == null && Primitives.box(assignment.setter.getType()).equals(Boolean.class)) {
@@ -445,7 +447,7 @@ public class Executor {
                 
                 
                 // Create sub environment.
-                Environment subEnv = new Environment(env, commandable.getClass(), commandIndex + 1);
+                Environment subEnv = new Environment(env, commandable.getClass(), commandIndex);
                 
                 boolean terminate = false;
                 
@@ -461,14 +463,14 @@ public class Executor {
                     }
                     terminate = true;
                 }
-                env.parentOutputs.get(commandIndex).addAll(subEnv.outputs);
                 if (cached) {
                     if (!cacheEntry.transients.isEmpty()) {
                         throw new GoException(0, commandable.getClass());
                     }
-                    cacheEntry.outputs.addAll(subEnv.outputs);
+                    cacheEntry.outputs.putAll(subEnv.outputs.get(commandIndex));
                     if (cacheEntry.outputs.isEmpty()) {
-                        cacheEntry.outputs.add(new Ilk.Box(new IgnorableOutput()));
+                        Ilk.Box box = new Ilk<IgnorableOutput>(IgnorableOutput.class).box(new IgnorableOutput());
+                        cacheEntry.outputs.put(box.key, box);
                     }
                 } else if (cacheEntry.transients.isEmpty()) {
                     cacheEntry.transients.addAll(transients);
@@ -502,10 +504,11 @@ public class Executor {
             // Descend the command tree.
             commands = commandNode.commands;
 
-            env.parentOutputs.add(new ArrayList<Ilk.Box>());
+            // Tree list will sort the keys by assignability.
+            env.outputs.add(new TreeMap<Ilk.Key, Ilk.Box>());
 
             if (cached != null) {
-                env.parentOutputs.get(commandIndex).addAll(cached.outputs);
+                env.outputs.get(commandIndex).putAll(cached.outputs);
                 env.commandables.addAll(cached.transients);
             } else {
                 cacheEntry = new CacheEntry();
@@ -514,13 +517,24 @@ public class Executor {
         }
         
         return chooseBox(env, outcomeType);
-     }
-    
-    public Ilk.Box chooseBox(Environment env, Ilk<?> outcomeType) {
-        if (outcomeType != null) {
-            for (Ilk.Box box : env.parentOutputs.get(env.parentOutputs.size() -1)) {
-                if (outcomeType.key.equals(box.getKey())) {
-                    return box;
+    }
+
+    /**
+     * Get the boxed command output form the the given environment that is
+     * assignable from the type indicated by the given super type token.
+     * 
+     * @param env
+     *            The environment.
+     * @param ilk
+     *            The super type token.
+     * @return The boxed command output assignable to the given type or null if
+     *         none is found.
+     */
+    public Ilk.Box chooseBox(Environment env, Ilk<?> ilk) {
+        if (ilk != null) {
+            for (Map.Entry<Ilk.Key, Ilk.Box> entry : env.outputs.get(env.outputs.size() -1).entrySet()) {
+                if (ilk.key.isAssignableFrom(entry.getKey())) {
+                    return entry.getValue();
                 }
             }
         }
@@ -586,12 +600,17 @@ public class Executor {
         return resume(env, null, arguments, 0, outcomeType);
     }
 
+    // FIXME Maybe this is execute and call doesn't do any unwrapping?
     public int run(InputOutput io, List<String> arguments) {
         try {
             start(io, arguments, null);
             return 0;
         } catch (GoException e) {
-            return GoException.unwrap(io, systemVerbosity, e);
+            // FIXME Can this even be reached? Add program in program queue
+            // wraps as well. Yes, it can be reached because this is not a fork,
+            // and therefore not a program. Do I want to catch it or let it
+            // propagate out to the program queue?
+            return e.unwrap(io, systemVerbosity);
         }
     }
 

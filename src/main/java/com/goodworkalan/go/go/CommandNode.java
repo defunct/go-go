@@ -8,6 +8,8 @@ import java.util.TreeMap;
 import com.goodworkalan.infuse.Infuser;
 import com.goodworkalan.reflective.Field;
 import com.goodworkalan.reflective.Method;
+import com.goodworkalan.reflective.setter.FieldSetter;
+import com.goodworkalan.reflective.setter.MethodSetter;
 import com.goodworkalan.utility.Primitives;
 
 /**
@@ -43,9 +45,6 @@ class CommandNode implements MetaCommand {
     /** The name of the command. */
     private final String name;
     
-    /** Whether or not the output of the command is cached. */
-    private final boolean cached;
-
     /** The parent task if any. */
     private final Class<? extends Commandable> parent;
 
@@ -94,17 +93,7 @@ class CommandNode implements MetaCommand {
         this.taskClass = commandableClass;
         this.name = name;
         this.parent = parent;
-        this.cached = command == null || command.cache();
         this.commands = new TreeMap<String, CommandNode>();
-    }
-
-    /**
-     * Get whether or not the command output is cached.
-     * 
-     * @return Ture if the command output is cached.
-     */
-    public boolean isCached() {
-        return cached;
     }
 
     /**
@@ -249,10 +238,5 @@ class CommandNode implements MetaCommand {
         if (assignment.containsKey(name)) {
             Environment.error(io, CommandNode.class, "duplicateArgument", arguableClass, "name");
         }
-    }
-    
-    public static boolean isCached(Class<? extends Commandable> commandableClass) {
-        Command command = commandableClass.getAnnotation(Command.class);
-        return command == null || command.cache();
     }
 }

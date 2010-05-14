@@ -13,7 +13,7 @@ import com.goodworkalan.danger.CodedDanger;
  * @author Alan Gutierrez
  */
 public class GoException extends CodedDanger {
-    /** The cache of resource bundles for <code>CodedDanger</code>. */
+    /** The static cache of exception message resource bundles. */
     private final static ConcurrentMap<String, ResourceBundle> BUNDLES = new ConcurrentHashMap<String, ResourceBundle>();
 
     /** Serial version id. */
@@ -67,6 +67,12 @@ public class GoException extends CodedDanger {
     
     /** Attempted to parse malformed URL. */
     public final static int MALFORMED_URL = 323;
+    
+    /** Attempted to parse malformed artifact string. */
+    public final static int MALFORMED_ARTIFACT = 324;
+    
+    /** Attempted to parse malformed artifact file. */
+    public final static int MALFORMED_ARTIFACT_FILE = 325;
 
     /** An exception was thrown during task property assignment. */
     public final static int ASSIGNMENT_EXCEPTION_THROWN = 401;
@@ -94,9 +100,6 @@ public class GoException extends CodedDanger {
     
     /** Unable to resolve artifact. */
     public final static int UNRESOLVED_ARTIFACT = 701;
-    
-    /** Unable to find the responder for a class during installation. */
-    public final static int CANNOT_FIND_RESPONDER = 801;
     
     /** Command class missing. */
     public final static int COMMAND_CLASS_MISSING = 101;
@@ -136,8 +139,9 @@ public class GoException extends CodedDanger {
         return ((Erroneous) e).getExitCode();
     }
 
-    public static int unwrap(InputOutput io, int verbosity, GoException e) {
-        Throwable iterator = e;
+    // FIXME Why static?
+    public int unwrap(InputOutput io, int verbosity) {
+        Throwable iterator = this;
         while ((iterator instanceof GoException) && ((GoException) iterator).getCode() == FUTURE_EXECUTION) {
             iterator = iterator.getCause().getCause();
         }
@@ -147,6 +151,6 @@ public class GoException extends CodedDanger {
         if (iterator instanceof Erroneous) {
             return erroneous(io, verbosity, iterator);
         }
-        throw e;
+        throw this;
     }
 }

@@ -1,6 +1,7 @@
 package com.goodworkalan.go.go;
 
 import com.goodworkalan.infuse.ObjectInfuser;
+import com.goodworkalan.reflective.setter.Setter;
 
 /**
  * Assigns a command line argument to a property in a {@link Arguable} Bean.
