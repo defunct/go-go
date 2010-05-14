@@ -1,6 +1,8 @@
 package go;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.InputStreamReader;
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
@@ -73,25 +75,18 @@ public class go implements Runnable, UncaughtExceptionHandler {
             throw new RuntimeException("No viable libaries in Jav-a-Go-Go path.");
         }
 
-        // Here's a list of the bootstrap dependencies for Jav-a-Go-Go.
-        String[][] artifacts = new String[][] {
-                new String[] { "go-go", "0.1.4.11" },
-                new String[] { "danger", "0.1.0.1" },
-                new String[] { "verbiage", "0.1.0.4" },
-                new String[] { "infuse", "0.1" },
-                new String[] { "retry", "0.1" },
-                new String[] { "ilk", "0.1.0.1" },
-                new String[] { "class-boxer", "0.1" },
-                new String[] { "class-association", "0.1" },
-                new String[] { "reflective", "0.1" }
-        };
-        
         List<URL> urls = new ArrayList<URL>();
         List<String> missing = new ArrayList<String>();
 
+        // Here's a list of the bootstrap dependencies for Jav-a-Go-Go.
+        BufferedReader reader = new BufferedReader(new InputStreamReader(go.class.getResourceAsStream("dependencies.txt")));
+
         // Locate them and create a list of URIs.
-        DEPENDENCY: for (String[] artifact : artifacts) {
-            String dep = "com/github/bigeasy/" + artifact[0] + "/" + artifact[0] + "/" + artifact[1] + "/" + artifact[0] + "-" + artifact[1] + ".jar";
+        String line;
+        DEPENDENCY: while ((line = reader.readLine()) != null) {
+            String[] artifact = line.split("/");
+            artifact[0] = artifact[0].replace(".", File.separator);
+            String dep = artifact[0] + File.separator + artifact[1] + File.separator + artifact[2] + File.separator + artifact[1] + "-" + artifact[2] + ".jar";
             for (File directory : libraries) {
                 File jar = new File(directory, dep);
                 if (jar.exists() && jar.canRead()) {
@@ -105,6 +100,8 @@ public class go implements Runnable, UncaughtExceptionHandler {
             }
             missing.add(dep);
         }
+        
+        reader.close();
 
         // If we're missing any of our requirements, then let's panic.
         if (!missing.isEmpty()) {
