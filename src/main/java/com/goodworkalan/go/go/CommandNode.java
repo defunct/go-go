@@ -67,8 +67,8 @@ class CommandNode implements MetaCommand {
     public CommandNode(InputOutput io, Class<? extends Commandable> commandableClass) {
         this.assignments = new TreeMap<String, Assignment>();
         
+        String name = null;
         Command command = commandableClass.getAnnotation(Command.class);
-        String name;
         if (command == null || command.name().equals("")) {
             String className = commandableClass.getCanonicalName();
             className = className.replaceFirst("^.*\\.", "");
@@ -77,6 +77,7 @@ class CommandNode implements MetaCommand {
         } else {
             name = command.name();
         }
+        
         Class<? extends Commandable> parent = null;
         if (command != null && !command.parent().equals(Commandable.class)) {
             parent = command.parent();

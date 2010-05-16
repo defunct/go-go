@@ -25,7 +25,7 @@ public class InstallCommandTest {
     /** Test the welcome message. */
     @Test
     public void execute() {
-        Files.delete(new File("src/test/libraries/a/go-go"));
+        Files.unlink(new File("src/test/libraries/a/go-go"));
         Go.execute(Collections.singletonList(new File("src/test/libraries/a").getAbsoluteFile()), "boot", "install");
         Redirection redirection = new Redirection();
         Go.execute(Collections.singletonList(new File("src/test/libraries/a").getAbsoluteFile()), redirection.io, "boot", "install", "com.goodworkalan/leaves", "com.goodworkalan/missing");
@@ -57,13 +57,13 @@ public class InstallCommandTest {
     public void cannotCreateDirectory() {
         File goGo = new File("src/test/libraries/a/go-go");
         try {
-            Files.delete(goGo);
+            Files.unlink(goGo);
             Files.pour(goGo, asList(""));
             Redirection redirection = new Redirection();
             Go.execute(Collections.singletonList(new File("src/test/libraries/a").getAbsoluteFile()), redirection.io, "boot", "install", "com.goodworkalan/leaves", "com.goodworkalan/missing");
             assertEquals(redirection.err.toString(), "Cannot create the artifact boot configuration directory [/Users/alan/git/go-go/src/test/libraries/a/go-go/com.goodworkalan].\n");
         } finally {
-            Files.delete(goGo);
+            Files.unlink(goGo);
         }
     }
     
@@ -72,7 +72,7 @@ public class InstallCommandTest {
     public void cannotCreateFile() {
         File goGo = new File("src/test/libraries/a/go-go/com.goodworkalan/leaves.go");
         try {
-            Files.delete(goGo);
+            Files.unlink(goGo);
             goGo.mkdirs();
             WriteInstallCommand.writeCommands("", goGo);
         } catch (GoError e) {
@@ -80,7 +80,7 @@ public class InstallCommandTest {
             assertEquals(e.getMessage(), "Cannot write the artifact boot configuration file [src/test/libraries/a/go-go/com.goodworkalan/leaves.go].");
             throw e;
         } finally {
-            Files.delete(goGo);
+            Files.unlink(goGo);
         }
     }
     

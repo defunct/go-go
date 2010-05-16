@@ -7,10 +7,10 @@ package com.goodworkalan.go.go;
  * @author Alan Gutierrez
  */
 class Conversion {
-    /** The command name. */
+    /** The command qualifier. */
     public final String command;
 
-    /** The qualified argument name. */
+    /** The argument name. */
     public final String name;
     
     /** The value. */
@@ -20,8 +20,10 @@ class Conversion {
      * Create a structure for the given argument name and the given converted
      * argument value.
      * 
+     * @param command
+     *            The command qualifier.
      * @param name
-     *            The qualified argument name.
+     *            The argument name.
      * @param value
      *            The argument value.
      */

@@ -74,9 +74,12 @@ public class Executor {
     
     /** The root map of command names to command nodes. */
     private final Map<String, CommandNode> commands = new TreeMap<String, CommandNode>();
-
+    
     /** The map of tasks to command nodes. */
     final Map<Class<? extends Commandable>, CommandNode> commandNodes = new HashMap<Class<? extends Commandable>, CommandNode>();
+
+    /** The map of hidden commands to command nodes. */
+    final Map<Class<? extends Commandable>, CommandNode> spawnedCommandNodes = new HashMap<Class<? extends Commandable>, CommandNode>();
 
     /** The path for the command loader. */
     private final Collection<PathPart> parts = new ArrayList<PathPart>();
@@ -142,6 +145,7 @@ public class Executor {
         this.library = parent.library;
         this.commands.putAll(parent.commands);
         this.commandNodes.putAll(parent.commandNodes);
+        this.spawnedCommandNodes.putAll(parent.spawnedCommandNodes);
         this.parts.addAll(parent.parts);
         this.cache.putAll(parent.cache);
         this.systemVerbosity = parent.systemVerbosity;
@@ -268,9 +272,9 @@ public class Executor {
                 Environment.error(io, Executor.class, "commandMissing", className);
                 continue;
             }
-            if (Commandable.class.isAssignableFrom(foundClass)) {
-                commandables.add(taskClass(foundClass));
-            } else {
+            try {
+                commandables.add(foundClass.asSubclass(Commandable.class));
+            } catch (ClassCastException e) {
                 Environment.error(io, Executor.class, "notCommandable", className, Commandable.class);
             }
         }
@@ -425,21 +429,31 @@ public class Executor {
                 Class<? extends Commandable> commandableClass = env.commandables.removeFirst();
 
                 CommandNode commandNode = commandNodes.get(commandableClass);
+                
+                if (commandNode == null) {
+                    commandNode = spawnedCommandNodes.get(commandableClass);
+                    if (commandNode == null) {
+                        commandNode = new CommandNode(env.io, commandableClass);
+                        spawnedCommandNodes.put(commandableClass, commandNode);
+                    }
+                }
 
                 Commandable commandable = getCommandable(commandableClass);
                 
                 if (commandNode != null) {
                     // Set the arguments for the command.
                     for (Conversion conversion : env.conversions.get(commandIndex)) {
-                        if (conversion.command.equals(commandNode.getName())) {
+                        if (conversion.command.equals(env.commands.get(commandIndex))) {
                             Assignment assignment = commandNode.getAssignments().get(conversion.name);
-                            try {
-                                assignment.setter.set(commandable, conversion.value);
-                            } catch (ReflectiveException e) {
-                                if (e.getCode() == ReflectiveException.INVOCATION_TARGET) {
-                                    throw new GoException(ASSIGNMENT_EXCEPTION_THROWN, e, commandable.getClass().getCanonicalName(), assignment.setter.getNative().getName());
+                            if (assignment != null) {
+                                try {
+                                    assignment.setter.set(commandable, conversion.value);
+                                } catch (ReflectiveException e) {
+                                    if (e.getCode() == ReflectiveException.INVOCATION_TARGET) {
+                                        throw new GoException(ASSIGNMENT_EXCEPTION_THROWN, e, commandable.getClass().getCanonicalName(), assignment.setter.getNative().getName());
+                                    }
+                                    throw new GoException(ASSIGNMENT_FAILED, e, commandable.getClass().getCanonicalName(), assignment.setter.getNative().getName());
                                 }
-                                throw new GoException(ASSIGNMENT_FAILED, e, commandable.getClass().getCanonicalName(), assignment.setter.getNative().getName());
                             }
                         }
                     }
@@ -541,11 +555,6 @@ public class Executor {
         return null;
     }
 
-    @SuppressWarnings("unchecked")
-    private Class<? extends Commandable> taskClass(Class taskClass) {
-        return taskClass;
-    }
-    
     private Ilk.Box extendClassPath(Collection<PathPart> unseen, Environment env, final FutureBox box) {
         Collection<PathPart> subPath = new ArrayList<PathPart>();
         subPath = library.resolve(unseen, seen);
