@@ -4,12 +4,22 @@ import com.goodworkalan.mix.ProjectModule;
 import com.goodworkalan.mix.builder.Builder;
 import com.goodworkalan.mix.builder.JavaProject;
 
-public class GoProject extends ProjectModule {
-    @Override
+/**
+ * Build definition for Jav-a-Go-Go.
+ *
+ * @author Alan Gutierrez
+ */
+public class GoProject implements ProjectModule {
+    /**
+     * Build the project definition for Jav-a-Go-Go.
+     *
+     * @param builder
+     *          The project builder.
+     */
     public void build(Builder builder) {
         builder
             .cookbook(JavaProject.class)
-                .produces("com.github.bigeasy.go-go/go-go/0.1.4.12")
+                .produces("com.github.bigeasy.go-go/go-go/0.1.4.13")
                 .main()
                     .depends()
                         .include("com.github.bigeasy.reflective/reflective-setter/0.+1")
