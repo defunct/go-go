@@ -23,7 +23,6 @@ import org.testng.annotations.Test;
 
 import com.goodworkalan.go.go.library.Artifact;
 import com.goodworkalan.go.go.library.Library;
-import com.goodworkalan.reflective.ReflectiveFactory;
 
 /**
  * Unit tests for the {@link Executor} class.
@@ -42,7 +41,7 @@ public class ExecutorTest {
         programs.put(Arrays.asList("snap"), new Artifact("com.goodworkalan/example/0.1"));
         programs.put(Arrays.asList("snap", "watusi"), new Artifact("com.goodworkalan/dummy/0.1"));
         Library library = new Library(getLibrary("a"), getLibrary("b"));
-        Executor executor = new Executor(new ReflectiveFactory(), library, programs, 0);
+        Executor executor = new Executor(library, programs, 0);
         
         String hello = executor.run(String.class, new InputOutput(), "snap", "watusi", "--repeat=Hello");
         assertEquals(hello, "Hello");
@@ -114,7 +113,7 @@ public class ExecutorTest {
     private Executor getExecutor() {
         Map<List<String>, Artifact> programs = new HashMap<List<String>, Artifact>();
         Library library = new Library(getLibrary("a"), getLibrary("b"));
-        Executor executor = new Executor(new ReflectiveFactory(), library, programs, 0);
+        Executor executor = new Executor(library, programs, 0);
         return executor;
     }
 }

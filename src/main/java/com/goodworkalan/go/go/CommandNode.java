@@ -6,8 +6,6 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import com.goodworkalan.infuse.Infuser;
-import com.goodworkalan.reflective.Field;
-import com.goodworkalan.reflective.Method;
 import com.goodworkalan.reflective.setter.FieldSetter;
 import com.goodworkalan.reflective.setter.MethodSetter;
 import com.goodworkalan.utility.Primitives;
@@ -202,7 +200,7 @@ class CommandNode implements MetaCommand {
                     }
                     checkForDuplicates(io, arguableClass, assignment, verbose);
                     Class<?> type =  Primitives.box(method.getParameterTypes()[0]);
-                    assignment.put(verbose, new Assignment(new MethodSetter(new Method(method)), INFUSER.getInfuser(type)));
+                    assignment.put(verbose, new Assignment(new MethodSetter(method), INFUSER.getInfuser(type)));
                 }
             }
         }
@@ -215,7 +213,7 @@ class CommandNode implements MetaCommand {
                 }
                 checkForDuplicates(io, arguableClass, assignment, verbose);
                 Class<?> type =  Primitives.box(field.getType());
-                assignment.put(verbose, new Assignment(new FieldSetter(new Field(field)), INFUSER.getInfuser(type)));
+                assignment.put(verbose, new Assignment(new FieldSetter(field), INFUSER.getInfuser(type)));
             }
         }
         // No superclass inspection. The above methods return all public methods

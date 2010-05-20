@@ -21,7 +21,6 @@ import java.util.concurrent.FutureTask;
 
 import com.goodworkalan.go.go.library.Artifact;
 import com.goodworkalan.go.go.library.Library;
-import com.goodworkalan.reflective.ReflectiveFactory;
 import com.goodworkalan.retry.Retry;
 
 /**
@@ -184,7 +183,7 @@ class ProgramQueue {
      * @return
      */
     private int runProgram(InputOutput io, List<String> arguments) {
-        Executor executor = new Executor(new ReflectiveFactory(), new Library(libraries.toArray(new File[libraries.size()])), programs,  verbosity);
+        Executor executor = new Executor(new Library(libraries.toArray(new File[libraries.size()])), programs,  verbosity);
         verbose(io, "start", arguments);
         long start = System.currentTimeMillis();
         try {

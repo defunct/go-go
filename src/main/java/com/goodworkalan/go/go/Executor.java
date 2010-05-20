@@ -38,8 +38,8 @@ import com.goodworkalan.go.go.library.ResolutionPart;
 import com.goodworkalan.ilk.Ilk;
 import com.goodworkalan.ilk.Ilk.Box;
 import com.goodworkalan.infuse.InfusionException;
+import com.goodworkalan.reflective.Reflective;
 import com.goodworkalan.reflective.ReflectiveException;
-import com.goodworkalan.reflective.ReflectiveFactory;
 import com.goodworkalan.retry.Retry;
 import com.goodworkalan.utility.Primitives;
 
@@ -51,9 +51,6 @@ import com.goodworkalan.utility.Primitives;
 public class Executor {
     /** The system verbosity for system standard error messages. */
     private final int systemVerbosity;
-    
-    /** Used to construct commands. */
-    private final ReflectiveFactory reflective;
     
     /** A map of commands and their arguments to a list of their outputs. */ 
     private final Map<List<String>, CacheEntry> cache = new HashMap<List<String>, CacheEntry>();
@@ -113,7 +110,7 @@ public class Executor {
      * @param artifactFile
      *            The artifact file.
      */
-    Executor(ReflectiveFactory reflective, Library library, Map<List<String>, Artifact> programs, int systemVerbosity) {
+    Executor(Library library, Map<List<String>, Artifact> programs, int systemVerbosity) {
         seen.add(new Exclude("com.github.bigeasy.danger/danger"));
         seen.add(new Exclude("com.github.bigeasy.verbiage/verbiage"));
         seen.add(new Exclude("com.github.bigeasy.go-go/go-go"));
@@ -124,7 +121,6 @@ public class Executor {
         seen.add(new Exclude("com.github.bigeasy.reflective/reflective"));
         seen.add(new Exclude("com.github.bigeasy.reflective/reflective-setter"));
         this.programs = programs;
-        this.reflective = reflective;
         this.library = library;
         this.parent = null;
         this.systemVerbosity = systemVerbosity;
@@ -137,7 +133,6 @@ public class Executor {
      */
     private Executor(Executor parent, Set<Object> seen) {
         this.programs = parent.programs;
-        this.reflective = parent.reflective;
         this.seen.addAll(parent.seen);
         this.seen.addAll(seen);
         this.urls.addAll(parent.urls);
@@ -412,11 +407,16 @@ public class Executor {
         return execute(env, commands, cacheEntry, outcomeType, commandIndex);
     }
     
-    private Commandable getCommandable(Class<? extends Commandable> commandableClass) {
+    private Commandable getCommandable(final Class<? extends Commandable> commandableClass) {
         try {
-            return reflective.newInstance(commandableClass);
+            try {
+                return commandableClass.newInstance();
+            } catch (Throwable e) {
+                throw new ReflectiveException(Reflective.encode(e), e);
+            }
         } catch (ReflectiveException e) {
             throw new GoException(CANNOT_CREATE_TASK, e, commandableClass);
+
         }
     }
     
@@ -449,7 +449,7 @@ public class Executor {
                                 try {
                                     assignment.setter.set(commandable, conversion.value);
                                 } catch (ReflectiveException e) {
-                                    if (e.getCode() == ReflectiveException.INVOCATION_TARGET) {
+                                    if (e.getCode() == Reflective.INVOCATION_TARGET) {
                                         throw new GoException(ASSIGNMENT_EXCEPTION_THROWN, e, commandable.getClass().getCanonicalName(), assignment.setter.getNative().getName());
                                     }
                                     throw new GoException(ASSIGNMENT_FAILED, e, commandable.getClass().getCanonicalName(), assignment.setter.getNative().getName());

@@ -14,13 +14,12 @@ import org.testng.annotations.Test;
 
 import com.goodworkalan.go.go.library.Artifact;
 import com.goodworkalan.go.go.library.Library;
-import com.goodworkalan.reflective.ReflectiveFactory;
 
 public class EnvironmentTest {
     public Executor getExecutor() {
         Map<List<String>, Artifact> programs = new HashMap<List<String>, Artifact>();
         Library library = new Library(new File[0]);
-        return new Executor(new ReflectiveFactory(), library, programs, 0);
+        return new Executor(library, programs, 0);
 
     }
 
