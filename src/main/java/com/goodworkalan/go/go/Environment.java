@@ -40,7 +40,7 @@ public class Environment {
     public final LinkedList<String> commands = new LinkedList<String>();
     
     /** The list of maps of generated objects by type. */
-    final List<Map<Ilk.Key, Ilk.Box>> outputs = new ArrayList<Map<Ilk.Key, Ilk.Box>>();
+    final List<List<Ilk.Box>> outputs = new ArrayList<List<Ilk.Box>>();
     
     /** The list of converted arguments for the commands. */
     final LinkedList<List<Conversion>> conversions = new LinkedList<List<Conversion>>();
@@ -339,12 +339,22 @@ public class Environment {
      * @return The output object or null if none exists.
      */
     public <T> T get(Ilk<T> ilk, int index) {
-        for (Map.Entry<Ilk.Key, Ilk.Box> entry : outputs.get(index).entrySet()) {
-            if (ilk.key.isAssignableFrom(entry.getKey())) {
-                return entry.getValue().cast(ilk);
+        Ilk.Box box = get(ilk.key, index);
+        if (box == null) {
+            return null;
+        }
+        return box.cast(ilk);
+    }
+    
+    Ilk.Box get(Ilk.Key key , int index) {
+        Ilk.Box candidate = null;
+        for (Ilk.Box box : outputs.get(index)) {
+            if (key.isAssignableFrom(box.key)
+            && (candidate == null || candidate.key.isAssignableFrom(box.key))) {
+                candidate = box;
             }
         }
-        return null;
+        return candidate;
     }
     
     /**
@@ -390,7 +400,7 @@ public class Environment {
      */
     public <T> void output(Class<T> outputClass, T output) {
         Ilk.Box box = new Ilk<T>(outputClass).box(output);
-        outputs.get(index).put(box.key, box);
+        outputs.get(index).add(box);
     }
 
     /**
@@ -405,7 +415,7 @@ public class Environment {
      */
     public <T> void output(Ilk<T> ilk, T output) {
         Ilk.Box box = ilk.box(output);
-        outputs.get(index).put(box.key, box);
+        outputs.get(index).add(box);
     }
 
     /**

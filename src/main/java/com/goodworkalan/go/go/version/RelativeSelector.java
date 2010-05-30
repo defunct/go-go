@@ -51,6 +51,30 @@ class RelativeSelector implements SelectionStrategy {
         this.parts = parts;
         this.comparisons = comparisons;
     }
+    
+    private boolean matches(int[] version) {
+        for (int i = 0; i < Math.max(parts.length, version.length); i++) {
+            int compare = get(version, i, 0) - get(parts, i, 0);
+            if (matched(compare, i)) {
+                boolean variable = comparisons[i] != 0;
+                if (variable) {
+                    for (int j = i + 1; j < Math.max(parts.length, version.length); j++) {
+                        if (compare != 0) {
+                            return true;
+                        }
+                        compare = get(version, j, 0) - get(parts, j, 0);
+                        if (!matched(compare, i)) {
+                            return false;
+                        }
+                    }
+                    return true;
+                }
+            } else {
+                return false;
+            }
+        }
+        return true;
+    }
 
     /**
      * Return the greatest version number from the list of version numbers that
@@ -74,7 +98,7 @@ class RelativeSelector implements SelectionStrategy {
                 for (int i = 0, stop = split.length; i < stop; i++) {
                     version[i] = Integer.parseInt(split[i]);
                 }
-                if (compare(best, version)) {
+                if (matches(version) && compare(best, version)) {
                     best = version;
                     choice = option;
                 }
@@ -134,27 +158,12 @@ class RelativeSelector implements SelectionStrategy {
      *         the given best version so far.
      */
     public boolean compare(int[] best, int[] version) {
-        for (int i = 0; i < parts.length; i++) {
-            int compare = get(version, i, 0) - parts[i];
-            if (matched(compare, i)) {
-                boolean variable = comparisons[i] != 0;
-                if (variable) {
-                    int better = get(version, i, 0) - get(best, i, 0);
-                    if (better > 0) {
-                        return true;
-                    } else if (better == 0) {
-                        if (compare == 0) {
-                            for (int j = i + 1; j < Math.max(best.length, version.length); j++) {
-                                if (!matched(get(version, j, 0) - get(parts, j, 0), i) || get(version, j, 0) < get(best, j, 0)) {
-                                    return false;
-                                }
-                            }
-                        }
-                        return true;
-                    }
-                    return false;
-                }
-            } else {
+        for (int i = 0, stop = Math.max(best.length, version.length); i < stop; i++) {
+            int compare = get(version, i, 0) - get(best, i, 0);
+            if (compare > 0) {
+                return true;
+            }
+            if (compare < 0) {
                 return false;
             }
         }

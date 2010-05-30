@@ -481,10 +481,10 @@ public class Executor {
                     if (!cacheEntry.transients.isEmpty()) {
                         throw new GoException(0, commandable.getClass());
                     }
-                    cacheEntry.outputs.putAll(subEnv.outputs.get(commandIndex));
+                    cacheEntry.outputs.addAll(subEnv.outputs.get(commandIndex));
                     if (cacheEntry.outputs.isEmpty()) {
                         Ilk.Box box = new Ilk<IgnorableOutput>(IgnorableOutput.class).box(new IgnorableOutput());
-                        cacheEntry.outputs.put(box.key, box);
+                        cacheEntry.outputs.add(box);
                     }
                 } else if (cacheEntry.transients.isEmpty()) {
                     cacheEntry.transients.addAll(transients);
@@ -519,10 +519,10 @@ public class Executor {
             commands = commandNode.commands;
 
             // Tree list will sort the keys by assignability.
-            env.outputs.add(new TreeMap<Ilk.Key, Ilk.Box>());
+            env.outputs.add(new ArrayList<Ilk.Box>());
 
             if (cached != null) {
-                env.outputs.get(commandIndex).putAll(cached.outputs);
+                env.outputs.get(commandIndex).addAll(cached.outputs);
                 env.commandables.addAll(cached.transients);
             } else {
                 cacheEntry = new CacheEntry();
@@ -546,11 +546,7 @@ public class Executor {
      */
     public Ilk.Box chooseBox(Environment env, Ilk<?> ilk) {
         if (ilk != null) {
-            for (Map.Entry<Ilk.Key, Ilk.Box> entry : env.outputs.get(env.outputs.size() -1).entrySet()) {
-                if (ilk.key.isAssignableFrom(entry.getKey())) {
-                    return entry.getValue();
-                }
-            }
+            return env.get(ilk.key, env.outputs.size() - 1);
         }
         return null;
     }
