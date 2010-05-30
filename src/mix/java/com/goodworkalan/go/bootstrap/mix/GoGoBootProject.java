@@ -17,12 +17,22 @@ import java.util.TreeSet;
 import java.util.Set;
 import java.io.File;
 
-public class GoGoBootProject extends ProjectModule {
-    @Override
+/**
+ * Build definition for Jav-a-Go-Go Boot.
+ *
+ * @author Alan Gutierrez
+ */
+public class GoGoBootProject implements ProjectModule {
+    /**
+     * Build the project definition for Jav-a-Go-Go Boot.
+     *
+     * @param builder
+     *          The project builder.
+     */
     public void build(Builder builder) {
         builder
             .cookbook(JavaProject.class)
-                .produces("com.github.bigeasy.go-go/go-go-boot/0.1.2.12")
+                .produces("com.github.bigeasy.go-go/go-go-boot/0.1.2.15")
                 .development("org.testng/testng-jdk15/5.10")
                 .end()
             .end();
