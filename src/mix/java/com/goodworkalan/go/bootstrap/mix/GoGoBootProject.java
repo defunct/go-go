@@ -1,5 +1,6 @@
 package com.goodworkalan.reflective.mix;
 
+import com.goodworkalan.go.go.Commandable;
 import com.goodworkalan.go.go.Environment;
 import com.goodworkalan.go.go.library.Include;
 import com.goodworkalan.go.go.library.ArtifactPart;
@@ -8,9 +9,8 @@ import com.goodworkalan.go.go.library.PathPart;
 import com.goodworkalan.mix.Mix;
 import com.goodworkalan.mix.Project;
 import com.goodworkalan.mix.ProjectModule;
-import com.goodworkalan.mix.builder.Executable;
 import com.goodworkalan.mix.builder.Builder;
-import com.goodworkalan.mix.builder.JavaProject;
+import com.goodworkalan.mix.cookbook.JavaProject;
 import com.goodworkalan.comfort.io.Files;
 import java.util.Collections;
 import java.util.TreeSet;
@@ -38,7 +38,7 @@ public class GoGoBootProject implements ProjectModule {
             .end();
         builder
             .recipe("dependencies")
-                .executable(new Executable() {
+                .executable(new Commandable() {
                     public void execute(Environment env) {
                         ArtifactPart artifactPart = env.library.getArtifactPart(new Include("com.github.bigeasy.go-go/go-go/+0"), "dep", "jar");
                         Set<String> artifacts = new TreeSet<String>();
