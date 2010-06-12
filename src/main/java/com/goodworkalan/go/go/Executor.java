@@ -359,7 +359,7 @@ public class Executor {
         }
     }
     
-    private Ilk.Box extend(Environment env, CommandNode CommandNode, List<String> arguments, int offset, Ilk<?> outcomeType) {
+    private Ilk.Box extend(Environment env, CommandNode commandNode, List<String> arguments, int offset, Ilk<?> outcomeType) {
         boolean remaining = false;
         for (int i = offset, stop = arguments.size(); i < stop; i++) {
             String argument = arguments.get(i);
@@ -372,17 +372,17 @@ public class Executor {
                     String[] pair = argument.substring(2).split("=", 2);
                     String name = pair[0];
                     String value = pair.length == 1 ? null : pair[1]; 
-                    argument(env, CommandNode, name, value);
+                    argument(env, commandNode, name, value);
                 } else {
                     Artifact artifact = programs.get(flatten(env.commands, argument));
                     if (artifact != null) {
                         Collection<PathPart> unseen = extendClassPath(new ResolutionPart(artifact));
                         if (!unseen.isEmpty()) {
-                            return load(unseen, env, CommandNode, arguments, i, outcomeType);
+                            return load(unseen, env, commandNode, arguments, i, outcomeType);
                         }
                     }
-                    CommandNode = CommandNode.commands.get(argument);
-                    if (CommandNode == null) {
+                    commandNode = commandNode.commands.get(argument);
+                    if (commandNode == null) {
                         env.remaining.add(argument);
                         remaining = true;
                     } else {

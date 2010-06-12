@@ -4,7 +4,6 @@ package com.goodworkalan.go.go;
 import static org.testng.Assert.assertEquals;
 
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.io.PrintStream;
 
 import org.testng.annotations.Test;
@@ -24,7 +23,7 @@ public class CommandNodeTest {
     
     /** Argument duplicated. */
     @Test
-    public void duplicateArgument() throws IOException {
+    public void duplicateArgument() {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         InputOutput io = new InputOutput(System.in, System.out, new PrintStream(out));
         new CommandNode(io, DuplicateArgumentMethod.class);

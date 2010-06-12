@@ -23,7 +23,7 @@ public class ArtifactsReaderTest {
      */
     @Test
     public void defaultConstructor() {
-        new Artifacts();;
+        new Artifacts();
     }
     
     @Test

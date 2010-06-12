@@ -5,12 +5,11 @@ import static org.testng.Assert.assertEquals;
 import org.testng.annotations.Test;
 
 import com.goodworkalan.infuse.StringInfuser;
-import com.goodworkalan.reflective.ReflectiveException;
 import com.goodworkalan.reflective.setter.MethodSetter;
 
 public class AssignmentTest {
     @Test
-    public void getType() throws ReflectiveException, SecurityException, NoSuchMethodException {
+    public void getType() throws SecurityException, NoSuchMethodException {
         Assignment assignment = new Assignment(new MethodSetter(Dubious.class.getMethod("setSomething", String.class)), StringInfuser.INSTNACE);
         assertEquals(assignment.setter.getType(), String.class);
     }

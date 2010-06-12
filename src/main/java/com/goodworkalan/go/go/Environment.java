@@ -236,6 +236,24 @@ public class Environment {
         }
     }
 
+	/**
+	 * Formats the given message token found in the message bundle associated
+	 * with the current <code>Commandable</code> class using the given
+	 * arguments.
+	 * <p>
+	 * The message bundle message bundle found in the package of the given
+	 * context class. The message format is found in a using a key made by
+	 * catenating the context class name, a slash, and the given message key.
+	 * 
+	 * @param messageKey
+	 *            The message format key.
+	 * @param arguments
+	 *            The message format arguments.
+	 */
+    public void error(String token, Object...arguments) {
+    	error(io, commandableClass, token, arguments);
+    }
+
     /**
      * Format the message format in the message bundle found in the package of
      * the given context class with the given key using the given arguments and

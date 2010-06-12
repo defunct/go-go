@@ -53,6 +53,8 @@ public class Library {
      * @return An expanded collection of path parts.
      */
     // FIXME Rename expand.
+    // FIXME Why a collection? Why not return a set or a list (probably list)?
+    // FIXME Collection kind of does make sense, though. You're not going to random access this.
     public Collection<PathPart> resolve(Collection<PathPart> parts) {
         return resolve(parts, Collections.<Object> emptySet());
     }
@@ -70,8 +72,7 @@ public class Library {
      * @return An expanded collection of path parts.
      * @see PathPart#expand(Library, Collection, Collection)
      */
-    public Collection<PathPart> resolve(Collection<PathPart> parts,
-            Set<?> exclude) {
+    public Collection<PathPart> resolve(Collection<PathPart> parts, Set<?> exclude) {
         Map<Object, PathPart> expanded = new LinkedHashMap<Object, PathPart>();
         Collection<PathPart> current = parts;
         Collection<PathPart> next = new ArrayList<PathPart>();
