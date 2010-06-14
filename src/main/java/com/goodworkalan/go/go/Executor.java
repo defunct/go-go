@@ -221,20 +221,20 @@ public class Executor {
                 for (Class<? extends Commandable> commandableClass : tasks) {
                     classNames.add(commandableClass.getCanonicalName());
                     if (!commandNodes.containsKey(commandableClass)) {
-                        CommandNode CommandNode = new CommandNode(io, commandableClass);
-                        commandNodes.put(commandableClass, CommandNode);
+                        CommandNode commandNode = new CommandNode(io, commandableClass);
+                        commandNodes.put(commandableClass, commandNode);
                         Class<? extends Commandable> parentCommandableClass = null;
-                        while ((parentCommandableClass = CommandNode.getParentCommandClass()) != null) {
+                        while ((parentCommandableClass = commandNode.getParentCommandClass()) != null) {
                             CommandNode parent = commandNodes.get(parentCommandableClass);
                             if (parent == null) {
                                 parent = new CommandNode(io, parentCommandableClass);
                                 commandNodes.put(parentCommandableClass, parent);
                             }
-                            parent.addCommand(CommandNode);
-                            CommandNode = parent;
+                            parent.addCommand(commandNode);
+                            commandNode = parent;
                         }
                         // Will reassign sometimes, but that's okay.
-                        commands.put(CommandNode.getName(), CommandNode);
+                        commands.put(commandNode.getName(), commandNode);
                     }
                 }
                 debug(io, "readConfiguration", url, classNames);
@@ -276,20 +276,20 @@ public class Executor {
         return commandables;
     }
 
-    private Ilk.Box resume(Environment env, CommandNode CommandNode, List<String> arguments, int offset, Ilk<?> outcomeType) {
+    private Ilk.Box resume(Environment env, CommandNode commandNode, List<String> arguments, int offset, Ilk<?> outcomeType) {
         readConfigurations(env.io);
         if (offset == 0) {
-            CommandNode = commands.get(arguments.get(0));
-            if (CommandNode == null) {
+            commandNode = commands.get(arguments.get(0));
+            if (commandNode == null) {
                 throw new GoException(COMMAND_CLASS_MISSING, arguments.get(offset));
             }
             env.addCommand(arguments.get(0));
             offset++;
         }
-        return extend(env, CommandNode, arguments, offset, outcomeType);
+        return extend(env, commandNode, arguments, offset, outcomeType);
     }
 
-    private void argument(Environment env, CommandNode CommandNode, String name, String value) {
+    private void argument(Environment env, CommandNode commandNode, String name, String value) {
         String command = env.commands.getLast();
         if (name.indexOf(':') == -1) {
             name = command + ':' + name;
@@ -299,7 +299,7 @@ public class Executor {
             throw new GoException(0);
         }
 
-        Class<? extends Commandable> parent = CommandNode.getParentCommandClass();
+        Class<? extends Commandable> parent = commandNode.getParentCommandClass();
         CommandNode actualCommandNode; 
         if (parent == null) {
             actualCommandNode = commands.get(qualified[0]);
@@ -584,10 +584,10 @@ public class Executor {
         public Ilk.Box call(Executor exuector, Environment env);
     }
 
-    private Ilk.Box load(Collection<PathPart> unseen, Environment env, final CommandNode CommandNode, final List<String> arguments, final int offset, final Ilk<?> outcomeType) {
+    private Ilk.Box load(Collection<PathPart> unseen, Environment env, final CommandNode commandNode, final List<String> arguments, final int offset, final Ilk<?> outcomeType) {
         return extendClassPath(unseen, env, new FutureBox() {
             public Box call(Executor executor, Environment env) {
-                return executor.resume(env, CommandNode, arguments, offset, outcomeType);
+                return executor.resume(env, commandNode, arguments, offset, outcomeType);
             }
         });
     }
