@@ -1,7 +1,7 @@
 package com.goodworkalan.go.go;
 
 import static com.goodworkalan.go.go.Environment.flatten;
-import static com.goodworkalan.go.go.GoException.ASSIGNMENT_EXCEPTION_THROWN;
+import static com.goodworkalan.go.go.GoException.*;
 import static com.goodworkalan.go.go.GoException.ASSIGNMENT_FAILED;
 import static com.goodworkalan.go.go.GoException.CANNOT_CREATE_TASK;
 import static com.goodworkalan.go.go.GoException.COMMANDABLE_RESOURCES_IO;
@@ -343,7 +343,7 @@ public class Executor {
                 assignment = actualCommandNode.getAssignments().get(qualified[1]); 
                 if (assignment == null) {
                     // FIXME Need a much nicer message.
-                    throw new GoException(0);
+                    throw new GoException(NO_SUCH_ARGUMENT, name);
                 }
                 if (value == null && Primitives.box(assignment.setter.getType()).equals(Boolean.class)) {
                     value = "true";

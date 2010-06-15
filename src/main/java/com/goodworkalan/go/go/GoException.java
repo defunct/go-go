@@ -104,6 +104,9 @@ public class GoException extends CodedDanger {
     /** Command class missing. */
     public final static int COMMAND_CLASS_MISSING = 101;
     
+    /** No such argument. */
+    public final static int NO_SUCH_ARGUMENT = 106;
+    
     /**
      * Create an exception with the given error code.
      * 
