@@ -32,7 +32,7 @@ public class GoGoBootProject implements ProjectModule {
     public void build(Builder builder) {
         builder
             .cookbook(JavaProject.class)
-                .produces("com.github.bigeasy.go-go/go-go-boot/0.1.2.22")
+                .produces("com.github.bigeasy.go-go/go-go-boot/0.1.2.23")
                 .development("org.testng/testng-jdk15/5.10")
                 .end()
             .end();
