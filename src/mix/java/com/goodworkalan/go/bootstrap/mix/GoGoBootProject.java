@@ -1,4 +1,4 @@
-package com.goodworkalan.reflective.mix;
+package com.goodworkalan.go.bootstrap.mix;
 
 import com.goodworkalan.go.go.Commandable;
 import com.goodworkalan.go.go.Environment;
@@ -32,7 +32,7 @@ public class GoGoBootProject implements ProjectModule {
     public void build(Builder builder) {
         builder
             .cookbook(JavaProject.class)
-                .produces("com.github.bigeasy.go-go/go-go-boot/0.1.2.23")
+                .produces("com.github.bigeasy.go-go/go-go-boot/0.1.2.24")
                 .development("org.testng/testng-jdk15/5.10")
                 .end()
             .end();
