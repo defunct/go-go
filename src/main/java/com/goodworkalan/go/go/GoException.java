@@ -1,9 +1,5 @@
 package com.goodworkalan.go.go;
 
-import java.util.ResourceBundle;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-
 import com.goodworkalan.danger.CodedDanger;
 
 /**
@@ -13,9 +9,6 @@ import com.goodworkalan.danger.CodedDanger;
  * @author Alan Gutierrez
  */
 public class GoException extends CodedDanger {
-    /** The static cache of exception message resource bundles. */
-    private final static ConcurrentMap<String, ResourceBundle> BUNDLES = new ConcurrentHashMap<String, ResourceBundle>();
-
     /** Serial version id. */
     private static final long serialVersionUID = 1L;
 
@@ -116,7 +109,7 @@ public class GoException extends CodedDanger {
      *            The format arguments.
      */
     public GoException(int code, Object...arguments) {
-        super(BUNDLES, code, null, arguments);
+        super(code, null, arguments);
     }
 
     /**
@@ -130,7 +123,7 @@ public class GoException extends CodedDanger {
      *            The format arguments.
      */
     public GoException(int code, Throwable cause, Object...arguments) {
-        super(BUNDLES, code, cause, arguments);
+        super(code, cause, arguments);
     }
 
     public static int erroneous(InputOutput io, int verbosity, Throwable e) {
