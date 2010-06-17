@@ -19,13 +19,13 @@ public class GoProject implements ProjectModule {
     public void build(Builder builder) {
         builder
             .cookbook(JavaProject.class)
-                .produces("com.github.bigeasy.go-go/go-go/0.1.4.18")
+                .produces("com.github.bigeasy.go-go/go-go/0.1.4.19")
                 .depends()
                     .production("com.github.bigeasy.reflective/reflective-setter/0.+1")
                     .production("com.github.bigeasy.ilk/ilk/0.+1")
                     .production("com.github.bigeasy.danger/danger/0.+1")
                     .production("com.github.bigeasy.retry/retry/0.+1")
-                    .production("com.github.bigeasy.class-boxer/class-boxer/0.+1")
+                    .production("com.github.bigeasy.class/class-boxer/0.+1")
                     .production("com.github.bigeasy.infuse/infuse/0.+1")
                     .development("com.github.bigeasy.comfort-io/comfort-io/0.+1.1")
                     .development("org.slf4j/slf4j-log4j12/1.4.2")
