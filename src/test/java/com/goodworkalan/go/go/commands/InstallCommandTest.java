@@ -2,6 +2,7 @@ package com.goodworkalan.go.go.commands;
 
 import static java.util.Arrays.asList;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -49,7 +50,7 @@ public class InstallCommandTest {
         ByteArrayOutputStream err = new ByteArrayOutputStream();
         InputOutput io = new InputOutput(System.in, System.out, new PrintStream(err));
         Go.execute(Collections.singletonList(new File("src/test/libraries/b").getAbsoluteFile()), io, "boot", "install", "com.goodworkalan/dummy/0.2");
-        assertEquals(err.toString(), "Unable to read the JAR archive [/Users/alan/git/go-go/src/test/libraries/b/com/goodworkalan/dummy/0.2/dummy-0.2.jar].\n");
+        assertTrue(err.toString().startsWith("Unable to read the JAR archive"));
     }
     
     /** Test cannot create resolution directory. */
@@ -61,7 +62,7 @@ public class InstallCommandTest {
             Files.pour(goGo, asList(""));
             Redirection redirection = new Redirection();
             Go.execute(Collections.singletonList(new File("src/test/libraries/a").getAbsoluteFile()), redirection.io, "boot", "install", "com.goodworkalan/leaves", "com.goodworkalan/missing");
-            assertEquals(redirection.err.toString(), "Cannot create the artifact boot configuration directory [/Users/alan/git/go-go/src/test/libraries/a/go-go/com.goodworkalan].\n");
+            assertTrue(redirection.err.toString().startsWith("Cannot create the artifact boot configuration directory"));
         } finally {
             Files.unlink(goGo);
         }
