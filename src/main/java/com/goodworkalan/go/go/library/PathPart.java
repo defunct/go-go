@@ -9,7 +9,7 @@ import java.util.Set;
 /**
  * A prototype interface for an archive or directory in a file path. Given a
  * list of path parts, a library will expand the list, by calling the the
- * {@link #expand(Library, Collection) expand} method of the
+ * {@link #expand(Library, Collection, Collection) expand} method of the
  * <code>PathPart</code>. A prototype <code>PathPart</code> implementation may
  * append additional <code>PathPart</code> instances to the path, if it is an
  * {@link Artifact}, for example, that has dependencies.
@@ -130,8 +130,6 @@ public interface PathPart {
      *            The list of expended path parts.
      * @param expand
      *            The list of path parts to expand.
-     * @return An expanded list of path parts that all have a file
-     *         representation on the file system.
      */
     public void expand(Library library, Collection<PathPart> expanded, Collection<PathPart> expand);
 

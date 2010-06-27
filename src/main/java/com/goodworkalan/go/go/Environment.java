@@ -73,8 +73,8 @@ public class Environment {
      *            The library.
      * @param io
      *            The input/output streams.
-     * @param execution
-     *            The execution state.
+     * @param executor
+     *            The executor.
      */
     public Environment(Library library, InputOutput io, Executor executor) {
         this.commandableClass = null;
@@ -119,8 +119,6 @@ public class Environment {
      * 
      * @param env
      *            The environment to copy.
-     * @param executor
-     *            The executor.
      * @param commandableClass
      *            The commandable class used as the error message context.
      * @param commandIndex
@@ -150,13 +148,13 @@ public class Environment {
      * class. The message format is found in a using a key made by catenating
      * the commandable class name, a slash, and the given message key.
      * 
-     * @param messageKey
-     *            The message format key.
+     * @param code
+     *            The message code.
      * @param arguments
      *            The message format arguments.
      */
-    public void verbose(String messageKey, Object...arguments) {
-        verbose(commandableClass, messageKey, arguments);
+    public void verbose(String code, Object...arguments) {
+        verbose(commandableClass, code, arguments);
     }
 
     /**
@@ -168,13 +166,15 @@ public class Environment {
      * context class. The message format is found in a using a key made by
      * catenating the context class name, a slash, and the given message key.
      * 
-     * @param messageKey
-     *            The message format key.
+     * @param context
+     *            The message bundle context class.
+     * @param code
+     *            The message code.
      * @param arguments
      *            The message format arguments.
      */
-    public void verbose(Class<?> context, String token, Object... arguments) {
-        error(1, context, token, arguments);
+    public void verbose(Class<?> context, String code, Object... arguments) {
+        error(1, context, code, arguments);
     }
 
     /**
@@ -185,13 +185,13 @@ public class Environment {
      * class. The message format is found in a using a key made by catenating
      * the commandable class name, a slash, and the given message key.
      * 
-     * @param messageKey
-     *            The message format key.
+     * @param code
+     *            The message code.
      * @param arguments
      *            The message format arguments.
-      */
-    public void debug(String message, Object...arguments) {
-        debug(commandableClass, message, arguments);
+     */
+    public void debug(String code, Object...arguments) {
+        debug(commandableClass, code, arguments);
     }
 
     /**
@@ -203,13 +203,15 @@ public class Environment {
      * context class. The message format is found in a using a key made by
      * catenating the context class name, a slash, and the given message key.
      * 
-     * @param messageKey
-     *            The message format key.
+     * @param context
+     *            The message bundle context class.
+     * @param code
+     *            The message code.
      * @param arguments
      *            The message format arguments.
      */
-    public void debug(Class<?> context, String token, Object...arguments) {
-        error(2, context, token, arguments);
+    public void debug(Class<?> context, String code, Object...arguments) {
+        error(2, context, code, arguments);
     }
 
     /**
@@ -222,15 +224,19 @@ public class Environment {
      * a using a key made by catenating the context class name, a slash, and the
      * given message key.
      * 
-     * @param messageKey
-     *            The message format key.
+     * @param level
+     *            The error level.
+     * @param context
+     *            The message bundle context class.
+     * @param code
+     *            The message code.
      * @param arguments
      *            The message format arguments.
      */
-    public void error(int level, Class<?> context, String token, Object...arguments) {
+    public void error(int level, Class<?> context, String code, Object...arguments) {
         for (int i = 0, stop = verbosity.size(); i < stop; i++) {
             if (verbosity.get(i) >= level) {
-                error(context, token, arguments);
+                error(context, code, arguments);
                 break;
             }
         }
@@ -245,30 +251,32 @@ public class Environment {
 	 * context class. The message format is found in a using a key made by
 	 * catenating the context class name, a slash, and the given message key.
 	 * 
-	 * @param messageKey
-	 *            The message format key.
+	 * @param code
+	 *            The message code.
 	 * @param arguments
 	 *            The message format arguments.
 	 */
-    public void error(String token, Object...arguments) {
-    	error(io, commandableClass, token, arguments);
+    public void error(String code, Object...arguments) {
+    	error(io, commandableClass, code, arguments);
     }
 
     /**
      * Format the message format in the message bundle found in the package of
      * the given context class with the given key using the given arguments and
-     * write to standard error. The message bundle message bundle found
-     * in the package of the given context class. The message format is found in
-     * a using a key made by catenating the context class name, a slash, and the
+     * write to standard error. The message bundle message bundle found in the
+     * package of the given context class. The message format is found in a
+     * using a key made by catenating the context class name, a slash, and the
      * given message key.
      * 
-     * @param messageKey
-     *            The message format key.
+     * @param context
+     *            The message bundle context class.
+     * @param code
+     *            The message code.
      * @param arguments
      *            The message format arguments.
      */
-    public void error(Class<?> context, String token, Object...arguments) {
-        error(io, context, token, arguments);
+    public void error(Class<?> context, String code, Object...arguments) {
+        error(io, context, code, arguments);
     }
 
     /**
@@ -286,15 +294,15 @@ public class Environment {
      * @param context
      *            The context used to find the bundle and half of the message
      *            key.
-     * @param token
-     *            The message token.
+     * @param code
+     *            The message code.
      * @param arguments
      *            Arguments to pass to the format.
      */
-    public static void error(InputOutput io, Class<?> context, String token, Object...arguments) {
+    public static void error(InputOutput io, Class<?> context, String code, Object...arguments) {
         String className = context.getCanonicalName();
         className = className.substring(className.lastIndexOf('.') + 1);
-        String key = className + "/" + token; 
+        String key = className + "/" + code; 
         ResourceBundle bundle;
         try {
             bundle = ResourceBundle.getBundle(context.getPackage().getName() + ".stderr", Locale.getDefault(), Thread.currentThread().getContextClassLoader());
@@ -374,14 +382,14 @@ public class Environment {
         }
         return candidate;
     }
-    
+
     /**
      * Extend the current class path with the given part for all descendant
      * commands in the command line. If any of the path parts are not in the
      * current class path, a new class loader is created that will lookup
      * classes in the missing path parts and a new thread is launched to execute
      * the descendant commands in the command line. The extended class path will
-     * apply to any commands added by the {@link #invokeAfter(Commandable)
+     * apply to any commands added by the {@link #invokeAfter(Class)
      * invokeAfter} method.
      * 
      * @param pathPart

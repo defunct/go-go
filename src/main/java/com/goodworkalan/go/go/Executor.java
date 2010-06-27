@@ -104,11 +104,14 @@ public class Executor {
     }
 
     /**
-     * Load the tasks found in the libraries specified in the given artifact
-     * file. The library dependencies are also loaded.
+     * Create an executor.
      * 
-     * @param artifactFile
-     *            The artifact file.
+     * @param library
+     *            The library.
+     * @param programs
+     *            The program to artifact map.
+     * @param systemVerbosity
+     *            The system verbosity level.
      */
     Executor(Library library, Map<List<String>, Artifact> programs, int systemVerbosity) {
         seen.add(new Exclude("com.github.bigeasy.danger/danger"));

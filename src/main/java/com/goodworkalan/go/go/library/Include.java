@@ -42,8 +42,6 @@ public class Include {
      * 
      * @param artifact
      *            The artifact to include.
-     * @param excludes
-     *            The artifact dependencies to exclude.
      */
     public Include(Artifact artifact) {
         this.artifact = artifact;

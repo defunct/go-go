@@ -179,8 +179,10 @@ class ProgramQueue {
      * down latch, since it would be cumbersome to write our own.
      * 
      * @param io
+     *            The input/output bouquet.
      * @param arguments
-     * @return
+     *            The command line arguments.
+     * @return Always returns zero, not sure why it is returning anything.
      */
     private int runProgram(InputOutput io, List<String> arguments) {
         Executor executor = new Executor(new Library(libraries.toArray(new File[libraries.size()])), programs,  verbosity);

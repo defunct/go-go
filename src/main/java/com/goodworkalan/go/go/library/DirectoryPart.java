@@ -63,7 +63,12 @@ public class DirectoryPart implements PathPart {
      * Returns a collection that contains a this directory path part since this
      * directory path part is already resolved.
      * 
-     * @return A collection containing this directory path part.
+     * @param library
+     *            The library.
+     * @param expanded
+     *            The list of expended path parts.
+     * @param expand
+     *            The list of path parts to expand.
      */
     public void expand(Library library, Collection<PathPart> expanded, Collection<PathPart> expand) {
         expanded.add(this);

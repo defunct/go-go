@@ -25,7 +25,7 @@ import com.goodworkalan.utility.Primitives;
  * to to describe the behavior so I used that for the interface. I've taken to
  * prefixing collections of reflected data Meta. This would be MetaCommand but I
  * needed to expose that to the user. This class was called
- * <code>Repsonder</code> for a while. Not sure where I got that from. I'm
+ * <code>Responder</code> for a while. Not sure where I got that from. I'm
  * calling this a CommandNode since it is in fact, a participant in a tree
  * representing the command structure. If it where not part of a tree, I'd
  * probably have to call it CommandElement, which will become my standard suffix
@@ -96,15 +96,13 @@ class CommandNode implements MetaCommand {
     }
 
     /**
-     * Add a sub command responder. The sub command will be made available
-     * through the {@link #getCommand(String) getCommand} method indexed by the
-     * command name property of the responder.
+     * Add a sub command command node.
      * 
-     * @param responder
+     * @param commandNode
      *            The sub command to add.
      */
-    public void addCommand(CommandNode responder) {
-        commands.put(responder.getName(), responder);
+    public void addCommand(CommandNode commandNode) {
+        commands.put(commandNode.getName(), commandNode);
     }
 
     /**

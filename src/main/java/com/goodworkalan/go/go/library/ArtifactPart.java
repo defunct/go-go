@@ -68,11 +68,11 @@ public class ArtifactPart implements PathPart {
      * an collection containing only this path part.
      * 
      * @param library
-     *            The library to use to resolve artifact includes.
+     *            The library.
+     * @param expanded
+     *            The list of expended path parts.
      * @param expand
-     *            A list of dependent path parts to add to the expanded class
-     *            path.
-     * @return A collection containing only this path part.
+     *            The list of path parts to expand.
      */
     public void expand(Library library, Collection<PathPart> expanded, Collection<PathPart> expand) {
         expanded.add(this);

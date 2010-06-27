@@ -61,8 +61,6 @@ public class Artifact {
      *            The dependency name.
      * @param version
      *            The dependency version.
-     * @param excludes
-     *            The list of excludes.
      */
     public Artifact(String group, String name, String version) {
         this.group = group;
@@ -99,15 +97,10 @@ public class Artifact {
     }
 
     /**
-     * Create an artifact by parsing the given file name assuming the given
-     * suffix and extension.
+     * Create an artifact by parsing the relative path into a library.
      * 
      * @param file
      *            An artifact file.
-     * @param suffix
-     *            A file name suffix.
-     * @param extension
-     *            The file extension.
      */
     public Artifact(File file) {
         LinkedList<File> parts = new LinkedList<File>();

@@ -71,9 +71,7 @@ public class VersionSelector {
      * 
      * @param version
      *            The version to parse.
-     * @param parts
-     *            The number of parts expected.
-     * @return An integer with the
+     * @return A list of version number parts.
      */
     public static List<Integer> parse(String version) {
         Matcher matcher = VERSION_PART.matcher(version.trim());

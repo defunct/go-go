@@ -4,7 +4,7 @@ import com.goodworkalan.infuse.ObjectInfuser;
 import com.goodworkalan.reflective.setter.Setter;
 
 /**
- * Assigns a command line argument to a property in a {@link Arguable} Bean.
+ * Assigns a command line argument to a property in a {@link Commandable}.
  * 
  * @author Alan Gutierrez
  */
@@ -19,8 +19,6 @@ class Assignment {
      * Create an assignment that will set the property identified by the given
      * setter method with a string value converted with the given converter.
      * 
-     * @param declaringClass
-     *            The class that declared the assignment.
      * @param setter
      *            The property setter.
      * @param infuser

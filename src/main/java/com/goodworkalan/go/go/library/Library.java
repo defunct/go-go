@@ -29,8 +29,8 @@ public class Library {
      * artifact path part the first library directory containing the artifact is
      * used to to create an artifact path part.
      * 
-     * @param dir
-     *            The library directory.
+     * @param dirs
+     *            The library directories.
      */
     public Library(File... dirs) {
         this.dirs = dirs;
@@ -119,8 +119,11 @@ public class Library {
      * path is searched in order. The first library to contain the artifact is
      * used to create the artifact part.
      * 
-     * @param artifact
-     *            An artifact.
+     * @param include
+     *            An artifact it include with its dependency exclusions.
+     * @param suffixes
+     *            The suffixes of files that must be present to consider the
+     *            artifact present.
      * @return An artifact part or null.
      */
     public ArtifactPart getArtifactPart(Include include, String...suffixes) {

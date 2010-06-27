@@ -80,12 +80,12 @@ public class WriteInstallCommand implements Commandable {
      * meta command information to create a list of available command paths.
      * 
      * @param env
-     *            The I/O bouquet for debugging.
+     *            The environment.
      * @param classLoader
      *            The class loader to use to load commandable classes.
      * @param jar
      *            The jar file to read.
-     * @return
+     * @return The list of available command paths.
      */
     static List<String> readCommands(Environment env, ClassLoader classLoader, File jar) {
         List<String> commands = new ArrayList<String>();
