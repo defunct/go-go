@@ -19,7 +19,7 @@ public class GoProject implements ProjectModule {
     public void build(Builder builder) {
         builder
             .cookbook(JavaProject.class)
-                .produces("com.github.bigeasy.go-go/go-go/0.1.4.19")
+                .produces("com.github.bigeasy.go-go/go-go/0.1.4.20")
                 .depends()
                     .production("com.github.bigeasy.reflective/reflective-setter/0.+1")
                     .production("com.github.bigeasy.ilk/ilk/0.+1")

@@ -450,9 +450,9 @@ public class Executor {
                                     assignment.setter.set(commandable, conversion.value);
                                 } catch (ReflectiveException e) {
                                     if (e.getCode() == Reflective.INVOCATION_TARGET) {
-                                        throw new GoException(ASSIGNMENT_EXCEPTION_THROWN, e, commandable.getClass().getCanonicalName(), assignment.setter.getNative().getName());
+                                        throw new GoException(ASSIGNMENT_EXCEPTION_THROWN, e, commandable.getClass().getCanonicalName(), assignment.setter.getMember().getName());
                                     }
-                                    throw new GoException(ASSIGNMENT_FAILED, e, commandable.getClass().getCanonicalName(), assignment.setter.getNative().getName());
+                                    throw new GoException(ASSIGNMENT_FAILED, e, commandable.getClass().getCanonicalName(), assignment.setter.getMember().getName());
                                 }
                             }
                         }

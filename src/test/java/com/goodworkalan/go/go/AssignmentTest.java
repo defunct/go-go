@@ -10,7 +10,7 @@ import com.goodworkalan.reflective.setter.MethodSetter;
 public class AssignmentTest {
     @Test
     public void getType() throws SecurityException, NoSuchMethodException {
-        Assignment assignment = new Assignment(new MethodSetter(Dubious.class.getMethod("setSomething", String.class)), StringInfuser.INSTNACE);
+        Assignment assignment = new Assignment(new MethodSetter(Dubious.class.getMethod("setSomething", String.class), null), StringInfuser.INSTNACE);
         assertEquals(assignment.setter.getType(), String.class);
     }
     

@@ -200,7 +200,7 @@ class CommandNode implements MetaCommand {
                     }
                     checkForDuplicates(io, arguableClass, assignment, verbose);
                     Class<?> type =  Primitives.box(method.getParameterTypes()[0]);
-                    assignment.put(verbose, new Assignment(new MethodSetter(method), INFUSER.getInfuser(type)));
+                    assignment.put(verbose, new Assignment(new MethodSetter(method, null), INFUSER.getInfuser(type)));
                 }
             }
         }
