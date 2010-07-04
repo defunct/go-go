@@ -1,6 +1,8 @@
 package com.goodworkalan.go.go;
 
-import com.goodworkalan.danger.CodedDanger;
+import java.util.Locale;
+import java.util.ResourceBundle;
+
 
 /**
  * A general purpose exception that indicates that an error occurred in one 
@@ -8,7 +10,7 @@ import com.goodworkalan.danger.CodedDanger;
  *   
  * @author Alan Gutierrez
  */
-public class GoException extends CodedDanger {
+public class GoException extends RuntimeException {
     /** Serial version id. */
     private static final long serialVersionUID = 1L;
 
@@ -100,6 +102,12 @@ public class GoException extends CodedDanger {
     /** No such argument. */
     public final static int NO_SUCH_ARGUMENT = 106;
     
+    /** The error code. */
+    private final int code;
+    
+    /** The error message. */
+    private final String message;
+    
     /**
      * Create an exception with the given error code.
      * 
@@ -109,7 +117,7 @@ public class GoException extends CodedDanger {
      *            The format arguments.
      */
     public GoException(int code, Object...arguments) {
-        super(code, null, arguments);
+        this(code, null, arguments);
     }
 
     /**
@@ -123,9 +131,52 @@ public class GoException extends CodedDanger {
      *            The format arguments.
      */
     public GoException(int code, Throwable cause, Object...arguments) {
-        super(code, cause, arguments);
+        super(null, cause);
+        this.message = formatMessage(code, arguments);
+        this.code = code;
+    }
+    
+    /**
+     * Get the error code.
+     * 
+     * @return The error code.
+     */
+    public int getCode() {
+        return code;
     }
 
+    /**
+     * Get the error message.
+     * 
+     * @return The error message.
+     */
+    public String getMessage() {
+        return message;
+    }
+
+    /**
+     * Format the exception message using the message arguments to format the
+     * message found with the message key in the message bundle found in the
+     * package of the given context class.
+     * 
+     * @param contextClass
+     *            The context class.
+     * @param code
+     *            The error code.
+     * @param arguments
+     *            The format message arguments.
+     * @return The formatted message.
+     */
+    private String formatMessage(int code, Object...arguments) {
+        String baseName = getClass().getPackage().getName() + ".exceptions";
+        try {
+            ResourceBundle bundle = ResourceBundle.getBundle(baseName, Locale.getDefault(), Thread.currentThread().getContextClassLoader());
+            return String.format((String) bundle.getObject(Integer.toString(code)), arguments);
+        } catch (Exception e) {
+            return String.format("Cannot load message key [%s] from bundle [%s] becuase [%s].", code, baseName, e.getMessage());
+        }
+    }
+    
     public static int erroneous(InputOutput io, int verbosity, Throwable e) {
         if (verbosity > 0) {
             e.printStackTrace(io.err);
@@ -135,7 +186,6 @@ public class GoException extends CodedDanger {
         return ((Erroneous) e).getExitCode();
     }
 
-    // FIXME Why static?
     public int unwrap(InputOutput io, int verbosity) {
         Throwable iterator = this;
         while ((iterator instanceof GoException) && ((GoException) iterator).getCode() == FUTURE_EXECUTION) {

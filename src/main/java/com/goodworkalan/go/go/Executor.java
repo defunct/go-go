@@ -14,6 +14,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -38,8 +39,6 @@ import com.goodworkalan.go.go.library.ResolutionPart;
 import com.goodworkalan.ilk.Ilk;
 import com.goodworkalan.ilk.Ilk.Box;
 import com.goodworkalan.infuse.InfusionException;
-import com.goodworkalan.reflective.Reflective;
-import com.goodworkalan.reflective.ReflectiveException;
 import com.goodworkalan.retry.Retry;
 import com.goodworkalan.utility.Primitives;
 
@@ -412,14 +411,11 @@ public class Executor {
     
     private Commandable getCommandable(final Class<? extends Commandable> commandableClass) {
         try {
-            try {
-                return commandableClass.newInstance();
-            } catch (Throwable e) {
-                throw new ReflectiveException(Reflective.encode(e), e);
-            }
-        } catch (ReflectiveException e) {
+            return commandableClass.newInstance();
+        } catch (RuntimeException e) {
+            throw e;
+        } catch (Exception e) {
             throw new GoException(CANNOT_CREATE_TASK, e, commandableClass);
-
         }
     }
     
@@ -451,10 +447,9 @@ public class Executor {
                             if (assignment != null) {
                                 try {
                                     assignment.setter.set(commandable, conversion.value);
-                                } catch (ReflectiveException e) {
-                                    if (e.getCode() == Reflective.INVOCATION_TARGET) {
-                                        throw new GoException(ASSIGNMENT_EXCEPTION_THROWN, e, commandable.getClass().getCanonicalName(), assignment.setter.getMember().getName());
-                                    }
+                                } catch (InvocationTargetException e) {
+                                    throw new GoException(ASSIGNMENT_EXCEPTION_THROWN, e, commandable.getClass().getCanonicalName(), assignment.setter.getMember().getName());
+                                } catch (IllegalAccessException e) {
                                     throw new GoException(ASSIGNMENT_FAILED, e, commandable.getClass().getCanonicalName(), assignment.setter.getMember().getName());
                                 }
                             }
