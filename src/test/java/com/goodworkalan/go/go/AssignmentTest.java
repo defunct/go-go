@@ -7,7 +7,9 @@ import org.testng.annotations.Test;
 import com.goodworkalan.infuse.StringInfuser;
 import com.goodworkalan.reflective.setter.MethodSetter;
 
+// TODO Document.
 public class AssignmentTest {
+    // TODO Document.
     @Test
     public void getType() throws SecurityException, NoSuchMethodException {
         Assignment assignment = new Assignment(new MethodSetter(Dubious.class.getMethod("setSomething", String.class), null), StringInfuser.INSTNACE);

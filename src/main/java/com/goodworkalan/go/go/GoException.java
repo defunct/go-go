@@ -177,6 +177,7 @@ public class GoException extends RuntimeException {
         }
     }
     
+    // TODO Document.
     public static int erroneous(InputOutput io, int verbosity, Throwable e) {
         if (verbosity > 0) {
             e.printStackTrace(io.err);
@@ -186,6 +187,7 @@ public class GoException extends RuntimeException {
         return ((Erroneous) e).getExitCode();
     }
 
+    // TODO Document.
     public int unwrap(InputOutput io, int verbosity) {
         Throwable iterator = this;
         while ((iterator instanceof GoException) && ((GoException) iterator).getCode() == FUTURE_EXECUTION) {

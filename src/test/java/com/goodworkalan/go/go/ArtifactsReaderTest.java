@@ -26,6 +26,7 @@ public class ArtifactsReaderTest {
         new Artifacts();
     }
     
+    // TODO Document.
     @Test
     public void fileNotFound() {
         new GoExceptionCatcher(GoException.ARTIFACT_FILE_NOT_FOUND, new Runnable() {
@@ -35,6 +36,7 @@ public class ArtifactsReaderTest {
         }).run();
     }
     
+    // TODO Document.
     @Test
     public void firstCharacterTooLong() {
         new GoExceptionCatcher(GoException.INVALID_ARTIFACTS_LINE_START, new Runnable() {
@@ -44,6 +46,7 @@ public class ArtifactsReaderTest {
         }).run();
     }
     
+    // TODO Document.
     @Test
     public void invalidFirstCharacter() {
         new GoExceptionCatcher(GoException.INVALID_ARTIFACTS_LINE_START, new Runnable() {
@@ -53,6 +56,7 @@ public class ArtifactsReaderTest {
         }).run();
     }
 
+    // TODO Document.
     @Test
     public void invalidIncludeLine() {
         new GoExceptionCatcher(GoException.INVALID_INCLUDE_LINE, new Runnable() {
@@ -62,6 +66,7 @@ public class ArtifactsReaderTest {
         }).run();
     }
     
+    // TODO Document.
     @Test
     public void ioException() {
         new GoExceptionCatcher(GoException.ARTIFACT_FILE_IO_EXCEPTION, new Runnable() {
@@ -77,16 +82,19 @@ public class ArtifactsReaderTest {
         }).run();
     }
     
+    // TODO Document.
     @Test
     public void skipComment() {
         assertEquals(Artifacts.read(new StringReader("#")).size(), 0);
     }
     
+    // TODO Document.
     @Test
     public void skipBlankLines() {
         assertEquals(Artifacts.read(new StringReader("\n\n")).size(), 0);
     }
     
+    // TODO Document.
     @Test
     public void read() {
         Reader reader = new InputStreamReader(getClass().getResourceAsStream("example.dep"));

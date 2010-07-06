@@ -23,11 +23,13 @@ import com.goodworkalan.go.go.library.Artifact;
 import com.goodworkalan.go.go.library.ArtifactPart;
 import com.goodworkalan.ilk.Ilk;
 
+// TODO Document.
 public class WriteInstallCommand implements Commandable {
     /** The default constructor. */
     public WriteInstallCommand() {
     }
     
+    // TODO Document.
     @SuppressWarnings("unchecked")
     public static <T> Class<? extends T> extendsClassCast(Class<T> targetClass, Class<?> unknownClass) { 
         if (!targetClass.isAssignableFrom(unknownClass)) {
@@ -36,6 +38,7 @@ public class WriteInstallCommand implements Commandable {
         return (Class<? extends T>) unknownClass;
     }
 
+    // TODO Document.
     public void execute(Environment env) {
         List<ArtifactPart> artifactParts = env.get(new Ilk<List<ArtifactPart>>() {}, 1);
         for (ArtifactPart artifactPart : artifactParts) {
@@ -43,6 +46,7 @@ public class WriteInstallCommand implements Commandable {
         }
     }
     
+    // TODO Document.
     public void record(Environment env, ArtifactPart artifactPart) {
         ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
         Artifact artifact = artifactPart.getArtifact();
@@ -64,6 +68,7 @@ public class WriteInstallCommand implements Commandable {
         env.io.out.println(line);
     }
 
+    // TODO Document.
     static void writeCommands(String line, File configuration) {
         try {
             Writer writer = new FileWriter(configuration);
@@ -125,6 +130,7 @@ public class WriteInstallCommand implements Commandable {
         return commands;
     }
 
+    // TODO Document.
     static Class<? extends Commandable> loadCommandable(ClassLoader classLoader, String line) {
         try {
             return extendsClassCast(Commandable.class, classLoader.loadClass(line));

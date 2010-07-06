@@ -52,6 +52,7 @@ class RelativeSelector implements SelectionStrategy {
         this.comparisons = comparisons;
     }
     
+    // TODO Document.
     private boolean matches(int[] version) {
         for (int i = 0; i < Math.max(parts.length, version.length); i++) {
             int compare = get(version, i, 0) - get(parts, i, 0);

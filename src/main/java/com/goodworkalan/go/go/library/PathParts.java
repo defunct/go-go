@@ -137,6 +137,7 @@ public class PathParts {
         }
     }
     
+    // TODO Document.
     public static List<Artifact> artifactsList(Collection<PathPart> parts) {
         List<Artifact> artifacts = new ArrayList<Artifact>();
         for (PathPart part : parts) {

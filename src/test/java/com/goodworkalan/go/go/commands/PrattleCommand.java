@@ -12,6 +12,7 @@ import com.goodworkalan.go.go.Environment;
  */
 @Command(parent = Snap.class)
 public class PrattleCommand implements Commandable {
+    // TODO Document.
     @Argument
     public String token;
 

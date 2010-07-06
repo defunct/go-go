@@ -24,6 +24,7 @@ import com.goodworkalan.go.go.GoException;
  * @author Alan Gutierrez
  */
 public class Artifacts {
+    // TODO Document.
     public static List<Include> read(File file) {
         try {
             return read(file.toString(), new FileReader(file));
@@ -32,10 +33,12 @@ public class Artifacts {
         }
     }
      
+    // TODO Document.
     public static List<Include> read(Reader reader) {
         return read("UNKNOWN", reader);
     }
     
+    // TODO Document.
     private static List<Include> read(String context, Reader reader) {
         try {
             List<Include> includes = new ArrayList<Include>();

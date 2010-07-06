@@ -30,6 +30,7 @@ public class JarPart implements PathPart {
         this.file = file;
     }
     
+    // TODO Document.
     public File getFile() {
         return file;
     }

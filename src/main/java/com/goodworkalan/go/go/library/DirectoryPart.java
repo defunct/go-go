@@ -95,6 +95,7 @@ public class DirectoryPart implements PathPart {
         return Collections.<Exclude>emptySet();
     }
     
+    // TODO Document.
     public String toString() {
         return dir.toString();
     }

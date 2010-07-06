@@ -4,11 +4,14 @@ import com.goodworkalan.go.go.Command;
 import com.goodworkalan.go.go.Commandable;
 import com.goodworkalan.go.go.Environment;
 
+// TODO Document.
 @Command(name = "junit", parent = Snap.class)
 public class JUnit implements Commandable {
+    // TODO Document.
     public JUnit() {
     }
 
+    // TODO Document.
     public void execute(Environment env) {
     }
 }

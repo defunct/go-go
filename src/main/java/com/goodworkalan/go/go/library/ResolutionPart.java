@@ -9,25 +9,32 @@ import java.util.Set;
 
 import com.goodworkalan.go.go.GoException;
 
+// TODO Document.
 public class ResolutionPart extends ExpandingPathPart {
+    // TODO Document.
     private final Include include;
     
+    // TODO Document.
     public ResolutionPart(Include include) {
         this.include = include;
     }
 
+    // TODO Document.
     public ResolutionPart(Artifact artifact) {
         this(new Include(artifact));
     }
 
+    // TODO Document.
     public ResolutionPart(Artifact artifact, Set<Exclude> excludes) {
         this(new Include(artifact, excludes));
     }
     
+    // TODO Document.
     public Artifact getArtifact() {
         return include.getArtifact();
     }
     
+    // TODO Document.
     public void expand(Library library, Collection<PathPart> expanded, Collection<PathPart> expand) {
         ArtifactPart artifactPart = library.getArtifactPart(include, "jar", "dep");
         if (artifactPart == null) {
@@ -44,14 +51,17 @@ public class ResolutionPart extends ExpandingPathPart {
         }
     }
     
+    // TODO Document.
     public Object getUnversionedKey() {
         return include.getArtifact().getUnversionedKey();
     }
     
+    // TODO Document.
     public Set<Exclude> getExcludes() {
         return include.getExcludes();
     }
     
+    // TODO Document.
     public String toString() {
         return include.getArtifact().toString();
     }

@@ -372,6 +372,7 @@ public class Environment {
         return box.cast(ilk);
     }
     
+    // TODO Document.
     Ilk.Box get(Ilk.Key key , int index) {
         Ilk.Box candidate = null;
         for (Ilk.Box box : outputs.get(index)) {
@@ -494,9 +495,12 @@ public class Environment {
         throw new Exit(code);
     }
     
+    // TODO Document.
     public List<String> getCommandKey() {
         return getCommandKey(0, commands.size());
     }
+
+    // TODO Document.
     public List<String> getCommandKey(int fromIndex, int toIndex) {
         List<List<String>> components = new ArrayList<List<String>>();
         for (int i = 0, stop = commands.size(); i < stop; i++) {
@@ -515,14 +519,17 @@ public class Environment {
         return key;
     }
     
+    // TODO Document.
     public List<String> getCommandLine() {
         return getCommandLine(0, commands.size());
     }
 
+    // TODO Document.
     public List<String> getCommandLine(int fromIndex) {
         return getCommandLine(fromIndex, commands.size());
     }
     
+    // TODO Document.
     public List<String> getCommandLine(int fromIndex, int toIndex) {
         if (toIndex > commands.size()) {
             throw new IndexOutOfBoundsException();
@@ -540,7 +547,7 @@ public class Environment {
         return commandLine;
     }
     
-
+    // TODO Document.
     public static List<String> flatten(Object... arguments) {
         List<String> flattened = new ArrayList<String>();
         for (Object object : arguments) {

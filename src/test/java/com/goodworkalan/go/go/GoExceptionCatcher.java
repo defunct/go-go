@@ -3,6 +3,7 @@ package com.goodworkalan.go.go;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.fail;
 
+// FIXME Replace with a static method.
 public class GoExceptionCatcher {
     private final int code;
 

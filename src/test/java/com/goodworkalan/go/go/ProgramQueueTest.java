@@ -20,6 +20,7 @@ public class ProgramQueueTest {
         assertEquals(new ProgramQueue(Collections.singletonList(new File(System.getProperty("user.home") + File.separator + ".m2" + File.separator + "repository")), "--verbose", "boot", "hello").run(new InputOutput()), 0);
     }
 
+    // TODO Document.
     private List<File> getLibrary() {
         return Collections.singletonList(new File(System.getProperty("user.home") + File.separator + ".m2" + File.separator + "repository"));
     }

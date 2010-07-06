@@ -21,6 +21,7 @@ public class ArtifactPart implements PathPart {
     /** The set of excludes in effect when this artifact part was expanded. */
     private final Set<Exclude> excludes;
     
+    // TODO Document.
     public ArtifactPart(File libraryDirectory, Artifact artifact, Set<Exclude> excludes) {
         this.libraryDirectory = libraryDirectory;
         this.artifact = artifact;
@@ -98,6 +99,7 @@ public class ArtifactPart implements PathPart {
         return excludes;
     }
     
+    // TODO Document.
     public String toString() {
         return artifact.toString();
     }

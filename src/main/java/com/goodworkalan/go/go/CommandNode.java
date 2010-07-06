@@ -35,6 +35,7 @@ import com.goodworkalan.utility.Primitives;
  * @author Alan Gutierrez
  */
 class CommandNode implements MetaCommand {
+    // TODO Document.
     private final static Infuser INFUSER = new Infuser();
     
     /** The task class. */

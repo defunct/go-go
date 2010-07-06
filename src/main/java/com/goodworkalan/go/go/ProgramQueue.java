@@ -29,6 +29,7 @@ import com.goodworkalan.retry.Retry;
  * @author Alan Gutierrez
  */
 class ProgramQueue {
+    // TODO Document.
     private int verbosity = 0;
     
     /** The list of libraries. */
@@ -49,6 +50,7 @@ class ProgramQueue {
     /** The number of threads running. */
     private int threadCount;
     
+    // TODO Document.
     public ProgramQueue(List<File> libraries, String...arguments) {
         LinkedList<String> args = new LinkedList<String>(Arrays.asList(arguments));
         if (args.isEmpty()) {
@@ -153,6 +155,7 @@ class ProgramQueue {
         }
     }
 
+    // TODO Document.
     public int fork(InputOutput io, List<String> arguments) {
         FutureTask<Integer> future = null;
         synchronized (monitor) {
@@ -203,6 +206,7 @@ class ProgramQueue {
         return 0;
     }
     
+    // TODO Document.
     private FutureTask<Integer> addProgram(final InputOutput io, final List<String> arguments) {
         FutureTask<Integer> future = new FutureTask<Integer>(new Callable<Integer>() {
             public Integer call() {
@@ -213,6 +217,7 @@ class ProgramQueue {
         return future;
     }
 
+    // TODO Document.
     private int start(InputOutput io) {
         FutureTask<Integer> future = addProgram(io, arguments);
         loop();
@@ -226,6 +231,7 @@ class ProgramQueue {
         return code;
     }
 
+    // TODO Document.
     public int run(InputOutput io) {
         try {
             return start(io);
@@ -234,6 +240,7 @@ class ProgramQueue {
         }
     }
 
+    // TODO Document.
     private void loop() {
         synchronized (monitor) {
             while (threadCount > 0 || !executions.isEmpty()) {

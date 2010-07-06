@@ -20,6 +20,7 @@ public class InputOutput {
     /** The error stream. */
     public final PrintStream err;
 
+    // TODO Document.
     static final InputOutput nulls(String input, String encoding) {
         PrintStream out = new PrintStream(new NullOutputStream());
         try {
@@ -29,10 +30,12 @@ public class InputOutput {
         }
     }
     
+    // TODO Document.
     public static final InputOutput nulls(String input) {
         return nulls(input, "UTF-8");
     }
     
+    // TODO Document.
     public static final InputOutput nulls() {
         return nulls("");
     }

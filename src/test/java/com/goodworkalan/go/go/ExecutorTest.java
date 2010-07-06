@@ -30,6 +30,7 @@ import com.goodworkalan.go.go.library.Library;
  * @author Alan Gutierrez
  */
 public class ExecutorTest {
+    // TODO Document.
     private File getLibrary(String library) {
         return new File(new File(".").getAbsolutePath() + File.separator + "src" + File.separator + "test" + File.separator + "libraries" + File.separator + library);
     }
@@ -110,6 +111,7 @@ public class ExecutorTest {
         assertEquals(out.toString(), "WARNING: Command class java.lang.String does not implement com.goodworkalan.go.go.Commandable.\n");
     }
 
+    // TODO Document.
     private Executor getExecutor() {
         Map<List<String>, Artifact> programs = new HashMap<List<String>, Artifact>();
         Library library = new Library(getLibrary("a"), getLibrary("b"));

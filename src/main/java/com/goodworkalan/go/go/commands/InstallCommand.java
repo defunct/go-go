@@ -11,8 +11,10 @@ import com.goodworkalan.go.go.library.Include;
 import com.goodworkalan.go.go.library.ResolutionPart;
 import com.goodworkalan.ilk.Ilk;
 
+// TODO Document.
 @Command(parent = BootCommand.class)
 public class InstallCommand implements Commandable {
+    // TODO Document.
     public void execute(Environment env) {
         List<ArtifactPart> artifactParts = new ArrayList<ArtifactPart>();
         if (!env.remaining.isEmpty()) {

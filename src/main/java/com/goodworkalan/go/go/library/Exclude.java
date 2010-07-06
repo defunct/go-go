@@ -10,6 +10,7 @@ import java.util.Set;
 
 import com.goodworkalan.go.go.GoException;
 
+// TODO Document.
 public class Exclude extends ArrayList<String> {
     /** The serial version id. */
     private static final long serialVersionUID = 1L;
@@ -28,6 +29,7 @@ public class Exclude extends ArrayList<String> {
         addAll(Arrays.asList(split[0], split[1]));
     }
     
+    // TODO Document.
     public Exclude(List<String> copy) {
         super(copy);
         if (copy.size() != 2) {
@@ -35,7 +37,7 @@ public class Exclude extends ArrayList<String> {
         }
     }
     
-    
+    // TODO Document.
     public static Set<Exclude> excludes(String...excludes) {
         Set<Exclude> set = new LinkedHashSet<Exclude>();
         for (String exclude : excludes) {
@@ -44,6 +46,7 @@ public class Exclude extends ArrayList<String> {
         return set;
     }
     
+    // TODO Document.
     public String toString() {
         return get(0) + "/" + get(1);
     }

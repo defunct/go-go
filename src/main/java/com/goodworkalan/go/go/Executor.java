@@ -252,7 +252,6 @@ public class Executor {
      * @param io
      *            The I/O bouquet.
      */
-
     Set<Class<? extends Commandable>> readCommandables(ClassLoader classLoader, InputStream in, InputOutput io)
     throws IOException {
         BufferedReader lines = new BufferedReader(new InputStreamReader(in));
@@ -278,6 +277,7 @@ public class Executor {
         return commandables;
     }
 
+    // TODO Document.
     private Ilk.Box resume(Environment env, CommandNode commandNode, List<String> arguments, int offset, Ilk<?> outcomeType) {
         readConfigurations(env.io);
         if (offset == 0) {
@@ -291,6 +291,7 @@ public class Executor {
         return extend(env, commandNode, arguments, offset, outcomeType);
     }
 
+    // TODO Document.
     private void argument(Environment env, CommandNode commandNode, String name, String value) {
         String command = env.commands.getLast();
         if (name.indexOf(':') == -1) {
@@ -361,6 +362,7 @@ public class Executor {
         }
     }
     
+    // TODO Document.
     private Ilk.Box extend(Environment env, CommandNode commandNode, List<String> arguments, int offset, Ilk<?> outcomeType) {
         boolean remaining = false;
         for (int i = offset, stop = arguments.size(); i < stop; i++) {
@@ -396,6 +398,7 @@ public class Executor {
         return execute(env, commands, new CacheEntry(), outcomeType, -1);
     }
 
+    // TODO Document.
     private Ilk.Box loadAfterCommandable(Collection<PathPart> unseen, Environment env, final Map<String, CommandNode> commands, final CacheEntry cacheEntry, final Ilk<?> outcomeType, final int commandIndex) {
         return extendClassPath(unseen, env, new FutureBox() {
             public Box call(Executor exuector, Environment env) {
@@ -404,11 +407,13 @@ public class Executor {
         });
     }
     
+    // TODO Document.
     private Ilk.Box resumeExecute(Environment env, Map<String, CommandNode> commands, CacheEntry cacheEntry, Ilk<?> outcomeType, int commandIndex) {
         readConfigurations(env.io);
         return execute(env, commands, cacheEntry, outcomeType, commandIndex);
     }
     
+    // TODO Document.
     private Commandable getCommandable(final Class<? extends Commandable> commandableClass) {
         try {
             return commandableClass.newInstance();
@@ -419,6 +424,7 @@ public class Executor {
         }
     }
     
+    // TODO Document.
     private Ilk.Box execute(Environment env, Map<String, CommandNode> commands, CacheEntry cacheEntry, Ilk<?> outcomeType, int commandIndex) {
         // Run any hidden commands.
         for (;;) {
@@ -549,6 +555,7 @@ public class Executor {
         return null;
     }
 
+    // TODO Document.
     private Ilk.Box extendClassPath(Collection<PathPart> unseen, Environment env, final FutureBox box) {
         Collection<PathPart> subPath = new ArrayList<PathPart>();
         subPath = library.resolve(unseen, seen);
@@ -578,10 +585,13 @@ public class Executor {
         }
     }
     
+    // TODO Document.
     private interface FutureBox {
+        // TODO Document.
         public Ilk.Box call(Executor exuector, Environment env);
     }
 
+    // TODO Document.
     private Ilk.Box load(Collection<PathPart> unseen, Environment env, final CommandNode commandNode, final List<String> arguments, final int offset, final Ilk<?> outcomeType) {
         return extendClassPath(unseen, env, new FutureBox() {
             public Box call(Executor executor, Environment env) {
@@ -590,6 +600,7 @@ public class Executor {
         });
     }
 
+    // TODO Document.
     Ilk.Box start(InputOutput io, List<String> arguments, Ilk<?> outcomeType) {
         Environment env = new Environment(library, io, this);
         readConfigurations(env.io);
@@ -603,6 +614,7 @@ public class Executor {
         return resume(env, null, arguments, 0, outcomeType);
     }
 
+    // TODO Document.
     // FIXME Maybe this is execute and call doesn't do any unwrapping?
     public int run(InputOutput io, List<String> arguments) {
         try {
@@ -617,22 +629,27 @@ public class Executor {
         }
     }
 
+    // TODO Document.
     public int run(InputOutput io, Object...arguments) {
         return run(io, flatten(arguments));
     }
 
+    // TODO Document.
     public <T> T run(Class<T> outcomeType, InputOutput io, Object...arguments) {
         return run(new Ilk<T>(outcomeType), io, flatten(arguments));
     }
     
+    // TODO Document.
     public <T> T run(Ilk<T> outcomeType, InputOutput io, Object...arguments) {
         return run(outcomeType, io, flatten(arguments));
     }
     
+    // TODO Document.
     public <T> T run(Class<T> outcomeType, InputOutput io, List<String> arguments) {
         return run(new Ilk<T>(outcomeType), io, flatten(arguments));
     }
 
+    // TODO Document.
     public <T> T run(Ilk<T> outcomeType, InputOutput io, List<String> arguments) {
         Ilk.Box outcome = start(io, arguments, outcomeType);
         if (outcome == null) {
@@ -641,7 +658,7 @@ public class Executor {
         return outcome.cast(outcomeType);
     }
 
-
+    // TODO Document.
     public void fork(InputOutput io, Object...arguments) {
     }
     
@@ -660,5 +677,4 @@ public class Executor {
             Environment.error(io, Executor.class, message, arguments);
         }
     }
-
 }
