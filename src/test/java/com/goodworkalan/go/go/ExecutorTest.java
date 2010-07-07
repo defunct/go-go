@@ -65,7 +65,7 @@ public class ExecutorTest {
     }
     
     /** Test unable to enumerate command line resources. */
-    @Test
+    @Test(expectedExceptions = GoException.class)
     public void cannotEnumerateCommandables() {
         exceptional(COMMANDABLE_RESOURCES_IO, new Runnable() {
             public void run() {
@@ -81,7 +81,7 @@ public class ExecutorTest {
     }
     
     /** Test unable to enumerate command line resources. */
-    @Test
+    @Test(expectedExceptions = GoException.class)
     public void cannotReadCommandles() {
         exceptional(COMMANDABLE_RESOURCE_IO, new Runnable() {
             public void run() {

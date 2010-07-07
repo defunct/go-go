@@ -27,7 +27,7 @@ public class ArtifactsReaderTest {
     }
     
     /** Test file not found exception handling. */
-    @Test
+    @Test(expectedExceptions = GoException.class)
     public void fileNotFound() {
         exceptional(GoException.ARTIFACT_FILE_NOT_FOUND, new Runnable() {
             public void run() {
@@ -40,7 +40,7 @@ public class ArtifactsReaderTest {
      * Test an artifact line with an initial character that is longer than one
      * character.
      */
-    @Test
+    @Test(expectedExceptions = GoException.class)
     public void firstCharacterTooLong() {
         exceptional(GoException.INVALID_ARTIFACTS_LINE_START, new Runnable() {
             public void run() {
@@ -50,7 +50,7 @@ public class ArtifactsReaderTest {
     }
     
     /** Test an invalidate state characater. */
-    @Test
+    @Test(expectedExceptions = GoException.class)
     public void invalidFirstCharacter() {
         exceptional(GoException.INVALID_ARTIFACTS_LINE_START, new Runnable() {
             public void run() {
@@ -60,7 +60,7 @@ public class ArtifactsReaderTest {
     }
 
     /** Test an invalid include line. */
-    @Test
+    @Test(expectedExceptions = GoException.class)
     public void invalidIncludeLine() {
         exceptional(GoException.INVALID_INCLUDE_LINE, new Runnable() {
             public void run() {
@@ -70,7 +70,7 @@ public class ArtifactsReaderTest {
     }
     
     /** Test I/O exception handling. */
-    @Test
+    @Test(expectedExceptions = GoException.class)
     public void ioException() {
         exceptional(GoException.ARTIFACT_FILE_IO_EXCEPTION, new Runnable() {
             public void run() {
