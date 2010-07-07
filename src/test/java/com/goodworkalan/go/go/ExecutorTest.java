@@ -1,5 +1,6 @@
 package com.goodworkalan.go.go;
 
+import static com.goodworkalan.go.go.ExcludeTest.exceptional;
 import static com.goodworkalan.go.go.GoException.COMMANDABLE_RESOURCES_IO;
 import static com.goodworkalan.go.go.GoException.COMMANDABLE_RESOURCE_IO;
 import static org.mockito.Matchers.anyString;
@@ -30,7 +31,14 @@ import com.goodworkalan.go.go.library.Library;
  * @author Alan Gutierrez
  */
 public class ExecutorTest {
-    // TODO Document.
+    /**
+     * Create a library file by appending the relative path to the test library
+     * directory.
+     * 
+     * @param library
+     *            The relative path to the test library.
+     * @return The absolute path to the test library.
+     */
     private File getLibrary(String library) {
         return new File(new File(".").getAbsolutePath() + File.separator + "src" + File.separator + "test" + File.separator + "libraries" + File.separator + library);
     }
@@ -59,7 +67,7 @@ public class ExecutorTest {
     /** Test unable to enumerate command line resources. */
     @Test
     public void cannotEnumerateCommandables() {
-        new GoExceptionCatcher(COMMANDABLE_RESOURCES_IO, new Runnable() {
+        exceptional(COMMANDABLE_RESOURCES_IO, new Runnable() {
             public void run() {
                 try {
                     Executor executor = getExecutor();
@@ -69,13 +77,13 @@ public class ExecutorTest {
                 } catch (IOException e) {
                 }
             }
-        }).run();
+        });
     }
     
     /** Test unable to enumerate command line resources. */
     @Test
     public void cannotReadCommandles() {
-        new GoExceptionCatcher(COMMANDABLE_RESOURCE_IO, new Runnable() {
+        exceptional(COMMANDABLE_RESOURCE_IO, new Runnable() {
             public void run() {
                 try {
                     Executor executor = getExecutor();
@@ -88,7 +96,7 @@ public class ExecutorTest {
                 } catch (IOException e) {
                 }
             }
-        }).run();
+        });
     }
     
     /** Command not found. */
@@ -111,7 +119,12 @@ public class ExecutorTest {
         assertEquals(out.toString(), "WARNING: Command class java.lang.String does not implement com.goodworkalan.go.go.Commandable.\n");
     }
 
-    // TODO Document.
+    /**
+     * Create an executor that will search for commands in two of the test
+     * libraries.
+     * 
+     * @return An executor.
+     */
     private Executor getExecutor() {
         Map<List<String>, Artifact> programs = new HashMap<List<String>, Artifact>();
         Library library = new Library(getLibrary("a"), getLibrary("b"));

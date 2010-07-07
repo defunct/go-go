@@ -1,13 +1,27 @@
 package com.goodworkalan.go.go;
 
-// TODO Document.
+/**
+ * An invalid command that duplicates an argument.
+ *
+ * @author Alan Gutierrez
+ */
 public class DuplicateArgumentMethod extends BaseCommand implements Commandable {
-    // TODO Document.
+    /**
+     * Add a value.
+     * 
+     * @param value
+     *            The value.
+     */
     @Argument
     public void addValue(int value) {
     }
-    
-    // TODO Document.
+
+    /**
+     * Does nothing.
+     * 
+     * @param env
+     *            The environment.
+     */
     public void execute(Environment env) {
     }
 }

@@ -1,5 +1,6 @@
 package com.goodworkalan.go.go;
 
+import static com.goodworkalan.go.go.ExcludeTest.exceptional;
 import static org.testng.Assert.assertEquals;
 
 import java.io.File;
@@ -11,7 +12,6 @@ import java.io.StringReader;
 import org.testng.annotations.Test;
 
 import com.goodworkalan.go.go.library.Artifacts;
-
 /**
  * Test suite for artifacts file.
  *
@@ -26,50 +26,53 @@ public class ArtifactsReaderTest {
         new Artifacts();
     }
     
-    // TODO Document.
+    /** Test file not found exception handling. */
     @Test
     public void fileNotFound() {
-        new GoExceptionCatcher(GoException.ARTIFACT_FILE_NOT_FOUND, new Runnable() {
+        exceptional(GoException.ARTIFACT_FILE_NOT_FOUND, new Runnable() {
             public void run() {
                 Artifacts.read(new File("file/not/found.txt"));
             }
-        }).run();
+        });
     }
     
-    // TODO Document.
+    /**
+     * Test an artifact line with an initial character that is longer than one
+     * character.
+     */
     @Test
     public void firstCharacterTooLong() {
-        new GoExceptionCatcher(GoException.INVALID_ARTIFACTS_LINE_START, new Runnable() {
+        exceptional(GoException.INVALID_ARTIFACTS_LINE_START, new Runnable() {
             public void run() {
                 Artifacts.read(new StringReader("xx"));
             }
-        }).run();
+        });
     }
     
-    // TODO Document.
+    /** Test an invalidate state characater. */
     @Test
     public void invalidFirstCharacter() {
-        new GoExceptionCatcher(GoException.INVALID_ARTIFACTS_LINE_START, new Runnable() {
+        exceptional(GoException.INVALID_ARTIFACTS_LINE_START, new Runnable() {
             public void run() {
                 Artifacts.read(new StringReader("&"));
             }
-        }).run();
+        });
     }
 
-    // TODO Document.
+    /** Test an invalid include line. */
     @Test
     public void invalidIncludeLine() {
-        new GoExceptionCatcher(GoException.INVALID_INCLUDE_LINE, new Runnable() {
+        exceptional(GoException.INVALID_INCLUDE_LINE, new Runnable() {
             public void run() {
                 Artifacts.read(new StringReader("+"));
             }
-        }).run();
+        });
     }
     
-    // TODO Document.
+    /** Test I/O exception handling. */
     @Test
     public void ioException() {
-        new GoExceptionCatcher(GoException.ARTIFACT_FILE_IO_EXCEPTION, new Runnable() {
+        exceptional(GoException.ARTIFACT_FILE_IO_EXCEPTION, new Runnable() {
             public void run() {
                 Artifacts.read(new StringReader("") {
                     @Override
@@ -79,22 +82,22 @@ public class ArtifactsReaderTest {
                     }
                 });
             }
-        }).run();
+        });
     }
     
-    // TODO Document.
+    /** Test skipping comments. */
     @Test
     public void skipComment() {
         assertEquals(Artifacts.read(new StringReader("#")).size(), 0);
     }
     
-    // TODO Document.
+    /** Test skipping blank lines. */
     @Test
     public void skipBlankLines() {
         assertEquals(Artifacts.read(new StringReader("\n\n")).size(), 0);
     }
     
-    // TODO Document.
+    /** Test a successful read. */
     @Test
     public void read() {
         Reader reader = new InputStreamReader(getClass().getResourceAsStream("example.dep"));

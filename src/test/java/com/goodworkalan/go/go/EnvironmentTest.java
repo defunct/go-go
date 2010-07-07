@@ -15,7 +15,11 @@ import org.testng.annotations.Test;
 import com.goodworkalan.go.go.library.Artifact;
 import com.goodworkalan.go.go.library.Library;
 
-// TODO Document.
+/**
+ * Unit tests for the {@link Environment} class.
+ *
+ * @author Alan Gutierrez
+ */
 public class EnvironmentTest {
     // TODO Document.
     public Executor getExecutor() {
