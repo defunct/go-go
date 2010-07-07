@@ -15,8 +15,7 @@ public class GoException extends RuntimeException {
     private static final long serialVersionUID = 1L;
 
     /** A Task has multiple Task type attributes indicating multiple parents. */
-    // FIXME REname.
-    public final static int MULTIPLE_TASK_PARENTS = 102;
+    public final static int MULTIPLE_COMMAND_PARENTS = 102;
 
     /** Unable to enumerate the available command resource files. */
     public final static int COMMANDABLE_RESOURCES_IO = 104;
