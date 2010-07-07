@@ -29,7 +29,7 @@ import com.goodworkalan.retry.Retry;
  * @author Alan Gutierrez
  */
 class ProgramQueue {
-    // TODO Document.
+    /** The system verbosity. */
     private int verbosity = 0;
     
     /** The list of libraries. */

@@ -5,19 +5,33 @@ import com.goodworkalan.go.go.Command;
 import com.goodworkalan.go.go.Commandable;
 import com.goodworkalan.go.go.Environment;
 
-// TODO Document.
+/**
+ * A command that prints a greeting.
+ *
+ * @author Alan Gutierrez
+ */
 @Command(parent = Snap.class)
 public class Welcome implements Commandable {
-    // TODO Document.
+    /** The greeting. */
     public String greeting;
     
-    // TODO Document.
+    /**
+     * Set the greeting.
+     * 
+     * @param greeting
+     *            The greeting.
+     */
     @Argument
     public void addGreeting(String greeting) {
         this.greeting = greeting;
     }
 
-    // TODO Document.
+    /**
+     * Print the greeting to standard out.
+     * 
+     * @param env
+     *            The environment.
+     */
     public void execute(Environment env) {
         env.io.out.println(greeting);
     }

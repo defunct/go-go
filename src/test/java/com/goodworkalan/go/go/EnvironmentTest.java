@@ -37,7 +37,7 @@ public class EnvironmentTest {
     @Test
     public void debug() {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
-        getExecutor().run(new InputOutput(System.in, System.out, new PrintStream(out)), "snap", "--verbose", "--verbose", "prattle", Collections.singletonMap("token", "greet"));
+        getExecutor().run(new InputOutput(System.in, System.out, new PrintStream(out)), "snap", "--verbose", "--verbose", "prattle", Collections.singletonMap("code", "greet"));
         assertEquals(out.toString(), "Hello, World!\n");
     }
 
@@ -53,7 +53,7 @@ public class EnvironmentTest {
     @Test
     public void missingKey() {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
-        getExecutor().run(new InputOutput(System.in, System.out, new PrintStream(out)), "snap", "--verbose", "--verbose", "prattle", new Object[] { "--token=foo" });
+        getExecutor().run(new InputOutput(System.in, System.out, new PrintStream(out)), "snap", "--verbose", "--verbose", "prattle", new Object[] { "--code=foo" });
         assertEquals(out.toString(), "Error message [PrattleCommand/foo] missing. This is a meta-error message.\n");
     }
     
@@ -61,7 +61,7 @@ public class EnvironmentTest {
     @Test
     public void missingArguments() {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
-        getExecutor().run(new InputOutput(System.in, System.out, new PrintStream(out)), "snap", "--verbose", "--verbose", "prattle", "--token=missingArguments");
+        getExecutor().run(new InputOutput(System.in, System.out, new PrintStream(out)), "snap", "--verbose", "--verbose", "prattle", "--code=missingArguments");
         assertEquals(out.toString(), "Error message format argument missing. Format specifier 'd'. This is a meta-error message.\n");
     }
 

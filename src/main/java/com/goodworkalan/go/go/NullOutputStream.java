@@ -3,15 +3,28 @@ package com.goodworkalan.go.go;
 import java.io.IOException;
 import java.io.OutputStream;
 
-// TODO Document.
+/**
+ * An output stream that does nothing.
+ *
+ * @author Alan Gutierrez
+ */
 public class NullOutputStream extends OutputStream {
-    // TODO Document.
+    /**
+     * Create a null output stream.
+     * 
+     * @return A null output stream.
+     */
     public static OutputStream nullStream() {
         return new NullOutputStream();
     }
-    
-    // TODO Document.
+
+    /**
+     * Does nothing.
+     * 
+     * @param b
+     *            The byte to write.
+     */
     @Override
-    public void write(int b) throws IOException {
+    public void write(int b) {
     }
 }

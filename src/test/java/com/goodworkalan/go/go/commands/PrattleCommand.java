@@ -12,9 +12,9 @@ import com.goodworkalan.go.go.Environment;
  */
 @Command(parent = Snap.class)
 public class PrattleCommand implements Commandable {
-    // TODO Document.
+    /** The debugging message code. */
     @Argument
-    public String token;
+    public String code;
 
     /**
      * Send some blather to stderr.
@@ -23,6 +23,6 @@ public class PrattleCommand implements Commandable {
      *            The environment.
      */
     public void execute(Environment env) {
-        env.debug(token, "World");
+        env.debug(code, "World");
     }
 }

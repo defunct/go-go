@@ -60,7 +60,11 @@ public class GoError extends GoException implements Erroneous {
         super(code, cause, arguments);
     }
     
-    // TODO Document.
+    /**
+     * The exit code.
+     * 
+     * @return The exit code.
+     */
     public int getExitCode() {
         return 1;
     }

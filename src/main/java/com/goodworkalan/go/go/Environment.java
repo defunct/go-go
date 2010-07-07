@@ -371,9 +371,18 @@ public class Environment {
         }
         return box.cast(ilk);
     }
-    
-    // TODO Document.
-    Ilk.Box get(Ilk.Key key , int index) {
+
+    /**
+     * Get the boxed output value of the type indicated by the given type key
+     * from the output of the command at the given index in the command path.
+     * 
+     * @param key
+     *            The type key.
+     * @param index
+     *            The command index.
+     * @return The boxed output value.
+     */
+    Ilk.Box get(Ilk.Key key, int index) {
         Ilk.Box candidate = null;
         for (Ilk.Box box : outputs.get(index)) {
             if (key.isAssignableFrom(box.key)
@@ -494,13 +503,33 @@ public class Environment {
     public void exit(int code) {
         throw new Exit(code);
     }
-    
-    // TODO Document.
+
+    /**
+     * Get the command key that represents the entire command path and
+     * arguments.
+     * 
+     * @return The command key for the entire command.
+     */
     public List<String> getCommandKey() {
         return getCommandKey(0, commands.size());
     }
 
-    // TODO Document.
+    /**
+     * Create a key that is unique for the a command path and its arguments for
+     * a subset of the commands in the command path. The key will be composed of
+     * the command name and qualified arguments with their values. If the key
+     * includes the last command in the command path, the remaining arguments
+     * are also included in the key. The key can be used as a cache key, to
+     * associate a command invocation with cached output.
+     * 
+     * @param fromIndex
+     *            The index of the first command and arguments in the command
+     *            path to include.
+     * @param toIndex
+     *            The index after the last command and arguments in the command
+     *            path to include.
+     * @return A key that identifies the command.
+     */
     public List<String> getCommandKey(int fromIndex, int toIndex) {
         List<List<String>> components = new ArrayList<List<String>>();
         for (int i = 0, stop = commands.size(); i < stop; i++) {
@@ -519,17 +548,38 @@ public class Environment {
         return key;
     }
     
-    // TODO Document.
+    /**
+     * Get the full command line without the remaining arguments.
+     * 
+     * @return The full command line.
+     */
     public List<String> getCommandLine() {
         return getCommandLine(0, commands.size());
     }
 
-    // TODO Document.
+    /**
+     * Get the command line starting from the command in the command path at the
+     * given index without the remaining arguments.
+     * 
+     * @param fromIndex
+     *            The index of the first command to include in the command line.
+     * @return The command line.
+     */
     public List<String> getCommandLine(int fromIndex) {
         return getCommandLine(fromIndex, commands.size());
     }
-    
-    // TODO Document.
+
+    /**
+     * Get the command line starting from the command in the command path at the
+     * given index up to but not included the end index.
+     * 
+     * @param fromIndex
+     *            The index of the first command to include in the command line.
+     * @param toIndex
+     *            The index after the last command to include in the command
+     *            line.
+     * @return The command line.
+     */
     public List<String> getCommandLine(int fromIndex, int toIndex) {
         if (toIndex > commands.size()) {
             throw new IndexOutOfBoundsException();
@@ -546,8 +596,18 @@ public class Environment {
         }
         return commandLine;
     }
-    
-    // TODO Document.
+
+    /**
+     * Flatten the list of arguments into a command line suitable for execution
+     * by an <code>Executor</code>. Objects are converted to strings. Lists and
+     * arrays have their individual items added to the command line. Maps have
+     * their entries added as named arguments with the key and value converted
+     * to strings.
+     * 
+     * @param arguments
+     *            The command line arguments.
+     * @return The command line arguments flattened into a command line.
+     */
     public static List<String> flatten(Object... arguments) {
         List<String> flattened = new ArrayList<String>();
         for (Object object : arguments) {
