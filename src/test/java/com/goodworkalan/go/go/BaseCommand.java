@@ -1,8 +1,12 @@
 package com.goodworkalan.go.go;
 
-// TODO Document.
+/**
+ * Base command of a command that duplicates an argument defintion.
+ *
+ * @author Alan Gutierrez
+ */
 public class BaseCommand {
-    // TODO Document.
+    /** The value. */
     @Argument
     public int value;
 }

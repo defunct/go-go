@@ -21,7 +21,11 @@ import com.goodworkalan.go.go.library.Library;
  * @author Alan Gutierrez
  */
 public class EnvironmentTest {
-    // TODO Document.
+    /**
+     * Get an <code>Executor</code> for testing.
+     * 
+     * @return An executor.
+     */
     public Executor getExecutor() {
         Map<List<String>, Artifact> programs = new HashMap<List<String>, Artifact>();
         Library library = new Library(new File[0]);

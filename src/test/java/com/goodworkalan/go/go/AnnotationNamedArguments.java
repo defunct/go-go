@@ -1,12 +1,16 @@
 package com.goodworkalan.go.go;
 
-// TODO Document.
+/**
+ * A command for testing arguments with annotation specified names.
+ *
+ * @author Alan Gutierrez
+ */
 public class AnnotationNamedArguments implements Commandable {
-    // TODO Document.
+    /** The annotation named field. */
     @Argument("bar")
     public int foo;
     
-    // TODO Document.
+    /** The annotation named setter. */
     @Argument("foo")
     public void addBar(String bar) {
     }

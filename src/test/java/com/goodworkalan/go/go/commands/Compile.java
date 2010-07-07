@@ -4,10 +4,19 @@ import com.goodworkalan.go.go.Command;
 import com.goodworkalan.go.go.Commandable;
 import com.goodworkalan.go.go.Environment;
 
-// TODO Document.
+/**
+ * Example of a command.
+ *
+ * @author Alan Gutierrez
+ */
 @Command(parent = Snap.class)
 public class Compile implements Commandable {
-    // TODO Document.
+    /**
+     * Does nothing.
+     * 
+     * @param env
+     *            The environment.
+     */
     public void execute(Environment env) {
     }
 }

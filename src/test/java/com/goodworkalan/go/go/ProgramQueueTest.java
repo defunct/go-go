@@ -20,7 +20,11 @@ public class ProgramQueueTest {
         assertEquals(new ProgramQueue(Collections.singletonList(new File(System.getProperty("user.home") + File.separator + ".m2" + File.separator + "repository")), "--verbose", "boot", "hello").run(new InputOutput()), 0);
     }
 
-    // TODO Document.
+    /**
+     * Get the default <code>~/.m2/repository</code> library.
+     * 
+     * @return The library path containing only the default library.
+     */
     private List<File> getLibrary() {
         return Collections.singletonList(new File(System.getProperty("user.home") + File.separator + ".m2" + File.separator + "repository"));
     }
