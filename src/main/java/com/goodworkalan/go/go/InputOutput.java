@@ -20,7 +20,17 @@ public class InputOutput {
     /** The error stream. */
     public final PrintStream err;
 
-    // TODO Document.
+    /**
+     * Create an I/O bouquet that has offers the given input in the input stream
+     * and discards all error and standard output.
+     * 
+     * @param input
+     *            The input for the input stream.
+     * @param encoding
+     *            The encoding of the input stream.
+     * @return An I/O bouquet with the given input in the input stream and null
+     *         error and output streams.
+     */
     static final InputOutput nulls(String input, String encoding) {
         PrintStream out = new PrintStream(new NullOutputStream());
         try {
@@ -29,13 +39,29 @@ public class InputOutput {
             throw new RuntimeException(e);
         }
     }
-    
-    // TODO Document.
+
+    /**
+     * Create an I/O bouquet that has offers the given input in the input stream
+     * and discards all error and standard output.
+     * 
+     * @param input
+     *            The input for the input stream.
+     * @return An I/O bouquet with the given input in the input stream and null
+     *         error and output streams.
+     */
     public static final InputOutput nulls(String input) {
         return nulls(input, "UTF-8");
     }
-    
-    // TODO Document.
+
+    /**
+     * Create an I/O bouquet with no input the input stream and discards all
+     * error and standard output.
+     * 
+     * @param input
+     *            The input for the input stream.
+     * @return An I/O bouquet with no input in the input stream and null error
+     *         and output streams.
+     */
     public static final InputOutput nulls() {
         return nulls("");
     }

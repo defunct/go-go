@@ -177,16 +177,6 @@ public class GoException extends RuntimeException {
     }
     
     // TODO Document.
-    public static int erroneous(InputOutput io, int verbosity, Throwable e) {
-        if (verbosity > 0) {
-            e.printStackTrace(io.err);
-        } else {
-            io.err.println(e.getMessage());
-        }
-        return ((Erroneous) e).getExitCode();
-    }
-
-    // TODO Document.
     public int unwrap(InputOutput io, int verbosity) {
         Throwable iterator = this;
         while ((iterator instanceof GoException) && ((GoException) iterator).getCode() == FUTURE_EXECUTION) {
@@ -196,7 +186,12 @@ public class GoException extends RuntimeException {
             return ((Exit) iterator.getCause()).code;
         }
         if (iterator instanceof Erroneous) {
-            return erroneous(io, verbosity, iterator);
+            if (verbosity > 0) {
+                iterator.printStackTrace(io.err);
+            } else {
+                io.err.println(iterator.getMessage());
+            }
+            return ((Erroneous) iterator).getExitCode();
         }
         throw this;
     }

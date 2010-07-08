@@ -136,8 +136,15 @@ public class PathParts {
             throw new GoException(MALFORMED_URL, url);
         }
     }
-    
-    // TODO Document.
+
+    /**
+     * Create list of artifacts from just the artifact parts in the part
+     * collection.
+     * 
+     * @param parts
+     *            The part collection.
+     * @return A list of artifacts in the part collection.
+     */
     public static List<Artifact> artifactsList(Collection<PathPart> parts) {
         List<Artifact> artifacts = new ArrayList<Artifact>();
         for (PathPart part : parts) {

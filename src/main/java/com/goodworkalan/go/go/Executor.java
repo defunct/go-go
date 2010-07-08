@@ -277,7 +277,24 @@ public class Executor {
         return commandables;
     }
 
-    // TODO Document.
+    /**
+     * Resume command processing after a launching a new thread due to an
+     * extension of the class path. Returns a boxed instance of the expected
+     * outcome type or null if the no output of the type is emitted, or if the
+     * the expected outcome super type token is null.
+     * 
+     * @param env
+     *            The environment.
+     * @param commandNode
+     *            The current command node.
+     * @param arguments
+     *            The arguments.
+     * @param offset
+     *            The offset into the command path.
+     * @param outcomeType
+     *            The expected outcome type.
+     * @return A boxed instance of the expected output type or null.
+     */
     private Ilk.Box resume(Environment env, CommandNode commandNode, List<String> arguments, int offset, Ilk<?> outcomeType) {
         readConfigurations(env.io);
         if (offset == 0) {

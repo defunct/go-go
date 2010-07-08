@@ -1,6 +1,5 @@
 package com.goodworkalan.go.go;
 
-import java.io.IOException;
 import java.io.OutputStream;
 
 /**

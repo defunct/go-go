@@ -1,8 +1,8 @@
 package com.goodworkalan.go.go;
 
 /**
- * FIXME We want to be able to have an exception, so that a command line switch
- * will turn errors into stack traces.
+ * An exception raised by Jav-a-Go-Go when the error should be displayed as an
+ * error message without a stack trace by default.
  * 
  * @author Alan Gutierrez
  */
