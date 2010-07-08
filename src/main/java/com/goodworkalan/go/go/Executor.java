@@ -1,7 +1,7 @@
 package com.goodworkalan.go.go;
 
 import static com.goodworkalan.go.go.Environment.flatten;
-import static com.goodworkalan.go.go.GoException.*;
+import static com.goodworkalan.go.go.GoException.ASSIGNMENT_EXCEPTION_THROWN;
 import static com.goodworkalan.go.go.GoException.ASSIGNMENT_FAILED;
 import static com.goodworkalan.go.go.GoException.CANNOT_CREATE_TASK;
 import static com.goodworkalan.go.go.GoException.COMMANDABLE_RESOURCES_IO;
@@ -9,6 +9,7 @@ import static com.goodworkalan.go.go.GoException.COMMANDABLE_RESOURCE_IO;
 import static com.goodworkalan.go.go.GoException.COMMAND_CLASS_MISSING;
 import static com.goodworkalan.go.go.GoException.EXIT;
 import static com.goodworkalan.go.go.GoException.FUTURE_EXECUTION;
+import static com.goodworkalan.go.go.GoException.NO_SUCH_ARGUMENT;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -39,7 +40,6 @@ import com.goodworkalan.go.go.library.ResolutionPart;
 import com.goodworkalan.ilk.Ilk;
 import com.goodworkalan.ilk.Ilk.Box;
 import com.goodworkalan.infuse.InfusionException;
-import com.goodworkalan.retry.Retry;
 import com.goodworkalan.utility.Primitives;
 
 /**
@@ -590,13 +590,14 @@ public class Executor {
         final Thread thread = new Thread(future);
         thread.setContextClassLoader(PathParts.getClassLoader(subPath, Thread.currentThread().getContextClassLoader()));
         thread.start();
-        Retry.retry(new Retry.Procedure() {
-            public void retry() throws InterruptedException {
+        retry(new Callable<Object>() {
+            public Object call() throws InterruptedException {
                 thread.join();
+                return null;
             }
         });
         try {
-            return Retry.retry(future);
+            return retry(future);
         } catch (ExecutionException e) {
             throw new GoException(FUTURE_EXECUTION, e);
         }
@@ -692,6 +693,52 @@ public class Executor {
     private void debug(InputOutput io, String message, Object...arguments) {
         if (systemVerbosity > 1) {
             Environment.error(io, Executor.class, message, arguments);
+        }
+    }
+
+    /**
+     * Get the future value, trying again if an
+     * <code>InterruptedException</code> is thrown.
+     * 
+     * @param <T>
+     *            The type of future value.
+     * @param future
+     *            The future.
+     * @return The future value.
+     * @throws ExecutionException
+     *             If an exception is thrown during the execution of the future
+     *             task.
+     */
+    static <T> T retry(FutureTask<T> future) throws ExecutionException {
+        for (;;) {
+            try {
+                return future.get();
+            } catch (InterruptedException e) {
+                continue;
+            }
+        }
+    }
+
+    /**
+     * Invoke the callable, trying again if an interrupted exception is thrown.
+     * 
+     * @param <T>
+     *            The type of return value.
+     * @param callable
+     *            The procedure.
+     * @return The return value.
+     */
+    static <T> T retry(Callable<T> callable) {
+        for (;;) {
+            try {
+                return callable.call();
+            } catch (InterruptedException e) {
+                continue;
+            } catch (Exception e) {
+                // We will only call this method with callables that throw an
+                // interrupted exception.
+                throw new RuntimeException(e);
+            }
         }
     }
 }

@@ -1,5 +1,6 @@
 package com.goodworkalan.go.go;
 
+import static com.goodworkalan.go.go.Executor.retry;
 import static com.goodworkalan.go.go.GoError.COMMAND_LINE_NO_ARGUMENTS;
 import static com.goodworkalan.go.go.GoError.INVALID_ARGUMENT;
 import static com.goodworkalan.go.go.GoError.INVALID_DEFINE_PARAMETER;
@@ -21,7 +22,6 @@ import java.util.concurrent.FutureTask;
 
 import com.goodworkalan.go.go.library.Artifact;
 import com.goodworkalan.go.go.library.Library;
-import com.goodworkalan.retry.Retry;
 
 /**
  * Queues pseudo-forked Jav-a-Go-Go programs for execution.
@@ -163,7 +163,7 @@ class ProgramQueue {
             monitor.notify();
         }
         try {
-            return Retry.retry(future);
+            return retry(future);
         } catch (ExecutionException e) {
             throw new GoException(FUTURE_EXECUTION, e);
         }
@@ -223,7 +223,7 @@ class ProgramQueue {
         loop();
         int code;
         try {
-            code = Retry.retry(future);
+            code = retry(future);
         } catch (ExecutionException e) {
             // FIXME Unpack here?
             throw new GoException(FUTURE_EXECUTION, e);
@@ -248,9 +248,10 @@ class ProgramQueue {
                     threadCount++;
                     new Thread(executions.removeFirst()).start();
                 }
-                Retry.retry(new Retry.Procedure() {
-                    public void retry() throws InterruptedException {
+                retry(new Callable<Object>() {
+                    public Object call() throws InterruptedException {
                         monitor.wait();
+                        return null;
                     }
                 });
             }

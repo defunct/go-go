@@ -19,6 +19,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Vector;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.FutureTask;
 
 import org.testng.annotations.Test;
 
@@ -130,5 +133,70 @@ public class ExecutorTest {
         Library library = new Library(getLibrary("a"), getLibrary("b"));
         Executor executor = new Executor(library, programs, 0);
         return executor;
+    }
+    
+    /**
+     * Test retrying a callable that throws an exception that is not an
+     * <code>InterruptedException</code>.
+     */
+    @Test(expectedExceptions = RuntimeException.class)
+    public void retryException() {
+        Executor.retry(new Callable<Object>() {
+            public Object call() throws IOException {
+                throw new IOException();
+            }
+        });
+    }
+    
+    /** Test callable retry. */
+    @Test
+    public void function() throws InterruptedException {
+        Thread thread = new Thread() {
+            public void run() {
+                String a = Executor.retry(new Callable<String>() {
+                    int count;
+                    public String call() throws InterruptedException {
+                        if (count == 0) {
+                            count++;
+                            synchronized (this) {
+                                wait();
+                            }
+                        }
+                        return "A";
+                    }
+                });
+                assertEquals(a, "A");
+            }
+        };
+        thread.start();
+        thread.interrupt();
+        thread.join();
+    }
+    
+    /** Test future retry. */
+    @Test
+    public void future() throws InterruptedException {
+        final FutureTask<Integer> future = new FutureTask<Integer>(new Callable<Integer>() {
+            public Integer call() {
+                return 1;
+            }
+        });
+        Thread consumer = new Thread() {
+            @Override
+            public void run() {
+                int i = 0;
+                try {
+                    i = Executor.retry(future);
+                } catch (ExecutionException e) {
+                }
+                assertEquals(i, 1);
+            }
+        };
+        consumer.start();
+        consumer.interrupt();
+        Thread thread = new Thread(future);
+        thread.start();
+        consumer.join();
+        thread.join();
     }
 }

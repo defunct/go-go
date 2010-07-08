@@ -57,8 +57,6 @@ public class InputOutput {
      * Create an I/O bouquet with no input the input stream and discards all
      * error and standard output.
      * 
-     * @param input
-     *            The input for the input stream.
      * @return An I/O bouquet with no input in the input stream and null error
      *         and output streams.
      */
