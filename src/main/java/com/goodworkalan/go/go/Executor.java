@@ -112,14 +112,12 @@ public class Executor {
      *            The system verbosity level.
      */
     Executor(Library library, Map<List<String>, Artifact> programs, int systemVerbosity) {
-        seen.add(new Exclude("com.github.bigeasy.danger/danger"));
-        seen.add(new Exclude("com.github.bigeasy.verbiage/verbiage"));
+//        seen.add(new Exclude("com.github.bigeasy.danger/danger"));
         seen.add(new Exclude("com.github.bigeasy.go-go/go-go"));
         seen.add(new Exclude("com.github.bigeasy.infuse/infuse"));
-        seen.add(new Exclude("com.github.bigeasy.retry/retry"));
+        seen.add(new Exclude("com.github.bigeasy.ilk/ilk"));
         seen.add(new Exclude("com.github.bigeasy.class-boxer/class-boxer"));
         seen.add(new Exclude("com.github.bigeasy.class-association/class-association"));
-        seen.add(new Exclude("com.github.bigeasy.reflective/reflective"));
         seen.add(new Exclude("com.github.bigeasy.reflective/reflective-setter"));
         this.programs = programs;
         this.library = library;
