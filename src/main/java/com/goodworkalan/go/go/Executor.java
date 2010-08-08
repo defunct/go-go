@@ -39,7 +39,6 @@ import com.goodworkalan.go.go.library.PathParts;
 import com.goodworkalan.go.go.library.ResolutionPart;
 import com.goodworkalan.ilk.Ilk;
 import com.goodworkalan.ilk.Ilk.Box;
-import com.goodworkalan.infuse.InfusionException;
 import com.goodworkalan.utility.Primitives;
 
 /**
@@ -372,7 +371,12 @@ public class Executor {
             
             try {
                 env.conversions.getLast().add(new Conversion(qualified[0], qualified[1], assignment.infuser.infuse(value)));
-            } catch (InfusionException e) {
+            } catch (Exception e) {
+                // Getting into the mindset that this is all about building
+                // a handsome stack trace, not about catching one exception or the
+                // the other. Does it matter if it was infusion that failed, if
+                // all I'm going to do is add some context to the stack trace, that
+                // context is just as useful if the exception is unanticipated.
                 throw new GoException(0, e);
             }
             env.arguments.getLast().add("--" + qualified[0] + ':' + qualified[1] + '=' + value);

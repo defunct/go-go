@@ -1,8 +1,8 @@
-package com.goodworkalan.go.go.mix;
+package com.goodworkalan.go.go;
 
-import com.goodworkalan.mix.ProjectModule;
-import com.goodworkalan.mix.builder.Builder;
-import com.goodworkalan.mix.cookbook.JavaProject;
+import com.goodworkalan.cafe.ProjectModule;
+import com.goodworkalan.cafe.builder.Builder;
+import com.goodworkalan.cafe.outline.JavaProject;
 
 /**
  * Build definition for Jav-a-Go-Go.
@@ -19,7 +19,7 @@ public class GoProject implements ProjectModule {
     public void build(Builder builder) {
         builder
             .cookbook(JavaProject.class)
-                .produces("com.github.bigeasy.go-go/go-go/0.1.4.25")
+                .produces("com.github.bigeasy.go-go/go-go/0.1.4.26")
                 .depends()
                     .production("com.github.bigeasy.reflective/reflective-setter/0.+1")
                     .production("com.github.bigeasy.ilk/ilk/0.+1")
