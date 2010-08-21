@@ -1,4 +1,4 @@
-package com.goodworkalan.go.bootstrap.mix;
+package com.goodworkalan.go.bootstrap;
 
 import com.goodworkalan.go.go.Commandable;
 import com.goodworkalan.go.go.Environment;
@@ -6,11 +6,11 @@ import com.goodworkalan.go.go.library.Include;
 import com.goodworkalan.go.go.library.ArtifactPart;
 import com.goodworkalan.go.go.library.ResolutionPart;
 import com.goodworkalan.go.go.library.PathPart;
-import com.goodworkalan.mix.Mix;
-import com.goodworkalan.mix.Project;
-import com.goodworkalan.mix.ProjectModule;
-import com.goodworkalan.mix.builder.Builder;
-import com.goodworkalan.mix.cookbook.JavaProject;
+import com.goodworkalan.cafe.Build;
+import com.goodworkalan.cafe.Project;
+import com.goodworkalan.cafe.ProjectModule;
+import com.goodworkalan.cafe.builder.Builder;
+import com.goodworkalan.cafe.outline.JavaProject;
 import com.goodworkalan.comfort.io.Files;
 import java.util.Collections;
 import java.util.TreeSet;
@@ -32,7 +32,7 @@ public class GoGoBootProject implements ProjectModule {
     public void build(Builder builder) {
         builder
             .cookbook(JavaProject.class)
-                .produces("com.github.bigeasy.go-go/go-go-boot/0.1.2.27")
+                .produces("com.github.bigeasy.go-go/go-go-boot/0.1.2.33")
                 .development("org.testng/testng-jdk15/5.10")
                 .end()
             .end();
